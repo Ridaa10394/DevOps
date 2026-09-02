@@ -1,0 +1,78 @@
+Ridaa Mirza
+24BCS10394
+Completed the shell scripting homework task.
+==============================================
+           SYSTEM INFORMATION REPORT          
+==============================================
+Current Date : Wed Sep  2 17:17:16 UTC 2026
+Hostname     : RidasDen
+Username     : ridaa
+
+---------------- DISK USAGE ------------------
+Filesystem      Size  Used Avail Use% Mounted on
+none            3.8G     0  3.8G   0% /usr/lib/modules/6.18.33.2-microsoft-standard-WSL2
+none            3.8G  4.0K  3.8G   1% /mnt/wsl
+drivers         534G  238G  297G  45% /usr/lib/wsl/drivers
+/dev/sdd       1007G  2.8G  953G   1% /
+none            3.8G   32K  3.8G   1% /mnt/wslg
+none            3.8G     0  3.8G   0% /usr/lib/wsl/lib
+rootfs          3.8G  2.8M  3.8G   1% /init
+none            3.8G  576K  3.8G   1% /run
+none            3.8G     0  3.8G   0% /run/lock
+none            3.8G  1.1M  3.8G   1% /run/shm
+none            3.8G   68K  3.8G   1% /mnt/wslg/versions.txt
+none            3.8G   68K  3.8G   1% /mnt/wslg/doc
+C:\             534G  238G  297G  45% /mnt/c
+D:\             396G  1.6G  394G   1% /mnt/d
+tmpfs           767M   20K  767M   1% /run/user/1000
+
+------------- RUNNING PROCESSES --------------
+    PID TTY          TIME CMD
+    458 pts/2    00:00:00 bash
+    463 pts/2    00:00:00 ps
+
+Enter your name        : Enter your roll number : Enter a short comment  : 
+[+] Directory created : sysinfo_report
+[+] File created      : sysinfo_report/process.log
+[+] Running processes saved to sysinfo_report/process.log
+
+==============================================
+                   SUMMARY                    
+==============================================
+My name is        : Ridaa Mirza
+My roll number is : 24BCS10394
+My comment is     : Completed the shell scripting homework task.
+Report generated  : Wed Sep  2 17:17:16 UTC 2026
+Report location   : /home/ridaa/sysinfo-run/sysinfo_report
+==============================================
+
+########## VERIFY: directory and file created ##########
+$ ls -l /home/ridaa/sysinfo-run
+total 8
+-rwxr-xr-x 1 ridaa ridaa 2331 Sep  2 17:17 sysinfo.sh
+drwxr-xr-x 2 ridaa ridaa 4096 Sep  2 17:17 sysinfo_report
+
+$ ls -l sysinfo_report/
+total 8
+-rw-r--r-- 1 ridaa ridaa 6961 Sep  2 17:17 process.log
+
+########## VERIFY: contents of process.log ##########
+$ head -15 sysinfo_report/process.log
+UID          PID    PPID  C STIME TTY          TIME CMD
+root           1       0 14 17:17 ?        00:00:00 /sbin/init
+root           2       1  0 17:17 hvc0     00:00:00 /init
+root           7       2  0 17:17 hvc0     00:00:00 plan9 --control-socket 7 --log-level 4 --server-fd 8 --pipe-fd 10 --log-truncate
+root          57       1  3 17:17 ?        00:00:00 /usr/lib/systemd/systemd-journald
+root         107       1  3 17:17 ?        00:00:00 /usr/lib/systemd/systemd-udevd
+systemd+     116       1  2 17:17 ?        00:00:00 /usr/lib/systemd/systemd-resolved
+systemd+     117       1  1 17:17 ?        00:00:00 /usr/lib/systemd/systemd-timesyncd
+root         121     107  0 17:17 ?        00:00:00 (udev-worker)
+root         122     107  0 17:17 ?        00:00:00 (udev-worker)
+root         123     107  0 17:17 ?        00:00:00 (udev-worker)
+root         124     107  0 17:17 ?        00:00:00 (udev-worker)
+root         125     107  0 17:17 ?        00:00:00 (udev-worker)
+root         126     107  0 17:17 ?        00:00:00 (udev-worker)
+root         127     107  0 17:17 ?        00:00:00 (udev-worker)
+
+$ wc -l sysinfo_report/process.log
+93 sysinfo_report/process.log

@@ -1,0 +1,52 @@
+### 1. Create the original file
+This is the original file.
+
+### 2. Create a HARD link and a SOFT link
+$ ln original.txt hardlink.txt
+$ ln -s original.txt softlink.txt
+
+### 3. Inspect with ls -li (note the inode numbers and link count)
+$ ls -li
+total 8
+11856 -rw-r--r-- 2 ridaa ridaa 27 Sep  2 17:16 hardlink.txt
+11856 -rw-r--r-- 2 ridaa ridaa 27 Sep  2 17:16 original.txt
+11857 lrwxrwxrwx 1 ridaa ridaa 12 Sep  2 17:16 softlink.txt -> original.txt
+
+### 4. Inode numbers compared
+original.txt inode : 11856  links: 2
+hardlink.txt inode : 11856  links: 2
+softlink.txt inode : 11857  links: 1
+-> hard link shares the SAME inode; soft link has its own inode.
+
+### 5. Both links read the same content
+$ cat hardlink.txt
+This is the original file.
+$ cat softlink.txt
+This is the original file.
+
+### 6. Append through the hard link - original sees it too
+$ cat original.txt
+This is the original file.
+Line added via hardlink.
+
+### 7. THE KEY TEST: delete the original
+$ rm original.txt
+
+$ cat hardlink.txt   # still works - data survives
+This is the original file.
+Line added via hardlink.
+
+$ cat softlink.txt   # BROKEN - target is gone
+cat: softlink.txt: No such file or directory
+
+$ ls -li
+total 4
+11856 -rw-r--r-- 1 ridaa ridaa 52 Sep  2 17:16 hardlink.txt
+11857 lrwxrwxrwx 1 ridaa ridaa 12 Sep  2 17:16 softlink.txt -> original.txt
+-> softlink.txt is now a dangling/broken link.
+
+### 8. Deleting links
+$ rm softlink.txt hardlink.txt
+drwx------  2 ridaa ridaa 4096 Sep  2 17:16 .
+drwxrwxrwt 10 root  root  4096 Sep  2 17:16 ..
+(rm on a link removes the link, never the target's data unless it is the last hard link)

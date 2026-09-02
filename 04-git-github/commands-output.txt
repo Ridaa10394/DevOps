@@ -1,0 +1,116 @@
+
+==================================================
+PART 1: git commit -m  vs  git commit -a -m
+==================================================
+--- Create and commit a tracked file ---
+done
+
+--- Modify the TRACKED file, and add a NEW untracked file ---
+$ git status --short
+ M app.txt
+?? untracked.txt
+
+>>> Attempt 1: plain 'git commit -m' with nothing staged
+$ git commit -m "try without -a"
+On branch main
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   app.txt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	untracked.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+(nothing was committed - modifications were never staged)
+
+>>> Attempt 2: 'git commit -a -m' - auto-stages MODIFIED TRACKED files
+$ git commit -a -m "Update app.txt using commit -a -m"
+[main 6d4d5d7] Update app.txt using commit -a -m
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ git status --short   # untracked.txt STILL not committed
+?? untracked.txt
+-> CONCLUSION: -a stages modified/deleted TRACKED files only.
+   It does NOT pick up new untracked files; those still need 'git add'.
+
+==================================================
+PART 2: Build 4 commits on main
+==================================================
+$ git log --oneline
+de7cce5 main: commit number 4
+0be5196 main: commit number 3
+4d6f3c1 main: commit number 2
+6d4d5d7 Update app.txt using commit -a -m
+3093bd9 Initial commit: add app.txt
+
+==================================================
+PART 3: Create a new branch with 3 commits
+==================================================
+$ git checkout -b feature   ->  now on: feature
+
+$ git log --oneline
+4fc8caf feature: add beta.txt
+58158ad feature: add bugfix.txt (THIS ONE WILL BE CHERRY-PICKED)
+db98737 feature: add alpha.txt
+de7cce5 main: commit number 4
+0be5196 main: commit number 3
+4d6f3c1 main: commit number 2
+6d4d5d7 Update app.txt using commit -a -m
+3093bd9 Initial commit: add app.txt
+
+==================================================
+PART 4: Identify the commit to cherry-pick
+==================================================
+$ git log --oneline --grep=bugfix
+58158ad feature: add bugfix.txt (THIS ONE WILL BE CHERRY-PICKED)
+
+Target commit hash: 58158add711db70938ec3a178537e167486d9311
+
+==================================================
+PART 5: Cherry-pick that single commit into main
+==================================================
+Switched to branch: main
+
+$ ls    # before cherry-pick
+app.txt
+
+$ git cherry-pick 58158add711db70938ec3a178537e167486d9311
+[main efd1e37] feature: add bugfix.txt (THIS ONE WILL BE CHERRY-PICKED)
+ Date: Wed Sep 2 17:18:30 2026 +0000
+ 1 file changed, 1 insertion(+)
+ create mode 100644 bugfix.txt
+
+==================================================
+PART 6: Verify the change landed on main
+==================================================
+$ ls    # after cherry-pick - bugfix.txt is here, alpha/beta are NOT
+app.txt
+bugfix.txt
+
+$ cat bugfix.txt
+BUGFIX applied
+
+$ git log --oneline    # main now carries the cherry-picked commit
+efd1e37 feature: add bugfix.txt (THIS ONE WILL BE CHERRY-PICKED)
+de7cce5 main: commit number 4
+0be5196 main: commit number 3
+4d6f3c1 main: commit number 2
+6d4d5d7 Update app.txt using commit -a -m
+3093bd9 Initial commit: add app.txt
+
+$ git log --oneline --all --graph
+* 4fc8caf feature: add beta.txt
+* 58158ad feature: add bugfix.txt (THIS ONE WILL BE CHERRY-PICKED)
+* db98737 feature: add alpha.txt
+| * efd1e37 feature: add bugfix.txt (THIS ONE WILL BE CHERRY-PICKED)
+|/  
+* de7cce5 main: commit number 4
+* 0be5196 main: commit number 3
+* 4d6f3c1 main: commit number 2
+* 6d4d5d7 Update app.txt using commit -a -m
+* 3093bd9 Initial commit: add app.txt
+
+-> Only the selected commit was copied to main.
+-> Note the cherry-picked commit has a NEW hash (it is a copy, not a move).

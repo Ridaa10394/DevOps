@@ -1,0 +1,72 @@
+
+==================================================
+$ journalctl --version | head -3
+==================================================
+systemd 255 (255.4-1ubuntu8.8)
++PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified
+
+==================================================
+$ journalctl -n 10 --no-pager
+==================================================
+An error was encountered while opening journal file or directory /var/log/journal/28b3f4526e5948afae85e30a39618c3f/system.journal, ignoring file: No such file or directory
+Sep 02 17:18:53 RidasDen systemd[1]: tmp-syscheck\x2dmountpoint\x2d1662666989.mount: Deactivated successfully.
+Sep 02 17:18:53 RidasDen snapd[194]: daemon.go:353: adjusting startup timeout by 30s (pessimistic estimate of 30s plus 5s per snap)
+Sep 02 17:18:53 RidasDen snapd[194]: backends.go:58: AppArmor status: apparmor not enabled
+Sep 02 17:18:53 RidasDen systemd[1]: Started snapd.service - Snap Daemon.
+Sep 02 17:18:53 RidasDen dbus-daemon[187]: [system] Activating via systemd: service name='org.freedesktop.timedate1' unit='dbus-org.freedesktop.timedate1.service' requested by ':1.4' (uid=0 pid=194 comm="/usr/lib/snapd/snapd" label="kernel")
+Sep 02 17:18:53 RidasDen systemd[1]: Starting systemd-timedated.service - Time & Date Service...
+Sep 02 17:18:53 RidasDen dbus-daemon[187]: [system] Successfully activated service 'org.freedesktop.timedate1'
+Sep 02 17:18:53 RidasDen systemd[1]: Started systemd-timedated.service - Time & Date Service.
+Sep 02 17:18:53 RidasDen systemd[1]: Finished snapd.seeded.service - Wait until snapd is fully seeded.
+Sep 02 17:18:53 RidasDen systemd[1]: snapd.autoimport.service - Auto import assertions from block devices was skipped because no trigger condition checks were met.
+
+==================================================
+$ journalctl -b --no-pager | head -15
+==================================================
+Sep 02 17:16:48 RidasDen kernel: Linux version 6.18.33.2-microsoft-standard-WSL2 (root@f1bbfb02316b) (gcc (GCC) 13.2.0, GNU ld (GNU Binutils) 2.41) #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026
+Sep 02 17:16:48 RidasDen kernel: Command line: initrd=\initrd.img WSL_ROOT_INIT=1 panic=-1 nr_cpus=22 hv_utils.timesync_implicit=1 console=hvc0 debug pty.legacy_count=0 WSL_ENABLE_CRASH_DUMP=1
+Sep 02 17:16:48 RidasDen kernel: KERNEL supported cpus:
+Sep 02 17:16:48 RidasDen kernel:   Intel GenuineIntel
+Sep 02 17:16:48 RidasDen kernel:   AMD AuthenticAMD
+Sep 02 17:16:48 RidasDen kernel: BIOS-provided physical RAM map:
+Sep 02 17:16:48 RidasDen kernel: BIOS-e820: [mem 0x0000000000000000-0x000000000009ffff] usable
+Sep 02 17:16:48 RidasDen kernel: BIOS-e820: [mem 0x00000000000e0000-0x00000000000e0fff] reserved
+Sep 02 17:16:48 RidasDen kernel: BIOS-e820: [mem 0x0000000000100000-0x00000000001fffff] ACPI data
+Sep 02 17:16:48 RidasDen kernel: BIOS-e820: [mem 0x0000000000200000-0x00000000f7ffffff] usable
+Sep 02 17:16:48 RidasDen kernel: BIOS-e820: [mem 0x0000000100000000-0x00000001f69fffff] usable
+Sep 02 17:16:48 RidasDen kernel: NX (Execute Disable) protection: active
+Sep 02 17:16:48 RidasDen kernel: APIC: Static calls initialized
+Sep 02 17:16:48 RidasDen kernel: DMI not present or invalid.
+Sep 02 17:16:48 RidasDen kernel: Hypervisor detected: Microsoft Hyper-V
+
+==================================================
+$ journalctl -p err -n 10 --no-pager
+==================================================
+Sep 02 17:18:53 RidasDen kernel: misc dxg: dxgk: dxgkio_query_adapter_info: Ioctl failed: -22
+Sep 02 17:18:53 RidasDen kernel: misc dxg: dxgk: dxgkio_query_adapter_info: Ioctl failed: -2
+Sep 02 17:18:53 RidasDen kernel: misc dxg: dxgk: dxgkio_query_adapter_info: Ioctl failed: -22
+Sep 02 17:18:53 RidasDen kernel: misc dxg: dxgk: dxgkio_query_adapter_info: Ioctl failed: -22
+Sep 02 17:18:53 RidasDen kernel: misc dxg: dxgk: dxgkio_query_adapter_info: Ioctl failed: -22
+Sep 02 17:18:53 RidasDen kernel: misc dxg: dxgk: dxgkio_query_adapter_info: Ioctl failed: -2
+Sep 02 17:18:53 RidasDen systemd[1]: Failed to start wsl-pro.service - Bridge to Ubuntu Pro agent on Windows.
+Sep 02 17:18:42 RidasDen systemd[1]: Failed to start wsl-pro.service - Bridge to Ubuntu Pro agent on Windows.
+Sep 02 17:18:42 RidasDen login[362]: PAM unable to dlopen(pam_lastlog.so): /usr/lib/security/pam_lastlog.so: cannot open shared object file: No such file or directory
+Sep 02 17:18:42 RidasDen login[362]: PAM adding faulty module: pam_lastlog.so
+
+==================================================
+$ journalctl -u systemd-resolved.service -n 10 --no-pager
+==================================================
+Sep 02 17:18:32 RidasDen systemd[1]: Stopped systemd-resolved.service - Network Name Resolution.
+Sep 02 17:18:53 RidasDen systemd[1]: Starting systemd-resolved.service - Network Name Resolution...
+Sep 02 17:18:53 RidasDen systemd-resolved[116]: Positive Trust Anchors:
+Sep 02 17:18:53 RidasDen systemd-resolved[116]: . IN DS 20326 8 2 e06d44b80b8f1d39a95c0b0d7c65d08458e880409bbc683457104237c7f8ec8d
+Sep 02 17:18:53 RidasDen systemd-resolved[116]: Negative trust anchors: home.arpa 10.in-addr.arpa 16.172.in-addr.arpa 17.172.in-addr.arpa 18.172.in-addr.arpa 19.172.in-addr.arpa 20.172.in-addr.arpa 21.172.in-addr.arpa 22.172.in-addr.arpa 23.172.in-addr.arpa 24.172.in-addr.arpa 25.172.in-addr.arpa 26.172.in-addr.arpa 27.172.in-addr.arpa 28.172.in-addr.arpa 29.172.in-addr.arpa 30.172.in-addr.arpa 31.172.in-addr.arpa 170.0.0.192.in-addr.arpa 171.0.0.192.in-addr.arpa 168.192.in-addr.arpa d.f.ip6.arpa ipv4only.arpa corp home internal intranet lan local private test
+Sep 02 17:18:53 RidasDen systemd-resolved[116]: Using system hostname 'RidasDen'.
+Sep 02 17:18:53 RidasDen systemd[1]: Started systemd-resolved.service - Network Name Resolution.
+Sep 02 17:18:40 RidasDen systemd-resolved[116]: Clock change detected. Flushing caches.
+Sep 02 17:18:56 RidasDen systemd-resolved[116]: Clock change detected. Flushing caches.
+Sep 02 17:18:43 RidasDen systemd-resolved[116]: Clock change detected. Flushing caches.
+
+==================================================
+$ journalctl -u systemd-journald --since today --no-pager
+==================================================

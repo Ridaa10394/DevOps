@@ -1,0 +1,36 @@
+# Task 1 equivalent expressed as Compose.
+# The manual `docker network create` / `docker run` commands are in README.md;
+# this file shows the same topology declaratively.
+services:
+  frontend:
+    image: nginx:alpine
+    container_name: frontend
+    networks:
+      - frontend-net
+
+  backend:
+    image: alpine:latest
+    container_name: backend
+    command: sleep infinity
+    networks:
+      # backend deliberately sits on TWO networks
+      - frontend-net
+      - backend-net
+
+  database:
+    image: mysql:8.0
+    container_name: database
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: testdb
+    networks:
+      - backend-net
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+  # third network, created but intentionally unused by the frontend
+  isolated-net:
+    driver: bridge

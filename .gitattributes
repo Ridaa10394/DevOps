@@ -1,0 +1,19 @@
+# Keep LF endings for anything executed inside Linux containers or shells.
+# Without this, a Windows checkout gets CRLF and scripts fail with
+# "bad interpreter: /bin/bash^M".
+* text=auto eol=lf
+
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.py        text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.java      text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.html      text eol=lf
+
+*.png binary
+*.jpg binary

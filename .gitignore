@@ -1,0 +1,19 @@
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Java
+*.class
+
+# Script run artifacts
+02-shell-scripting/sysinfo_report/
+
+# OS
+.DS_Store
+Thumbs.db
