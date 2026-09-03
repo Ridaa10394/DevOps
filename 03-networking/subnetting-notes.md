@@ -1,13 +1,11 @@
-# IP Addressing and Subnetting — Notes
+# IP Addressing and Subnetting - Notes
 
-**Name:** Ridaa Mirza
-**Enrollment No:** 24BCS10394
-
----
+Name: Ridaa Mirza
+Enrollment No: 24BCS10394
 
 ## What an IP address is
 
-A unique numeric identifier for a device on a network, defined by the **Internet Protocol**. IPv4 is **32 bits**, written as four 8-bit octets in dotted decimal:
+A number that uniquely identifies a device on a network, defined by the Internet Protocol. IPv4 is 32 bits, written as four 8-bit octets separated by dots:
 
 ```
 192.168.1.10
@@ -15,32 +13,28 @@ A unique numeric identifier for a device on a network, defined by the **Internet
  8   8   8 8   bits  =  32 bits total
 ```
 
-Range: `0.0.0.0` to `255.255.255.255`.
+Range: 0.0.0.0 to 255.255.255.255.
 
-Every IP splits into two parts — a **network portion** and a **host portion**. The subnet mask is what marks the boundary.
-
----
+Every IP is really split into two parts, a network part and a host part. The subnet mask is what tells you where that split happens.
 
 ## Address classes
 
 | Class | First octet | Default mask | CIDR | Purpose |
 |---|---|---|---|---|
-| A | 1 – 126 | 255.0.0.0 | /8 | Very large networks |
-| B | 128 – 191 | 255.255.0.0 | /16 | Medium networks |
-| C | 192 – 223 | 255.255.255.0 | /24 | Small networks |
-| D | 224 – 239 | — | — | **Multicast** |
-| E | 240 – 255 | — | — | **Experimental / reserved** |
+| A | 1 - 126 | 255.0.0.0 | /8 | very large networks |
+| B | 128 - 191 | 255.255.0.0 | /16 | medium networks |
+| C | 192 - 223 | 255.255.255.0 | /24 | small networks |
+| D | 224 - 239 | - | - | multicast |
+| E | 240 - 255 | - | - | experimental / reserved |
 
-Two notes on the edges:
+Two things worth noting:
 
-- **127.x.x.x is loopback**, not a usable class A network. That is why class A stops at 126.
-- Classes D and E have **no subnet mask** — they are not divided into networks and hosts, so writing `255.255.255.255` as "the class D mask" is incorrect. `255.255.255.255` is the limited-broadcast address.
-
----
+- 127.x.x.x is loopback, not really a usable class A network, that is why class A stops at 126 instead of 127.
+- Classes D and E do not have a subnet mask, they are not split into network/host, so 255.255.255.255 is not "the class D mask" - it is the limited broadcast address.
 
 ## Subnet masks
 
-The mask marks which bits are network and which are host. A `1` bit is network, a `0` bit is host.
+A 1 bit in the mask means network, a 0 bit means host.
 
 ```
 255.0.0.0        = 11111111.00000000.00000000.00000000  = /8   (Class A)
@@ -49,9 +43,7 @@ The mask marks which bits are network and which are host. A `1` bit is network, 
 255.255.240.0    = 11111111.11111111.11110000.00000000  = /20
 ```
 
-CIDR notation (`/20`) is just the count of leading `1` bits.
-
----
+CIDR notation (/20) is just counting the leading 1 bits.
 
 ## Counting hosts
 
@@ -61,10 +53,10 @@ total addresses   = 2 ^ host bits
 usable addresses  = 2 ^ host bits - 2
 ```
 
-The `-2` removes two addresses that can never be assigned to a device:
+The -2 is because two addresses in every subnet can never actually be given to a device:
 
-- the **network address** (all host bits `0`)
-- the **broadcast address** (all host bits `1`)
+- the network address (all host bits 0)
+- the broadcast address (all host bits 1)
 
 | CIDR | Mask | Host bits | Total | Usable |
 |---|---|---|---|---|
@@ -79,16 +71,14 @@ The `-2` removes two addresses that can never be assigned to a device:
 | /30 | 255.255.255.252 | 2 | 4 | 2 |
 | /32 | 255.255.255.255 | 0 | 1 | 1 (single host) |
 
----
-
-## Worked example 1 — `197.23.45.10 / 255.255.255.0`
+## Worked example 1 - 197.23.45.10 / 255.255.255.0
 
 ```
 IP    : 197.23.45.10
 Mask  : 255.255.255.0   (/24)
 ```
 
-First octet is 197, so this is **Class C**.
+First octet is 197, so this is class C.
 
 ```
 Network bits = 24, host bits = 8
@@ -101,7 +91,7 @@ Broadcast address : 197.23.45.255
 Usable hosts = 2^8 - 2 = 254
 ```
 
-The network address is found by ANDing the IP with the mask:
+Find the network address by ANDing the IP with the mask:
 
 ```
 197.23.45.10   = 11000101.00010111.00101101.00001010
@@ -109,16 +99,14 @@ The network address is found by ANDing the IP with the mask:
 AND            = 11000101.00010111.00101101.00000000  = 197.23.45.0
 ```
 
----
-
-## Worked example 2 — `120.27.1.0 / 8`
+## Worked example 2 - 120.27.1.0 / 8
 
 ```
 IP    : 120.27.1.0
 Mask  : 255.0.0.0   (/8)
 ```
 
-First octet is 120, so this is **Class A**.
+First octet is 120, so this is class A.
 
 ```
 Network bits = 8, host bits = 24
@@ -131,11 +119,9 @@ Broadcast address : 120.255.255.255
 Usable hosts = 2^24 - 2 = 16,777,214
 ```
 
-Note that with a /8, only the **first** octet is fixed — `120.27.1.0` and `120.99.250.7` are on the same network.
+With a /8, only the first octet is fixed, so 120.27.1.0 and 120.99.250.7 are actually on the same network.
 
----
-
-## Worked example 3 — the interface on this machine
+## Worked example 3 - the interface on this machine
 
 ```
 $ ip addr show eth0
@@ -147,7 +133,7 @@ IP    : 172.21.62.236
 Mask  : /20 = 255.255.240.0
 ```
 
-The interesting octet is the third, because /20 splits it (16 bits + 4 bits):
+The interesting octet here is the third one, since /20 splits it into 16 bits + 4 bits:
 
 ```
 Third octet 62  = 00111110
@@ -160,39 +146,33 @@ Usable range      : 172.21.48.1  -  172.21.63.254
 Usable hosts      : 2^12 - 2 = 4094
 ```
 
-This matches the real output exactly — `ip route` showed the connected route as `172.21.48.0/20`, and `ip addr` reported `brd 172.21.63.255`.
-
----
+This matches the real output from earlier - ip route showed the connected route as 172.21.48.0/20, and ip addr reported brd 172.21.63.255.
 
 ## Private IP ranges (RFC 1918)
 
-Not routable on the public internet; reused freely inside private networks and translated by NAT.
+Not routable on the public internet, reused freely inside private networks and translated by NAT.
 
 | Class | Range | CIDR |
 |---|---|---|
-| A | 10.0.0.0 – 10.255.255.255 | 10.0.0.0/8 |
-| B | 172.16.0.0 – 172.31.255.255 | 172.16.0.0/12 |
-| C | 192.168.0.0 – 192.168.255.255 | 192.168.0.0/16 |
+| A | 10.0.0.0 - 10.255.255.255 | 10.0.0.0/8 |
+| B | 172.16.0.0 - 172.31.255.255 | 172.16.0.0/12 |
+| C | 192.168.0.0 - 192.168.255.255 | 192.168.0.0/16 |
 
-The address on this machine, `172.21.62.236`, falls inside `172.16.0.0/12` — a private address, as expected for a virtualised interface.
-
----
+The address on this machine, 172.21.62.236, falls inside 172.16.0.0/12, so it is a private address, which makes sense for a virtualised interface.
 
 ## Special addresses
 
 | Address | Meaning |
 |---|---|
-| `0.0.0.0` | "This host" / bind to all interfaces |
-| `127.0.0.1` | Loopback — this machine |
-| `127.0.0.0/8` | The entire loopback range |
-| `169.254.0.0/16` | APIPA link-local — assigned when DHCP fails |
-| `255.255.255.255` | Limited broadcast |
-| `x.x.x.0` (in a /24) | Network address — not assignable |
-| `x.x.x.255` (in a /24) | Broadcast address — not assignable |
+| `0.0.0.0` | "this host" / bind to all interfaces |
+| `127.0.0.1` | loopback, this machine |
+| `127.0.0.0/8` | the whole loopback range |
+| `169.254.0.0/16` | APIPA link-local, assigned when DHCP fails |
+| `255.255.255.255` | limited broadcast |
+| `x.x.x.0` (in a /24) | network address, not assignable |
+| `x.x.x.255` (in a /24) | broadcast address, not assignable |
 
-Seeing a `169.254.x.x` address is a strong signal that **DHCP failed** — the host gave up and self-assigned.
-
----
+Seeing a 169.254.x.x address usually means DHCP failed and the host just self-assigned one.
 
 ## Quick binary reference
 
@@ -204,4 +184,4 @@ Seeing a `169.254.x.x` address is a strong signal that **DHCP failed** — the h
 | 224 | 11100000 | 254 | 11111110 |
 | | | 255 | 11111111 |
 
-Octet bit values: `128 64 32 16 8 4 2 1`.
+Octet bit values: 128 64 32 16 8 4 2 1.

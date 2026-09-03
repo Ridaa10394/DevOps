@@ -1,6 +1,3 @@
-# Task 1 equivalent expressed as Compose.
-# The manual `docker network create` / `docker run` commands are in README.md;
-# this file shows the same topology declaratively.
 services:
   frontend:
     image: nginx:alpine
@@ -13,7 +10,6 @@ services:
     container_name: backend
     command: sleep infinity
     networks:
-      # backend deliberately sits on TWO networks
       - frontend-net
       - backend-net
 
@@ -31,6 +27,5 @@ networks:
     driver: bridge
   backend-net:
     driver: bridge
-  # third network, created but intentionally unused by the frontend
   isolated-net:
     driver: bridge

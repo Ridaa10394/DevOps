@@ -1,35 +1,27 @@
-# Session 3 — Shell Scripting
+# Session 3 - Shell Scripting
 
-**Name:** Ridaa Mirza
-**Enrollment No:** 24BCS10394
+Name: Ridaa Mirza
+Enrollment No: 24BCS10394
 
-**Script:** [`sysinfo.sh`](sysinfo.sh)
-**Raw captured output:** [`run-output.txt`](run-output.txt)
+Script: [sysinfo.sh](sysinfo.sh)
+Raw output from running it: [run-output.txt](run-output.txt)
 
-Executed on **Ubuntu 24.04.1 LTS**.
+Ran on Ubuntu 24.04.1 LTS.
 
----
+## Task - System information script
 
-## Task — System Information Script
+What it needs to do and where I did it in sysinfo.sh:
 
-### Requirements checklist
-
-| Requirement | Where it is met in `sysinfo.sh` |
-|---|---|
-| Prints the current date | `current_date=$(date)` then `echo` |
-| Prints the hostname | `host_name=$(hostname)` |
-| Prints the username | `user_name=$(whoami)` |
-| Prints the disk usage | `df -h` |
-| Prints the running processes | `ps` |
-| Uses variables to store and use data | `current_date`, `host_name`, `user_name`, `report_dir`, `process_file`, `name`, `roll_no`, `comment` |
-| Takes user input using `read -p` | three `read -p` prompts |
-| Creates a directory using `mkdir` | `mkdir -p "$report_dir"` |
-| Creates a file using `touch` | `touch "$process_file"` |
-| Stores processes in the file using `>` | `ps -ef > "$process_file"` |
-
-All ten requirements are covered.
-
----
+- print the current date -> `current_date=$(date)` then echo
+- print the hostname -> `host_name=$(hostname)`
+- print the username -> `user_name=$(whoami)`
+- print disk usage -> `df -h`
+- print running processes -> `ps`
+- use variables -> current_date, host_name, user_name, report_dir, process_file, name, roll_no, comment
+- take user input with `read -p` -> three read -p prompts
+- create a directory with mkdir -> `mkdir -p "$report_dir"`
+- create a file with touch -> `touch "$process_file"`
+- store processes in the file with `>` -> `ps -ef > "$process_file"`
 
 ## How to run
 
@@ -38,13 +30,9 @@ chmod +x sysinfo.sh
 ./sysinfo.sh
 ```
 
-The script prompts for three values (name, roll number, comment), then writes a report directory containing `process.log`.
+It asks for your name, roll number and a comment, then writes a report folder containing process.log.
 
----
-
-## Command outputs
-
-### Full script run
+## Output from running it
 
 ```
 ==============================================
@@ -91,7 +79,7 @@ Report location   : /home/ridaa/sysinfo-run/sysinfo_report
 ==============================================
 ```
 
-### Verifying `mkdir` and `touch` worked
+Checking that mkdir and touch actually worked:
 
 ```
 $ ls -l /home/ridaa/sysinfo-run
@@ -104,9 +92,9 @@ total 8
 -rw-r--r-- 1 ridaa ridaa 6961 Sep  2 17:17 process.log
 ```
 
-The directory `sysinfo_report/` and the file `process.log` were both created by the script.
+Both sysinfo_report/ and process.log got created by the script, as expected.
 
-### Verifying the `>` redirection captured the process list
+Checking that the `>` redirection actually caught the process list:
 
 ```
 $ head -15 sysinfo_report/process.log
@@ -125,36 +113,32 @@ $ wc -l sysinfo_report/process.log
 93 sysinfo_report/process.log
 ```
 
-93 process lines were written into the file by `ps -ef > "$process_file"`.
+93 lines got written into the file by `ps -ef > "$process_file"`.
 
----
-
-## Commands used, and what each one does
+## Commands used and what they do here
 
 | Command | Purpose in this script |
 |---|---|
-| `date` | Current date and time |
-| `hostname` | Machine name |
-| `whoami` | Current effective username |
-| `df -h` | Disk usage, `-h` for human-readable sizes |
-| `ps` | Processes in the current shell |
-| `ps -ef` | **Every** process, full format — written to the log |
-| `read -p` | Prompt for and read user input |
-| `mkdir -p` | Create directory, `-p` avoids an error if it exists |
-| `touch` | Create the empty log file |
-| `>` | Redirect stdout into the file, overwriting |
-| `$(...)` | Command substitution — capture output into a variable |
-| `echo` | Print text and variable values |
+| `date` | current date and time |
+| `hostname` | machine name |
+| `whoami` | current effective username |
+| `df -h` | disk usage, -h for human readable sizes |
+| `ps` | processes in the current shell |
+| `ps -ef` | every process, full format, written to the log |
+| `read -p` | prompt for and read user input |
+| `mkdir -p` | create directory, -p avoids an error if it already exists |
+| `touch` | create the empty log file |
+| `>` | redirect stdout into the file, overwriting |
+| `$(...)` | command substitution, capture output into a variable |
+| `echo` | print text and variable values |
 
-### A note on command substitution
-
-Storing command output in a variable requires `$(...)`:
+One thing that tripped me up while writing this: storing a command's output needs `$(...)`.
 
 ```bash
-current_date=$(date)     # correct - runs date, stores the result
+current_date=$(date)     # correct, runs date and stores the result
 echo $current_date
 
-hostname_wrong=$hostname # wrong - $hostname is an undefined variable, prints nothing
+hostname_wrong=$hostname # wrong, $hostname is just an undefined variable, prints nothing
 ```
 
-Referencing `$hostname` or `$whoami` directly prints an empty string, because those are command *names*, not shell variables. They must be invoked with `$(hostname)` and `$(whoami)`.
+Just writing `$hostname` or `$whoami` prints nothing, because those are command names, not variables. You have to actually call them with `$(hostname)` and `$(whoami)`.

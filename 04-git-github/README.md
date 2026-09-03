@@ -1,29 +1,23 @@
-# Session 5 — Git / GitHub
+# Session 5 - Git / GitHub
 
-**Name:** Ridaa Mirza
-**Enrollment No:** 24BCS10394
+Name: Ridaa Mirza
+Enrollment No: 24BCS10394
 
-Every command below was executed for real. Full raw transcript: [`commands-output.txt`](commands-output.txt).
+Every command below was actually run, not made up. Full transcript: [commands-output.txt](commands-output.txt).
 
----
-
-## Task 1 — `git commit -a -m` vs `git commit -m`
-
-### The difference
+## Task 1 - git commit -a -m vs git commit -m
 
 | | `git commit -m "msg"` | `git commit -a -m "msg"` |
 |---|---|---|
-| Commits staged changes | Yes | Yes |
-| Auto-stages **modified tracked** files | No | **Yes** |
-| Auto-stages **deleted tracked** files | No | **Yes** |
-| Auto-stages **new untracked** files | No | **No** |
-| Needs `git add` first | Yes | Only for new files |
+| Commits staged changes | yes | yes |
+| Auto-stages modified tracked files | no | yes |
+| Auto-stages deleted tracked files | no | yes |
+| Auto-stages new untracked files | no | no |
+| Needs git add first | yes | only for new files |
 
-`-a` is shorthand for "run `git add -u` first". The critical limitation: **it only touches files git already knows about.** A brand-new file is invisible to `-a` and still requires an explicit `git add`.
+-a is basically shorthand for "run git add -u first". The important limitation: it only touches files git already knows about. A brand new file is invisible to -a and still needs an explicit git add.
 
-### Demonstration
-
-Starting state — one tracked file modified, one new untracked file:
+Starting point - one tracked file modified, one new untracked file:
 
 ```
 $ git status --short
@@ -31,7 +25,7 @@ $ git status --short
 ?? untracked.txt
 ```
 
-**Attempt 1 — plain `git commit -m` with nothing staged:**
+Attempt 1, plain git commit -m with nothing staged:
 
 ```
 $ git commit -m "try without -a"
@@ -48,9 +42,9 @@ Untracked files:
 no changes added to commit (use "git add" and/or "git commit -a")
 ```
 
-Nothing was committed. The modification was never staged, so git had nothing to record.
+Nothing got committed since the modification was never staged.
 
-**Attempt 2 — `git commit -a -m`:**
+Attempt 2, git commit -a -m:
 
 ```
 $ git commit -a -m "Update app.txt using commit -a -m"
@@ -58,26 +52,22 @@ $ git commit -a -m "Update app.txt using commit -a -m"
  1 file changed, 1 insertion(+), 1 deletion(-)
 ```
 
-This succeeded — `-a` staged the modified tracked file automatically.
+That worked, -a staged the modified tracked file on its own.
 
-**But checking what was left behind:**
+But checking what got left behind:
 
 ```
 $ git status --short
 ?? untracked.txt
 ```
 
-`untracked.txt` is **still uncommitted**. This is the observable difference, and the reason `-a` is not a safe blanket substitute for `git add .` — it silently skips new files.
+untracked.txt is still sitting there uncommitted. That's the actual difference, and why you can't just assume -a is the same as git add . - it quietly skips anything new.
 
-### Conclusion
+So basically: use -a as a shortcut when you're only editing files that already exist in the repo. The moment you add new files, you still need git add for those. Assuming -a caught everything is a good way to push a build missing a file.
 
-Use `-a` as a convenience when you are only editing files that are already tracked. Any time you have created new files, you still need `git add`. Committing with `-a` and assuming everything got in is a common way to push a broken build.
+## Task 2 - Git cherry-pick
 
----
-
-## Task 2 — Git Cherry-Pick
-
-### Step 1 — Create commits on `main`
+Step 1, some commits on main:
 
 ```
 $ git log --oneline
@@ -88,16 +78,16 @@ de7cce5 main: commit number 4
 3093bd9 Initial commit: add app.txt
 ```
 
-Five commits on `main`.
+Five commits on main.
 
-### Step 2 — Create a new branch and commit to it
+Step 2, new branch with its own commits:
 
 ```
 $ git checkout -b feature
 Switched to a new branch 'feature'
 ```
 
-Three commits were made on `feature`, each adding a file:
+Three commits on feature, each adding a file:
 
 ```
 $ git log --oneline
@@ -111,18 +101,18 @@ de7cce5 main: commit number 4
 3093bd9 Initial commit: add app.txt
 ```
 
-### Step 3 — Identify the specific commit with `git log`
+Step 3, find the one I actually want:
 
 ```
 $ git log --oneline --grep=bugfix
 58158ad feature: add bugfix.txt (THIS ONE WILL BE CHERRY-PICKED)
 ```
 
-Target commit: `58158add711db70938ec3a178537e167486d9311`
+Target commit: 58158add711db70938ec3a178537e167486d9311
 
-The goal is to bring **only** this bugfix to `main`, leaving `alpha.txt` and `beta.txt` behind on the feature branch — the exact situation cherry-pick exists for.
+The idea is to bring only this bugfix over to main, and leave alpha.txt and beta.txt behind on feature - which is exactly the situation cherry-pick is for.
 
-### Step 4 — Cherry-pick into `main`
+Step 4, cherry-pick it onto main:
 
 ```
 $ git checkout main
@@ -138,7 +128,7 @@ $ git cherry-pick 58158add711db70938ec3a178537e167486d9311
  create mode 100644 bugfix.txt
 ```
 
-### Step 5 — Verify the change is on `main`
+Step 5, confirm it landed on main:
 
 ```
 $ ls    # after cherry-pick
@@ -149,7 +139,7 @@ $ cat bugfix.txt
 BUGFIX applied
 ```
 
-`bugfix.txt` is now on `main`. `alpha.txt` and `beta.txt` are **not** — only the selected commit came across.
+bugfix.txt is now on main. alpha.txt and beta.txt are not - only the one commit I picked came across.
 
 ```
 $ git log --oneline
@@ -161,7 +151,7 @@ de7cce5 main: commit number 4
 3093bd9 Initial commit: add app.txt
 ```
 
-### Step 6 — The branch graph
+Step 6, the branch graph, this is the interesting part:
 
 ```
 $ git log --oneline --all --graph
@@ -177,32 +167,30 @@ $ git log --oneline --all --graph
 * 3093bd9 Initial commit: add app.txt
 ```
 
-This graph is the most instructive part of the exercise. The same commit message appears **twice**, on two diverged branches, with **two different hashes**:
+Same commit message shows up twice, on two different branches, with two different hashes:
 
-- `58158ad` — the original, still on `feature`
-- `efd1e37` — the copy, now on `main`
+- 58158ad, the original, still sitting on feature
+- efd1e37, the copy, now on main
 
-### What I understood
+So cherry-pick copies a commit, it doesn't move it. Git takes the diff from the commit you picked and replays it on top of wherever you currently are, then makes a brand new commit object with its own hash - because a commit's hash depends on its parent too, and the parent is different now.
 
-**Cherry-pick copies a commit, it does not move it.** Git replays the *diff* of the chosen commit on top of the current branch and creates a **new commit object** with a new hash — because the parent commit differs, and a commit's hash is derived from its content plus its parent.
+Some things that follow from that:
 
-Practical consequences:
+- the original commit is untouched on the source branch, cherry-pick doesn't delete anything
+- if you later merge feature into main, git might show the change as already applied, or you could get conflicts if the copy was edited afterward - cherry-picking and then merging the same work is a classic way to confuse yourself
+- if it doesn't apply cleanly, cherry-pick stops and makes you resolve conflicts, then you run git cherry-pick --continue (or --abort to bail out)
 
-- The original commit stays on the source branch. Cherry-picking is non-destructive.
-- Later merging `feature` into `main` may show the change as already applied, and can produce conflicts if the copy was modified. Cherry-picking then merging the same work is a common source of confusion.
-- If the change does not apply cleanly, cherry-pick stops and asks you to resolve conflicts, then continue with `git cherry-pick --continue` (or abandon with `--abort`).
+When you'd actually use this: pulling one urgent fix out of a dev branch straight into production, without dragging in whatever else is half-finished on that branch - which is basically what this exercise was simulating.
 
-**When to use it:** pulling a single urgent hotfix from a development branch into production without dragging along unfinished features — precisely what this exercise modelled.
-
-### Useful cherry-pick options
+Some other cherry-pick options worth knowing:
 
 | Command | Purpose |
 |---|---|
-| `git cherry-pick <hash>` | Copy one commit |
-| `git cherry-pick <h1> <h2>` | Copy several specific commits |
-| `git cherry-pick A..B` | Copy a range (excluding A) |
-| `git cherry-pick A^..B` | Copy a range (including A) |
-| `git cherry-pick -n <hash>` | Apply changes but do **not** commit |
-| `git cherry-pick -x <hash>` | Record the source hash in the message |
-| `git cherry-pick --continue` | Resume after resolving conflicts |
-| `git cherry-pick --abort` | Cancel and restore the previous state |
+| `git cherry-pick <hash>` | copy one commit |
+| `git cherry-pick <h1> <h2>` | copy several specific commits |
+| `git cherry-pick A..B` | copy a range (excluding A) |
+| `git cherry-pick A^..B` | copy a range (including A) |
+| `git cherry-pick -n <hash>` | apply the changes but don't commit |
+| `git cherry-pick -x <hash>` | record the source hash in the message |
+| `git cherry-pick --continue` | resume after resolving conflicts |
+| `git cherry-pick --abort` | cancel and go back to before |

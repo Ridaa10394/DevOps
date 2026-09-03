@@ -1,0 +1,371 @@
+===== nodejs-app build =====
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  5.632kB
+Step 1/7 : FROM node:20-alpine
+20-alpine: Pulling from library/node
+fff4e2c1b189: Pulling fs layer
+6a0ac1617861: Pulling fs layer
+4feea04c1543: Pulling fs layer
+b2cbbfe903b0: Pulling fs layer
+14f8540414db: Download complete
+0f92261bcd1c: Download complete
+fff4e2c1b189: Download complete
+6a0ac1617861: Download complete
+b2cbbfe903b0: Download complete
+6a0ac1617861: Pull complete
+4feea04c1543: Download complete
+b2cbbfe903b0: Pull complete
+4feea04c1543: Pull complete
+fff4e2c1b189: Pull complete
+Digest: sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+Status: Downloaded newer image for node:20-alpine
+ ---> fb4cd12c85ee
+Step 2/7 : WORKDIR /app
+ ---> Running in 89d5255794cb
+ ---> Removed intermediate container 89d5255794cb
+ ---> 28bcc2fe3802
+Step 3/7 : COPY package.json ./
+ ---> ffb7a8d5d6dd
+Step 4/7 : RUN npm install --omit=dev
+ ---> Running in de4208a67a2c
+
+added 68 packages, and audited 69 packages in 5s
+
+15 packages are looking for funding
+  run `npm fund` for details
+
+3 moderate severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+[91mnpm notice
+npm notice New major version of npm available! 10.8.2 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+[0m ---> Removed intermediate container de4208a67a2c
+ ---> 5b3719528590
+Step 5/7 : COPY server.js ./
+ ---> 33ada784bf5a
+Step 6/7 : EXPOSE 3000
+ ---> Running in d680c221f0e2
+ ---> Removed intermediate container d680c221f0e2
+ ---> 058e0239fc3a
+Step 7/7 : CMD ["node", "server.js"]
+ ---> Running in 056ff822d1d7
+ ---> Removed intermediate container 056ff822d1d7
+ ---> 0cacb43b1f56
+Successfully built 0cacb43b1f56
+Successfully tagged hw-nodejs:latest
+===== python-app build =====
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  6.656kB
+Step 1/7 : FROM python:3.12-slim
+3.12-slim: Pulling from library/python
+failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://production.cloudfront.docker.com/registry-v2/docker/registry/v2/blobs/sha256/ec/ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad/data?Expires=1788441153&Signature=UgAKPWoxKxz7aTq2dI3AGwxp8TbQBdcATQUgpyZszI92KvRsq-0ixOo9dT5Uo0HHlpxdp9FwFniAuJJryLY4d8ilFpMmkkg75m4m82k6Wh35qcWxvGIkb9ye9IDi6WY6o2HgK1ADRgoL6iDMc775RxMk27oRYIS2mJGjTF5fqeCApsKwcNXpCZzi~cpLBo3~nKbi9PqDEuvgeS3CC~Fu7dVLlhbJJ0qo0e8aN6oY9JB7FIza~f-lAfc5NS1p3GhkoN39QeKEs-xF7WjCxsivhpdO2H8mgxX1c0~oH1q9Ys2HeKdLKl8HN~0wF9EtStUlJEjdNoLwD5SrEiEMIrCf5w__&Key-Pair-Id=K2C9XPB6FLAKUF": dial tcp [2600:9000:237b:1000:9:4855:aac0:93a1]:443: connect: network is unreachable
+===== java-app build =====
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  4.608kB
+Step 1/9 : FROM eclipse-temurin:21-jdk AS build
+21-jdk: Pulling from library/eclipse-temurin
+32c4ecfebe88: Pulling fs layer
+3deee1eac5f9: Pulling fs layer
+06e9d71331fb: Pulling fs layer
+f0b5b340c424: Pulling fs layer
+f3db1cd94078: Pulling fs layer
+0886d3363565: Pulling fs layer
+32c4ecfebe88: Download complete
+f3db1cd94078: Download complete
+0886d3363565: Download complete
+4c1c73196644: Download complete
+a620df6a72bf: Download complete
+f0b5b340c424: Download complete
+06e9d71331fb: Download complete
+06e9d71331fb: Pull complete
+f3db1cd94078: Pull complete
+f0b5b340c424: Pull complete
+3deee1eac5f9: Download complete
+3deee1eac5f9: Pull complete
+32c4ecfebe88: Pull complete
+0886d3363565: Pull complete
+Digest: sha256:85f00967bcc624fc19fa9c2cf124ea426a5363898e267141726f31f358c2e14b
+Status: Downloaded newer image for eclipse-temurin:21-jdk
+ ---> 85f00967bcc6
+Step 2/9 : WORKDIR /src
+ ---> Running in 76c77f96efc1
+ ---> Removed intermediate container 76c77f96efc1
+ ---> c8a340e6bd3f
+Step 3/9 : COPY HelloWorld.java ./
+ ---> 4c20959ac521
+Step 4/9 : RUN javac HelloWorld.java
+ ---> Running in c7665af3baa1
+ ---> Removed intermediate container c7665af3baa1
+ ---> 57ce715c1bea
+Step 5/9 : FROM eclipse-temurin:21-jre
+21-jre: Pulling from library/eclipse-temurin
+f6795b7189ec: Pulling fs layer
+74d4de9c947f: Pulling fs layer
+85685ec585ba: Pulling fs layer
+369da5fd35f2: Pulling fs layer
+f6795b7189ec: Download complete
+74d4de9c947f: Download complete
+932bd8ee8b53: Download complete
+062e17716850: Download complete
+369da5fd35f2: Download complete
+85685ec585ba: Download complete
+85685ec585ba: Pull complete
+f6795b7189ec: Pull complete
+74d4de9c947f: Pull complete
+369da5fd35f2: Pull complete
+Digest: sha256:7a65df4b22d2de92d4e04056e884f3b9122d70b21e2847fd66084278bd0ce037
+Status: Downloaded newer image for eclipse-temurin:21-jre
+ ---> 7a65df4b22d2
+Step 6/9 : WORKDIR /app
+ ---> Running in 66420f9db577
+ ---> Removed intermediate container 66420f9db577
+ ---> ac8d0bd1e076
+Step 7/9 : COPY --from=build /src/HelloWorld.class ./
+ ---> 4b8044a74b30
+Step 8/9 : EXPOSE 8000
+ ---> Running in 80ab3bd76219
+ ---> Removed intermediate container 80ab3bd76219
+ ---> 73aad51d8e81
+Step 9/9 : CMD ["java", "HelloWorld"]
+ ---> Running in ebaa0ae79835
+ ---> Removed intermediate container ebaa0ae79835
+ ---> 0c3a6a1dbb93
+Successfully built 0c3a6a1dbb93
+Successfully tagged hw-java:latest
+===== Apache-app build =====
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  3.072kB
+Step 1/3 : FROM httpd:2.4-alpine
+2.4-alpine: Pulling from library/httpd
+ec6419fed67b: Pulling fs layer
+e5ad846ecbb8: Pulling fs layer
+55afa1ecc21d: Pulling fs layer
+71af8d887193: Pulling fs layer
+f0c9ed0cf49e: Pulling fs layer
+5e8b95221646: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+b4e124edb500: Download complete
+d54f80382ece: Download complete
+f0c9ed0cf49e: Download complete
+4f4fb700ef54: Download complete
+55afa1ecc21d: Download complete
+ec6419fed67b: Download complete
+f0c9ed0cf49e: Pull complete
+55afa1ecc21d: Pull complete
+e5ad846ecbb8: Download complete
+5e8b95221646: Download complete
+e5ad846ecbb8: Pull complete
+4f4fb700ef54: Pull complete
+71af8d887193: Download complete
+71af8d887193: Pull complete
+ec6419fed67b: Pull complete
+5e8b95221646: Pull complete
+Digest: sha256:1b766f17b84026429b7cb243317b142921b24432336e798bc881c43f45ed9567
+Status: Downloaded newer image for httpd:2.4-alpine
+ ---> 1b766f17b840
+Step 2/3 : COPY index.html /usr/local/apache2/htdocs/index.html
+ ---> fb63add570b4
+Step 3/3 : EXPOSE 80
+ ---> Running in 108c199bd480
+ ---> Removed intermediate container 108c199bd480
+ ---> 7a963b25abfb
+Successfully built 7a963b25abfb
+Successfully tagged hw-apache:latest
+===== React-app build =====
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  8.704kB
+Step 1/9 : FROM node:20-alpine AS build
+ ---> fb4cd12c85ee
+Step 2/9 : WORKDIR /app
+ ---> Using cache
+ ---> 28bcc2fe3802
+Step 3/9 : COPY package.json ./
+ ---> 136d41c67594
+Step 4/9 : RUN npm install
+ ---> Running in aca2db20c74e
+
+added 62 packages, and audited 63 packages in 13s
+
+7 packages are looking for funding
+  run `npm fund` for details
+
+2 vulnerabilities (1 moderate, 1 high)
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+[91mnpm notice
+npm notice New major version of npm available! 10.8.2 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+[0m ---> Removed intermediate container aca2db20c74e
+ ---> 78fcf6b49446
+Step 5/9 : COPY . .
+ ---> c238348dd04f
+Step 6/9 : RUN npm run build
+ ---> Running in 34e0e64efcc1
+
+> react-hello-app@1.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 30 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                  0.33 kB │ gzip:  0.24 kB
+dist/assets/index-DLbOSL8z.js  142.85 kB │ gzip: 45.91 kB
+✓ built in 1.04s
+ ---> Removed intermediate container 34e0e64efcc1
+ ---> c672e947366f
+Step 7/9 : FROM nginx:1.27-alpine
+1.27-alpine: Pulling from library/nginx
+39c2ddfd6010: Pulling fs layer
+d7e507024086: Pulling fs layer
+81bd8ed7ec67: Pulling fs layer
+f18232174bc9: Pulling fs layer
+197eb75867ef: Pulling fs layer
+61ca4f733c80: Pulling fs layer
+34a64644b756: Pulling fs layer
+b464cfdf2a63: Pulling fs layer
+34a64644b756: Download complete
+81bd8ed7ec67: Download complete
+d7e507024086: Download complete
+197eb75867ef: Download complete
+b464cfdf2a63: Download complete
+2a84448aca9c: Download complete
+39c2ddfd6010: Download complete
+61ca4f733c80: Download complete
+9261b9aff737: Download complete
+f18232174bc9: Download complete
+f18232174bc9: Pull complete
+d7e507024086: Pull complete
+b464cfdf2a63: Pull complete
+61ca4f733c80: Pull complete
+34a64644b756: Pull complete
+81bd8ed7ec67: Pull complete
+197eb75867ef: Pull complete
+39c2ddfd6010: Pull complete
+Digest: sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+Status: Downloaded newer image for nginx:1.27-alpine
+ ---> 65645c7bb6a0
+Step 8/9 : COPY --from=build /app/dist /usr/share/nginx/html
+ ---> 7c1a7fff6e02
+Step 9/9 : EXPOSE 80
+ ---> Running in 0c814ae7e6ed
+ ---> Removed intermediate container 0c814ae7e6ed
+ ---> 47fc42ff2165
+Successfully built 47fc42ff2165
+Successfully tagged hw-react:latest
+===== nginx-app build =====
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  3.072kB
+Step 1/3 : FROM nginx:1.27-alpine
+ ---> 65645c7bb6a0
+Step 2/3 : COPY index.html /usr/share/nginx/html/index.html
+ ---> 9bc950d9d811
+Step 3/3 : EXPOSE 80
+ ---> Running in 7ea258eb034b
+ ---> Removed intermediate container 7ea258eb034b
+ ---> f0a222faf1e2
+Successfully built f0a222faf1e2
+Successfully tagged hw-nginx:latest
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  6.656kB
+Step 1/7 : FROM python:3.12-slim
+3.12-slim: Pulling from library/python
+56235e424563: Pulling fs layer
+dbd0b7849e6c: Pulling fs layer
+1560cfed01dc: Pulling fs layer
+6310eb16bf42: Pulling fs layer
+da194ce1df82: Download complete
+56235e424563: Download complete
+86ab2e2dee57: Download complete
+dbd0b7849e6c: Download complete
+1560cfed01dc: Download complete
+6310eb16bf42: Download complete
+6310eb16bf42: Pull complete
+dbd0b7849e6c: Pull complete
+1560cfed01dc: Pull complete
+56235e424563: Pull complete
+Digest: sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea
+Status: Downloaded newer image for python:3.12-slim
+ ---> 78387bc3881b
+Step 2/7 : WORKDIR /app
+ ---> Running in 593f3df2c1fa
+ ---> Removed intermediate container 593f3df2c1fa
+ ---> 97191a684bd8
+Step 3/7 : COPY requirements.txt ./
+ ---> bb2028d62f0d
+Step 4/7 : RUN pip install --no-cache-dir -r requirements.txt
+ ---> Running in 1265a9299af1
+Collecting Flask==3.0.3 (from -r requirements.txt (line 1))
+  Downloading flask-3.0.3-py3-none-any.whl.metadata (3.2 kB)
+Collecting Werkzeug>=3.0.0 (from Flask==3.0.3->-r requirements.txt (line 1))
+  Downloading werkzeug-3.1.8-py3-none-any.whl.metadata (4.0 kB)
+Collecting Jinja2>=3.1.2 (from Flask==3.0.3->-r requirements.txt (line 1))
+  Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting itsdangerous>=2.1.2 (from Flask==3.0.3->-r requirements.txt (line 1))
+  Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)
+Collecting click>=8.1.3 (from Flask==3.0.3->-r requirements.txt (line 1))
+  Downloading click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+Collecting blinker>=1.6.2 (from Flask==3.0.3->-r requirements.txt (line 1))
+  Downloading blinker-1.9.0-py3-none-any.whl.metadata (1.6 kB)
+Collecting MarkupSafe>=2.0 (from Jinja2>=3.1.2->Flask==3.0.3->-r requirements.txt (line 1))
+  Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+Downloading flask-3.0.3-py3-none-any.whl (101 kB)
+Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB)
+Downloading click-8.5.0-py3-none-any.whl (125 kB)
+Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+Downloading werkzeug-3.1.8-py3-none-any.whl (226 kB)
+Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+Installing collected packages: MarkupSafe, itsdangerous, click, blinker, Werkzeug, Jinja2, Flask
+Successfully installed Flask-3.0.3 Jinja2-3.1.6 MarkupSafe-3.0.3 Werkzeug-3.1.8 blinker-1.9.0 click-8.5.0 itsdangerous-2.2.0
+[91mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+[0m[91m
+[notice] A new release of pip is available: 25.0.1 -> 26.2.1
+[notice] To update, run: pip install --upgrade pip
+[0m ---> Removed intermediate container 1265a9299af1
+ ---> 1fa0567831a1
+Step 5/7 : COPY app.py ./
+ ---> fcc39fc62e6a
+Step 6/7 : EXPOSE 5000
+ ---> Running in a930c05d9449
+ ---> Removed intermediate container a930c05d9449
+ ---> 919eb820d8c5
+Step 7/7 : CMD ["python", "app.py"]
+ ---> Running in 42421417e3de
+ ---> Removed intermediate container 42421417e3de
+ ---> b3aba4d0a5b5
+Successfully built b3aba4d0a5b5
+Successfully tagged hw-python:latest

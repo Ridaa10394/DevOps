@@ -1,0 +1,58 @@
+===== docker pull httpd:2.4 =====
+2.4: Pulling from library/httpd
+8ff6b626bd4b: Pulling fs layer
+af224ce66aeb: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+0be8edeb7b17: Pulling fs layer
+6de3897443b2: Pulling fs layer
+4f4fb700ef54: Already exists
+af224ce66aeb: Download complete
+8ff6b626bd4b: Download complete
+af224ce66aeb: Pull complete
+4f4fb700ef54: Pull complete
+d51ee7b361a1: Download complete
+2a4a80d8f05a: Download complete
+6de3897443b2: Download complete
+0be8edeb7b17: Download complete
+0be8edeb7b17: Pull complete
+8ff6b626bd4b: Pull complete
+6de3897443b2: Pull complete
+Digest: sha256:979c38c2228d28c2edfd45c6e27dcee1c7b4a101a5526721ae8ece454e89e99e
+Status: Downloaded newer image for httpd:2.4
+docker.io/library/httpd:2.4
+
+===== docker run --network host =====
+907c4cac7ae7afb23cc38f9fac0830d020e259b73ccb7b0182c9189c34374ebf
+
+===== docker ps =====
+CONTAINER ID   IMAGE       COMMAND              CREATED         STATUS         PORTS     NAMES
+907c4cac7ae7   httpd:2.4   "httpd-foreground"   5 seconds ago   Up 3 seconds             apache-host
+
+===== curl localhost:80 =====
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>It works! Apache httpd</title>
+</head>
+<body>
+<p>It works!</p>
+</body>
+</html>
+
+HTTP 200
+
+===== docker exec apache-host ip addr show =====
+OCI runtime exec failed: exec failed: unable to start container process: exec: "ip": executable file not found in $PATH
+
+===== ss -tulnp | grep :80 =====
+tcp   LISTEN 0      4096          0.0.0.0:8082       0.0.0.0:*          
+tcp   LISTEN 0      4096          0.0.0.0:8083       0.0.0.0:*          
+tcp   LISTEN 0      4096          0.0.0.0:8080       0.0.0.0:*          
+tcp   LISTEN 0      4096          0.0.0.0:8081       0.0.0.0:*          
+tcp   LISTEN 0      4096          0.0.0.0:8000       0.0.0.0:*          
+tcp   LISTEN 0      4096             [::]:8082          [::]:*          
+tcp   LISTEN 0      4096             [::]:8083          [::]:*          
+tcp   LISTEN 0      4096             [::]:8080          [::]:*          
+tcp   LISTEN 0      4096             [::]:8081          [::]:*          
+tcp   LISTEN 0      4096             [::]:8000          [::]:*          
+tcp   LISTEN 0      511                 *:80               *:*          

@@ -6,10 +6,6 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Minimal Hello World web server using the JDK's built-in HTTP server.
- * No external build tool (Maven/Gradle) required.
- */
 public class HelloWorld {
 
     private static final int PORT = 8000;

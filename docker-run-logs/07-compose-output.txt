@@ -1,0 +1,41 @@
+===== docker compose up -d =====
+ Network 07-docker-network-volume_frontend-net  Creating
+ Network 07-docker-network-volume_frontend-net  Created
+ Network 07-docker-network-volume_backend-net  Creating
+ Network 07-docker-network-volume_backend-net  Created
+ Container frontend  Creating
+ Container backend  Creating
+ Container database  Creating
+ Container frontend  Created
+ Container database  Created
+ Container backend  Created
+ Container frontend  Starting
+ Container database  Starting
+ Container backend  Starting
+ Container frontend  Started
+ Container database  Started
+ Container backend  Started
+
+===== docker compose ps =====
+NAME       IMAGE           COMMAND                  SERVICE    CREATED         STATUS         PORTS
+backend    alpine:latest   "sleep infinity"         backend    4 seconds ago   Up 4 seconds   
+database   mysql:8.0       "docker-entrypoint.s…"   database   4 seconds ago   Up 4 seconds   3306/tcp, 33060/tcp
+frontend   nginx:alpine    "/docker-entrypoint.…"   frontend   4 seconds ago   Up 4 seconds   80/tcp
+
+===== docker compose down =====
+ Container backend  Stopping
+ Container frontend  Stopping
+ Container database  Stopping
+ Container frontend  Stopped
+ Container frontend  Removing
+ Container frontend  Removed
+ Container database  Stopped
+ Container database  Removing
+ Container backend  Stopped
+ Container backend  Removing
+ Container database  Removed
+ Container backend  Removed
+ Network 07-docker-network-volume_backend-net  Removing
+ Network 07-docker-network-volume_frontend-net  Removing
+ Network 07-docker-network-volume_frontend-net  Removed
+ Network 07-docker-network-volume_backend-net  Removed

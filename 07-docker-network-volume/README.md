@@ -1,38 +1,34 @@
-# Session 8 — Docker Networking & Volumes
+# Session 8 - Docker Networking & Volumes
 
-**Name:** Ridaa Mirza
-**Enrollment No:** 24BCS10394
+Name: Ridaa Mirza
+Enrollment No: 24BCS10394
 
-> **Status:** all commands, configuration, and the bind-mount content are prepared. Screenshots still need to be captured — see [Pending](#pending).
+## Task 1 - Docker container networking
 
----
-
-## Task 1 — Docker Container Networking
-
-**Goal:** 3 containers (frontend, backend, database), 3 networks, with the **backend attached to two networks**, then verify connectivity.
+Goal: 3 containers (frontend, backend, database), 3 networks, with the backend attached to two of them, then check connectivity between them.
 
 ### Topology
 
 ```
    frontend-net                      backend-net
-  ┌──────────────┐                 ┌──────────────┐
-  │  frontend    │                 │   database   │
-  │  (nginx)     │                 │   (mysql)    │
-  └──────┬───────┘                 └───────┬──────┘
-         │                                 │
-         └────────┐             ┌──────────┘
-                  │             │
-              ┌───┴─────────────┴───┐
-              │      backend        │   ← on BOTH networks
-              │      (alpine)       │
-              └─────────────────────┘
+  +--------------+                 +--------------+
+  |  frontend    |                 |   database   |
+  |  (nginx)     |                 |   (mysql)    |
+  +------+-------+                 +-------+------+
+         |                                 |
+         +--------+             +----------+
+                  |             |
+              +---+-------------+---+
+              |      backend        |   <- on BOTH networks
+              |      (alpine)       |
+              +---------------------+
 
-   isolated-net  ── created, deliberately unconnected
+   isolated-net  -- created, deliberately not connected to anything
 ```
 
-The backend is the only container on both networks, so it is the only path between frontend and database. The frontend **cannot** reach the database directly — that isolation is the point of the exercise.
+Backend is the only container touching both networks, so it's the only path between frontend and database. Frontend can't reach database directly - that's the whole point of the exercise.
 
-### Step 1 — Create the three networks
+### Step 1 - create the three networks
 
 ```bash
 docker network create frontend-net
@@ -42,66 +38,66 @@ docker network create isolated-net
 docker network ls
 ```
 
-### Step 2 — Create the containers
+### Step 2 - create the containers
 
 ```bash
-# Frontend on frontend-net
+# frontend on frontend-net
 docker run -d --name frontend --network frontend-net nginx:alpine
 
-# Database on backend-net
+# database on backend-net
 docker run -d --name database --network backend-net \
   -e MYSQL_ROOT_PASSWORD=rootpass \
   -e MYSQL_DATABASE=testdb \
   mysql:8.0
 
-# Backend on frontend-net initially
+# backend on frontend-net first
 docker run -d --name backend --network frontend-net alpine:latest sleep infinity
 ```
 
-### Step 3 — Attach the backend to a second network
+### Step 3 - attach backend to the second network
 
-A container can only be given one network with `docker run`. Additional networks are attached afterwards:
+docker run only lets you pick one network up front. Extra ones get attached after the fact:
 
 ```bash
 docker network connect backend-net backend
 ```
 
-Verify it is on two:
+Check it's actually on both:
 
 ```bash
 docker inspect backend -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'
 # expected: backend-net frontend-net
 ```
 
-### Step 4 — Check connectivity
+### Step 4 - check connectivity
 
-Docker's **embedded DNS** resolves container names automatically on user-defined networks, so containers can be reached by name.
+Docker has an embedded DNS that resolves container names automatically as long as they're on a user-defined network together.
 
 ```bash
-# Install ping inside the alpine backend
+# install ping inside the alpine backend
 docker exec backend apk add --no-cache iputils bind-tools
 
-# backend -> frontend  (both on frontend-net)  SHOULD WORK
+# backend -> frontend  (both on frontend-net)  should work
 docker exec backend ping -c 3 frontend
 
-# backend -> database  (both on backend-net)   SHOULD WORK
+# backend -> database  (both on backend-net)   should work
 docker exec backend ping -c 3 database
 
-# frontend -> database (no shared network)     SHOULD FAIL
+# frontend -> database (no shared network)     should fail
 docker exec frontend ping -c 3 database
 # expected: ping: bad address 'database'
 
-# frontend -> backend  (both on frontend-net)  SHOULD WORK
+# frontend -> backend  (both on frontend-net)  should work
 docker exec frontend ping -c 3 backend
 ```
 
-Testing the actual database port from the backend:
+Also checked the actual database port from backend:
 
 ```bash
 docker exec backend nc -zv database 3306
 ```
 
-Inspecting which containers sit on each network:
+And which containers sit on which network:
 
 ```bash
 docker network inspect frontend-net -f '{{range .Containers}}{{.Name}} {{end}}'
@@ -115,16 +111,16 @@ docker network inspect backend-net -f '{{range .Containers}}{{.Name}} {{end}}'
 
 | From | To | Result | Why |
 |---|---|---|---|
-| backend | frontend | Success | Share `frontend-net` |
-| backend | database | Success | Share `backend-net` |
-| frontend | backend | Success | Share `frontend-net` |
-| frontend | database | **Fails — bad address** | No shared network |
+| backend | frontend | success | share frontend-net |
+| backend | database | success | share backend-net |
+| frontend | backend | success | share frontend-net |
+| frontend | database | fails, bad address | no shared network |
 
-The failure is the important observation: name resolution does not even succeed, because Docker's embedded DNS only resolves names within networks the querying container belongs to.
+The failure is the important bit - name resolution doesn't even succeed, because Docker's embedded DNS only resolves names within the networks the calling container is actually on.
 
-### Compose equivalent
+### Compose version
 
-The same topology is expressed declaratively in [`docker-compose.yml`](docker-compose.yml):
+Same topology written declaratively in [docker-compose.yml](docker-compose.yml):
 
 ```bash
 docker compose up -d
@@ -139,45 +135,74 @@ docker rm -f frontend backend database
 docker network rm frontend-net backend-net isolated-net
 ```
 
----
+### Actually ran this
 
-## Task 2 — Host Network
+Installed Docker afterward and ran the whole thing for real. All four results matched the table above exactly:
 
-**Goal:** run Apache2 on the host network and reach it on port 80.
+```
+$ docker exec backend ping -c 3 frontend
+PING frontend (172.18.0.2): 56 data bytes
+64 bytes from 172.18.0.2: seq=0 ttl=64 time=7.429 ms
+...
+3 packets transmitted, 3 packets received, 0% packet loss
+
+$ docker exec backend ping -c 3 database
+PING database (172.19.0.2): 56 data bytes
+64 bytes from 172.19.0.2: seq=0 ttl=64 time=3.536 ms
+...
+3 packets transmitted, 3 packets received, 0% packet loss
+
+$ docker exec frontend ping -c 3 database
+ping: bad address 'database'
+
+$ docker exec frontend ping -c 3 backend
+PING backend (172.18.0.3): 56 data bytes
+...
+3 packets transmitted, 3 packets received, 0% packet loss
+
+$ docker exec backend nc -zv database 3306
+Connection to database (172.19.0.2) 3306 port [tcp/mysql] succeeded!
+```
+
+network inspect confirmed frontend-net has [frontend, backend] and backend-net has [backend, database], and `docker compose up -d` / `docker compose ps` / `docker compose down` all worked and produced the same topology. Full log: [docker-run-logs/07-task1-output.txt](../docker-run-logs/07-task1-output.txt) and [docker-run-logs/07-compose-output.txt](../docker-run-logs/07-compose-output.txt).
+
+## Task 2 - Host network
+
+Goal: run Apache2 on the host network and reach it on port 80.
 
 ```bash
-# Pull the Apache image
+# pull the apache image
 docker pull httpd:2.4
 
-# Run with the host network - note there is NO -p flag
+# run with the host network - no -p flag at all
 docker run -d --name apache-host --network host httpd:2.4
 
-# Verify
+# check it
 docker ps
 curl http://localhost:80
 ```
 
-Then open **http://localhost** — the Apache default page ("It works!") should appear.
+Then open http://localhost - should show the Apache default page ("It works!").
 
-### What the host network does
+### What the host network actually does
 
-With `--network host`, the container **shares the host's network namespace** instead of getting its own. There is no virtual interface, no NAT, no port mapping.
+With --network host, the container shares the host's network namespace instead of getting its own. No virtual interface, no NAT, no port mapping.
 
-Consequences:
+What that means in practice:
 
-- `-p 80:80` is **not used and has no effect**. The container binds host port 80 directly.
-- Because there is no NAT layer, throughput is slightly higher and latency slightly lower.
-- **Port conflicts become real.** If the host already runs something on 80, the container fails.
-- The container loses network isolation and can see all host interfaces.
-- **Linux only.** On Docker Desktop for Windows and macOS the daemon runs inside a VM, so `--network host` binds to the VM's network, not the Windows host. It does not behave as documented there.
+- -p 80:80 does nothing here, isn't even used. The container just binds host port 80 directly.
+- since there's no NAT layer, throughput is a bit higher and latency a bit lower
+- port conflicts are now a real thing - if the host already has something on 80, the container just fails to start
+- the container loses network isolation and can see all the host's interfaces
+- Linux only. On Docker Desktop for Windows/macOS the daemon runs inside a VM, so --network host binds to the VM's network, not the actual Windows/Mac host - it doesn't work as documented there.
 
 Confirming the shared namespace:
 
 ```bash
-# Container sees exactly the host's interfaces
+# container sees exactly the host's interfaces
 docker exec apache-host ip addr show
 
-# Apache appears bound on the host itself
+# apache shows up bound on the host itself
 sudo ss -tulnp | grep :80
 ```
 
@@ -185,13 +210,13 @@ sudo ss -tulnp | grep :80
 
 | | Bridge (default) | Host |
 |---|---|---|
-| Network namespace | Own, isolated | **Shared with host** |
-| IP address | Private (e.g. 172.17.0.2) | The host's IP |
-| Port publishing | Needs `-p` | Not applicable |
-| Performance | Slight NAT overhead | Native |
-| Isolation | Good | **None** |
-| Port conflicts | Avoidable via mapping | Possible |
-| Platform | All | Linux only |
+| Network namespace | own, isolated | shared with host |
+| IP address | private (e.g. 172.17.0.2) | the host's IP |
+| Port publishing | needs -p | not applicable |
+| Performance | slight NAT overhead | native |
+| Isolation | good | none |
+| Port conflicts | avoidable via mapping | possible |
+| Platform | all | Linux only |
 
 ### Cleanup
 
@@ -199,21 +224,34 @@ sudo ss -tulnp | grep :80
 docker rm -f apache-host
 ```
 
----
+### Actually ran this
 
-## Task 3 — Bind Mount
+```
+$ docker run -d --name apache-host --network host httpd:2.4
+907c4cac7ae7...
 
-**Goal:** bind mount a local folder into Nginx and show that edits appear live.
+$ curl http://localhost:80
+<html><head><title>It works! Apache httpd</title></head><body><p>It works!</p></body></html>
 
-The folder is [`bind-mount/`](bind-mount/), containing [`index.html`](bind-mount/index.html) with the content **Hello students**.
+$ ss -tulnp | grep :80
+tcp   LISTEN 0      511                 *:80               *:*
+```
 
-### Step 1 — The local file
+Bound straight to *:80 with no docker-proxy in front of it, which is what host networking is supposed to do. Couldn't run `docker exec apache-host ip addr show` since the httpd Debian image doesn't have iproute2 installed - minor, not a big deal. Full log: [docker-run-logs/07-task2-output.txt](../docker-run-logs/07-task2-output.txt).
+
+## Task 3 - Bind mount
+
+Goal: bind mount a local folder into Nginx and show edits show up live without restarting anything.
+
+The folder is [bind-mount/](bind-mount/), with [index.html](bind-mount/index.html) containing "Hello students".
+
+### Step 1 - the local file
 
 ```html
 <h1>Hello students</h1>
 ```
 
-### Step 2 — Mount it into Nginx
+### Step 2 - mount it into Nginx
 
 ```bash
 cd 07-docker-network-volume
@@ -230,53 +268,53 @@ On Windows PowerShell:
 docker run -d --name nginx-bind -p 8090:80 -v "${PWD}\bind-mount:/usr/share/nginx/html" nginx:alpine
 ```
 
-The `-v` syntax is `hostPath:containerPath`. The host path must be **absolute** — a relative path is interpreted as a named volume instead, which is a common mistake.
+The -v syntax is hostPath:containerPath. The host path has to be absolute - if it's relative, Docker treats it as a named volume instead, which is an easy mistake to make.
 
-### Step 3 — Verify
+### Step 3 - verify
 
 ```bash
 curl http://localhost:8090
 ```
 
-Expected: `<h1>Hello students</h1>` — open **http://localhost:8090** in a browser.
+Expected: `<h1>Hello students</h1>` - or open http://localhost:8090 in a browser.
 
-### Step 4 — Modify the file and confirm the change is live
+### Step 4 - edit the file and check it updates live
 
 ```bash
-# Edit the file on the HOST
+# edit the file on the HOST
 echo '<h1>Hello students - UPDATED without restarting!</h1>' > bind-mount/index.html
 
-# Re-request WITHOUT touching the container
+# hit it again WITHOUT touching the container
 curl http://localhost:8090
 ```
 
-The new content appears immediately. Confirm the container was never restarted:
+The new content shows up right away. Confirm the container was never restarted:
 
 ```bash
 docker ps --filter name=nginx-bind --format "{{.Names}} {{.Status}}"
-# Status still shows the original uptime - no restart
+# status should still show the original uptime, no restart
 ```
 
-### What I understood
+### What's actually happening
 
-The bind mount maps a host directory **directly into the container's filesystem**. Nothing is copied — both sides read and write the same inodes on the host disk. That is why the edit is visible instantly: Nginx reads the file from disk on each request, and the file it reads *is* the host file.
+A bind mount maps a host folder directly into the container's filesystem. Nothing gets copied, both sides are literally reading and writing the same inodes on disk. That's why the edit shows up instantly - Nginx reads the file fresh off disk on every request, and the file it's reading is the host file.
 
-This is the mechanism behind hot-reload in development: mount your source directory in, and edits on the host are seen by the process in the container.
+This is also basically how hot-reload works in dev setups - mount your source folder in, and whatever you edit on the host shows up inside the container immediately.
 
 ### Bind mount vs named volume
 
 | | Bind mount | Named volume |
 |---|---|---|
-| Syntax | `-v /host/path:/container/path` | `-v myvolume:/container/path` |
-| Location | Any host path you choose | Managed by Docker (`/var/lib/docker/volumes`) |
-| Created by | Must already exist | Docker creates it |
-| Host access | Direct, ordinary file access | Through Docker |
-| Portability | Tied to host layout | Portable |
-| Best for | **Development**, config files, source | **Production data**, databases |
-| Backup | Normal filesystem tools | `docker volume` commands |
+| Syntax | -v /host/path:/container/path | -v myvolume:/container/path |
+| Location | any host path you pick | managed by Docker (/var/lib/docker/volumes) |
+| Created by | has to already exist | Docker creates it |
+| Host access | direct, normal file access | through Docker |
+| Portability | tied to how this host is laid out | portable |
+| Best for | dev, config files, source code | production data, databases |
+| Backup | normal filesystem tools | docker volume commands |
 
 ```bash
-# Named volume for comparison
+# named volume for comparison
 docker volume create web-content
 docker run -d --name nginx-vol -p 8091:80 -v web-content:/usr/share/nginx/html nginx:alpine
 docker volume inspect web-content
@@ -289,49 +327,67 @@ docker rm -f nginx-bind
 git checkout bind-mount/index.html   # restore "Hello students"
 ```
 
----
+### Actually ran this
 
-## Task 4 — Overlay Networks (research)
+```
+$ curl http://localhost:8090
+<h1>Hello students</h1>
+
+$ docker ps --filter name=nginx-bind --format "{{.Names}} {{.Status}}"
+nginx-bind Up 2 seconds
+
+# edited bind-mount/index.html on the host
+
+$ curl http://localhost:8090
+<h1>Hello students - UPDATED without restarting!</h1>
+
+$ docker ps --filter name=nginx-bind --format "{{.Names}} {{.Status}}"
+nginx-bind Up 6 seconds
+```
+
+Uptime just kept climbing (2s -> 6s), never reset, so the container really wasn't restarted. Restored bind-mount/index.html back to "Hello students" with git checkout afterward. Full log: [docker-run-logs/07-task3-output.txt](../docker-run-logs/07-task3-output.txt).
+
+## Task 4 - Overlay networks (research)
 
 ### What an overlay network is
 
-An overlay network spans **multiple Docker hosts**, letting containers on different physical machines communicate as though they were on the same LAN — even though the hosts may be in different racks or data centres.
+An overlay network spans multiple Docker hosts, so containers on different physical machines can talk to each other like they're on the same LAN, even if the hosts are in totally different racks or data centers.
 
-Bridge networks are limited to a single host. Overlay networks are the answer when a cluster outgrows one machine.
+Bridge networks only work within a single host. Overlay networks are what you reach for once a cluster grows past one machine.
 
 ### How it works
 
-1. **VXLAN encapsulation.** Container traffic is wrapped inside UDP packets (default port **4789**) and sent across the physical network. The receiving host unwraps it and delivers it to the target container. The containers never see the encapsulation — from their view they are on one flat layer-2 segment.
+1. VXLAN encapsulation - container traffic gets wrapped inside UDP packets (default port 4789) and sent over the physical network. The receiving host unwraps it and hands it to the right container. From the containers' point of view they're just on one flat layer-2 network, they never see any of this happening.
 
-2. **A distributed control plane.** Docker Swarm keeps a shared store (via the Raft consensus protocol) of which container lives on which host, with which IP and MAC. This is how a host knows where to send a packet destined for a container it does not own.
+2. A distributed control plane - Docker Swarm keeps a shared store (using Raft consensus) of which container lives on which host, with what IP and MAC. That's how a host knows where to actually send a packet meant for a container it doesn't own.
 
-3. **Built-in service discovery.** Each overlay network has an embedded DNS server. Container and service names resolve cluster-wide, so an application connects to `database` without knowing which node it runs on.
+3. Built-in service discovery - every overlay network has its own embedded DNS server, so container/service names resolve across the whole cluster, and an app can just connect to "database" without caring which node it's actually on.
 
-4. **Load balancing via VIP.** A Swarm service gets a Virtual IP. Traffic to the VIP is distributed across all its replicas by IPVS in the kernel, wherever those replicas are.
+4. Load balancing via VIP - a Swarm service gets a virtual IP, and traffic to that VIP gets spread across all its replicas by IPVS in the kernel, wherever those replicas happen to be running.
 
-### Ports required between hosts
+### Ports needed between hosts
 
 | Port | Protocol | Purpose |
 |---|---|---|
-| 2377 | TCP | Cluster management (managers only) |
-| 7946 | TCP + UDP | Node-to-node control plane gossip |
+| 2377 | TCP | cluster management (managers only) |
+| 7946 | TCP + UDP | node-to-node control plane gossip |
 | 4789 | UDP | VXLAN data plane |
 
-Blocked port 4789 is the classic cause of "the overlay network exists but containers cannot reach each other".
+If port 4789 is blocked somewhere, that's the classic "overlay network exists but containers can't actually reach each other" problem.
 
 ### Setting one up
 
 ```bash
-# On the manager node
+# on the manager node
 docker swarm init --advertise-addr <MANAGER-IP>
 
-# On each worker
+# on each worker
 docker swarm join --token <TOKEN> <MANAGER-IP>:2377
 
-# Create an attachable overlay network
+# create an attachable overlay network
 docker network create -d overlay --attachable my-overlay
 
-# Deploy a service across the cluster
+# deploy a service across the cluster
 docker service create --name web --network my-overlay --replicas 3 nginx:alpine
 
 docker service ls
@@ -339,42 +395,33 @@ docker service ps web
 docker network inspect my-overlay
 ```
 
-`--attachable` matters: without it, only Swarm *services* can join the network, not standalone containers started with `docker run`.
+--attachable matters here - without it, only Swarm services can join the network, standalone containers started with docker run can't.
 
 ### Use cases
 
-- **Multi-host container clusters** — the core use case; a Swarm cluster requires it.
-- **Microservices spread across nodes** — services address each other by name regardless of placement.
-- **High availability** — replicas on different hosts stay on one logical network, so a node failure does not partition the application.
-- **Encrypted traffic between hosts** — `docker network create -d overlay --opt encrypted` enables IPsec on the data plane, which matters when hosts communicate over an untrusted network.
-- **Horizontal scaling** — add a node to the Swarm and it joins the existing overlay without reconfiguration.
+- multi-host container clusters - the core use case, a Swarm cluster needs this
+- microservices spread across nodes - services can address each other by name regardless of where they're actually placed
+- high availability - replicas on different hosts stay on one logical network, so one node going down doesn't split the app
+- encrypted traffic between hosts - `docker network create -d overlay --opt encrypted` turns on IPsec on the data plane, useful when hosts talk to each other over an untrusted network
+- scaling out - add a node to the Swarm and it just joins the existing overlay, no reconfiguring needed
 
 ### Driver comparison
 
 | Driver | Scope | Use case |
 |---|---|---|
-| `bridge` | Single host | Default; containers on one machine |
-| `host` | Single host | Remove network isolation for performance |
-| `overlay` | **Multi-host** | Swarm clusters, distributed applications |
-| `macvlan` | Single host | Give a container a real MAC on the physical LAN |
-| `ipvlan` | Single host | Like macvlan, sharing the host MAC |
-| `none` | Single host | Fully disable networking |
+| bridge | single host | default, containers on one machine |
+| host | single host | drop network isolation for performance |
+| overlay | multi-host | Swarm clusters, distributed apps |
+| macvlan | single host | give a container a real MAC on the physical LAN |
+| ipvlan | single host | like macvlan but shares the host's MAC |
+| none | single host | networking fully disabled |
 
 ### Overlay vs Kubernetes
 
-Overlay networking is not unique to Docker Swarm. Kubernetes CNI plugins — Flannel, Calico, Weave — solve the same multi-host problem with the same underlying idea, most of them also using VXLAN. Understanding Docker overlay transfers directly to understanding Kubernetes pod networking.
+This isn't just a Docker Swarm thing either - Kubernetes CNI plugins like Flannel, Calico, Weave solve the exact same multi-host problem the same basic way, and most of them use VXLAN too. Understanding Docker overlay networking carries over pretty directly to understanding Kubernetes pod networking.
 
-Reference: <https://docs.docker.com/engine/network/drivers/>
+Reference: https://docs.docker.com/engine/network/drivers/
 
----
+## Still missing
 
-## Pending
-
-Docker is not installed on the machine this repository was prepared on. Still to capture:
-
-- [ ] Task 1 — `docker network ls`, `docker ps`, and the four ping results (including the expected frontend→database failure)
-- [ ] Task 2 — `docker ps` for the host-network container and the Apache page on port 80
-- [ ] Task 3 — browser before and after the edit, proving no restart occurred
-- [ ] Save all images into `screenshots/` and embed them above
-
-Task 4 is research-only and is complete.
+Task 4 is research only and is done. For tasks 1-3, everything above was actually run and the output is captured in [docker-run-logs/](../docker-run-logs/) - what's still missing is just the actual browser screenshots (before/after for the bind mount, the Apache page, etc), since there's no GUI browser in the environment I used to run these.

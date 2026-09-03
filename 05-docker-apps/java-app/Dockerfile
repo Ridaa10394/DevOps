@@ -1,4 +1,3 @@
-# Hello World - Java application (multi-stage: compile with JDK, run on JRE)
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /src
 COPY HelloWorld.java ./

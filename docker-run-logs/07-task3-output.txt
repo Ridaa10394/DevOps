@@ -1,0 +1,26 @@
+===== docker run with bind mount =====
+182fd6c18bc80f085332c97589af51b1b4c9d073374c36f74dd8329b94504cb8
+
+===== curl localhost:8090 (before edit) =====
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Bind Mount Demo</title>
+    <meta charset="utf-8">
+  </head>
+  <body style="font-family: sans-serif; text-align: center; padding-top: 80px;">
+    <h1>Hello students</h1>
+  </body>
+</html>
+
+===== docker ps status BEFORE edit =====
+nginx-bind Up 2 seconds
+
+===== editing bind-mount/index.html on HOST (no container restart) =====
+<h1>Hello students - UPDATED without restarting!</h1>
+
+===== curl localhost:8090 (after edit, no restart) =====
+<h1>Hello students - UPDATED without restarting!</h1>
+
+===== docker ps status AFTER edit (proves no restart, uptime kept climbing) =====
+nginx-bind Up 6 seconds

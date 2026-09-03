@@ -1,0 +1,98 @@
+===== docker build =====
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  4.096kB
+Step 1/12 : FROM node:24-alpine AS builder
+24-alpine: Pulling from library/node
+502142e2f202: Pulling fs layer
+a0f82f71477f: Pulling fs layer
+b38a07ecd3ea: Pulling fs layer
+36334af576ad: Download complete
+1485682258f6: Download complete
+502142e2f202: Download complete
+b38a07ecd3ea: Download complete
+a0f82f71477f: Download complete
+a0f82f71477f: Pull complete
+502142e2f202: Pull complete
+b38a07ecd3ea: Pull complete
+Digest: sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf
+Status: Downloaded newer image for node:24-alpine
+ ---> e67514e5d0f6
+Step 2/12 : WORKDIR /app
+ ---> Running in 051943cb1e24
+ ---> Removed intermediate container 051943cb1e24
+ ---> 8355b5586500
+Step 3/12 : COPY package*.json ./
+ ---> 6da1cec58bed
+Step 4/12 : RUN npm install
+ ---> Running in a11b79497a6a
+
+added 68 packages, and audited 69 packages in 3s
+
+27 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+[91mnpm notice
+npm notice New major version of npm available! 11.19.0 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+[0m ---> Removed intermediate container a11b79497a6a
+ ---> 4e8841be28fb
+Step 5/12 : COPY . .
+ ---> cbf872cc8540
+Step 6/12 : FROM node:24-alpine AS production
+ ---> e67514e5d0f6
+Step 7/12 : WORKDIR /app
+ ---> Using cache
+ ---> 8355b5586500
+Step 8/12 : COPY --from=builder /app/package*.json ./
+ ---> 904f9d4473bc
+Step 9/12 : RUN npm install --omit=dev
+ ---> Running in 4f513e56235b
+
+added 68 packages, and audited 69 packages in 2s
+
+27 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+[91mnpm notice
+npm notice New major version of npm available! 11.19.0 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+[0m ---> Removed intermediate container 4f513e56235b
+ ---> 4affb806a3f6
+Step 10/12 : COPY --from=builder /app/server.js ./
+ ---> 45a054c2d803
+Step 11/12 : EXPOSE 3000
+ ---> Running in f5dfd858377d
+ ---> Removed intermediate container f5dfd858377d
+ ---> f190f42bd5f8
+Step 12/12 : CMD ["npm", "start"]
+ ---> Running in 08403130902b
+ ---> Removed intermediate container 08403130902b
+ ---> e457adb086b0
+Successfully built e457adb086b0
+Successfully tagged hw-multistage:latest
+
+===== docker run =====
+aa7dc0a0adcf31618285090c1b0b23c63a0c5bf3e0c6712b423ab883f46db7ee
+
+===== docker ps =====
+CONTAINER ID   IMAGE           COMMAND                  CREATED         STATUS         PORTS                                         NAMES
+aa7dc0a0adcf   hw-multistage   "docker-entrypoint.s…"   3 seconds ago   Up 2 seconds   0.0.0.0:8080->3000/tcp, [::]:8080->3000/tcp   hw-multistage
+
+===== curl localhost:8080 =====
+<h1>Hello World from Docker Multi-Stage Build!</h1>
+HTTP 200
+
+===== docker images (size comparison) =====
+hw-multistage:latest     e457adb086b0        247MB         60.4MB   U    
+hw-nodejs:latest         0cacb43b1f56        209MB         50.9MB   U    
+node:20-alpine           fb4cd12c85ee        194MB         48.8MB        
+node:24-alpine           e67514e5d0f6        235MB         58.8MB        

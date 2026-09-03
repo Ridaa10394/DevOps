@@ -1,0 +1,95 @@
+===== docker ps =====
+CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                                         NAMES
+8d44ee3d7209   hw-nginx    "/docker-entrypoint.…"   18 seconds ago   Up 18 seconds   0.0.0.0:8083->80/tcp, [::]:8083->80/tcp       hw-nginx
+042cedc86eb5   hw-react    "/docker-entrypoint.…"   19 seconds ago   Up 19 seconds   0.0.0.0:8082->80/tcp, [::]:8082->80/tcp       hw-react
+d2decd714b67   hw-apache   "httpd-foreground"       20 seconds ago   Up 19 seconds   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp       hw-apache
+35d8c5c88f9e   hw-java     "/__cacert_entrypoin…"   21 seconds ago   Up 20 seconds   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp   hw-java
+78f389fcc10f   hw-python   "python app.py"          21 seconds ago   Up 21 seconds   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp   hw-python
+ae65f26a5366   hw-nodejs   "docker-entrypoint.s…"   22 seconds ago   Up 22 seconds   0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp   hw-nodejs
+
+===== docker images =====
+IMAGE                    ID             DISK USAGE   CONTENT SIZE   EXTRA
+eclipse-temurin:21-jdk   85f00967bcc6        726MB          229MB        
+eclipse-temurin:21-jre   7a65df4b22d2        459MB          120MB        
+hello-world:latest       5dd0d3e6e255       25.9kB         9.49kB        
+httpd:2.4-alpine         1b766f17b840       97.3MB         21.9MB        
+hw-apache:latest         7a963b25abfb       96.1MB         20.7MB   U    
+hw-java:latest           0c3a6a1dbb93        454MB          115MB   U    
+hw-nginx:latest          f0a222faf1e2       73.6MB           21MB   U    
+hw-nodejs:latest         0cacb43b1f56        209MB         50.9MB   U    
+hw-python:latest         b3aba4d0a5b5        208MB         51.2MB   U    
+hw-react:latest          47fc42ff2165       73.8MB           21MB   U    
+nginx:1.27-alpine        65645c7bb6a0       74.5MB         21.9MB        
+node:20-alpine           fb4cd12c85ee        194MB         48.8MB        
+python:3.12-slim         78387bc3881b        190MB         48.4MB        
+
+===== curl checks =====
+--- nodejs (port 3000) ---
+HTTP 200
+
+    <html>
+      <head><title>Node.js Hello World</title></head>
+      <body style="font-family: sans-serif; text-align: center; padding-top: 80px;">
+        <h1>Hello World from Node.js</h1>
+        <p>Served by Express inside a Docker container on port 3000</p>
+      </body>
+    </html>
+  
+--- python (port 5000) ---
+HTTP 200
+
+    <html>
+      <head><title>Python Hello World</title></head>
+      <body style="font-family: sans-serif; text-align: center; padding-top: 80px;">
+        <h1>Hello World from Python</h1>
+        <p>Served by Flask inside a Docker container on port 5000</p>
+      </body>
+    </html>
+    
+--- java (port 8000) ---
+HTTP 200
+<html>
+  <head><title>Java Hello World</title></head>
+  <body style="font-family: sans-serif; text-align: center; padding-top: 80px;">
+    <h1>Hello World from Java</h1>
+    <p>Served by the JDK HttpServer inside a Docker container on port 8000</p>
+  </body>
+</html>
+
+--- apache (port 8081) ---
+HTTP 200
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Apache Hello World</title>
+    <meta charset="utf-8">
+  </head>
+  <body style="font-family: sans-serif; text-align: center; padding-top: 80px;">
+    <h1>Hello World from Apache</h1>
+    <p>Served by the Apache HTTP Server (httpd) inside a Docker container</
+--- react (port 8082) ---
+HTTP 200
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React Hello World</title>
+    <script type="module" crossorigin src="/assets/index-DLbOSL8z.js"></script>
+  </head>
+  <body>
+    <div id="roo
+--- nginx (port 8083) ---
+HTTP 200
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Nginx Hello World</title>
+    <meta charset="utf-8">
+  </head>
+  <body style="font-family: sans-serif; text-align: center; padding-top: 80px;">
+    <h1>Hello World from Nginx</h1>
+    <p>Served by Nginx inside a Docker container</p>
+  </body>
+</html>
+

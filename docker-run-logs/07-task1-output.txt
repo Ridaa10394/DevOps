@@ -1,0 +1,153 @@
+===== Step 1: create networks =====
+4f5441c56d981f15d2cd4ee99d8e1d6b3366e58c756d8e7f88e390fa50a80f63
+640885b5d17bb70ce03158f98d59bcb227ff01aa779f2bec4e59784459cd9884
+a6585ba60b17f0be368ce84810475a2c75626b4a4dcc4ecd55e45cc45fe1b791
+NETWORK ID     NAME           DRIVER    SCOPE
+640885b5d17b   backend-net    bridge    local
+da390ad12138   bridge         bridge    local
+4f5441c56d98   frontend-net   bridge    local
+677401996bc6   host           host      local
+a6585ba60b17   isolated-net   bridge    local
+83536429e425   none           null      local
+
+===== Step 2: create containers =====
+Unable to find image 'nginx:alpine' locally
+alpine: Pulling from library/nginx
+6636b9fc203c: Pulling fs layer
+bc98d7675616: Pulling fs layer
+850bf2dcecff: Pulling fs layer
+58c524ea09ce: Pulling fs layer
+8f924cf5086c: Pulling fs layer
+af7dd138f459: Pulling fs layer
+51900e10fb9c: Pulling fs layer
+10d8afe205cd: Download complete
+a32eccfe9457: Download complete
+51900e10fb9c: Download complete
+af7dd138f459: Download complete
+bc98d7675616: Download complete
+58c524ea09ce: Download complete
+850bf2dcecff: Download complete
+af7dd138f459: Pull complete
+850bf2dcecff: Pull complete
+51900e10fb9c: Pull complete
+bc98d7675616: Pull complete
+58c524ea09ce: Pull complete
+8f924cf5086c: Download complete
+8f924cf5086c: Pull complete
+6636b9fc203c: Download complete
+6636b9fc203c: Pull complete
+Digest: sha256:a9ae6f6d078d477e21323310498e5196cb2b7c0aedd9e07b7306612077227d7c
+Status: Downloaded newer image for nginx:alpine
+913bebd325aaf029e68a4a8891c52a73ea19d8843fbf73b9a944cfadc19039db
+Unable to find image 'mysql:8.0' locally
+8.0: Pulling from library/mysql
+6ef6c7b50a93: Pulling fs layer
+96d30d9fbee8: Pulling fs layer
+e3e5d1ac74c1: Pulling fs layer
+0d74d296605b: Pulling fs layer
+297d04cfe470: Pulling fs layer
+4c8a3e0d4e4b: Pulling fs layer
+a63160a5eda1: Pulling fs layer
+7534d1db9f8d: Pulling fs layer
+49ec2dab01d9: Pulling fs layer
+ab24264a27e9: Pulling fs layer
+edf85873f64e: Pulling fs layer
+96d30d9fbee8: Download complete
+ab24264a27e9: Download complete
+4c8a3e0d4e4b: Download complete
+6ef6c7b50a93: Download complete
+297d04cfe470: Download complete
+7534d1db9f8d: Download complete
+796812c73292: Download complete
+e3e5d1ac74c1: Download complete
+0d74d296605b: Download complete
+af166387641d: Download complete
+edf85873f64e: Download complete
+6ef6c7b50a93: Pull complete
+edf85873f64e: Pull complete
+e3e5d1ac74c1: Pull complete
+4c8a3e0d4e4b: Pull complete
+297d04cfe470: Pull complete
+0d74d296605b: Pull complete
+a63160a5eda1: Download complete
+7534d1db9f8d: Pull complete
+a63160a5eda1: Pull complete
+49ec2dab01d9: Download complete
+96d30d9fbee8: Pull complete
+ab24264a27e9: Pull complete
+49ec2dab01d9: Pull complete
+Digest: sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+Status: Downloaded newer image for mysql:8.0
+fdab9ce910e29099fa2e576ae3c0beee1a7f9f00003068aedac27193ee2ea70c
+Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+56dceff11b33: Download complete
+f5124fb579e2: Download complete
+Digest: sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+Status: Downloaded newer image for alpine:latest
+d53d08700a2fb71d8e0ad4b5bbd91cb389929675867c5593648ab5d40fb16d80
+
+===== Step 3: attach backend to backend-net =====
+backend-net frontend-net 
+
+===== Step 4: install ping tools in backend =====
+WARNING: fetching https://dl-cdn.alpinelinux.org/alpine/v3.24/main/x86_64/APKINDEX.tar.gz: DNS: transient error (try again later)
+ERROR: unable to select packages:
+  bind-tools (no such package):
+    required by: world[bind-tools]
+  iputils (no such package):
+    required by: world[iputils]
+
+----- backend -> frontend (SHOULD WORK) -----
+PING frontend (172.18.0.2): 56 data bytes
+64 bytes from 172.18.0.2: seq=0 ttl=64 time=7.429 ms
+64 bytes from 172.18.0.2: seq=1 ttl=64 time=0.198 ms
+64 bytes from 172.18.0.2: seq=2 ttl=64 time=0.155 ms
+
+--- frontend ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.155/2.594/7.429 ms
+
+----- backend -> database (SHOULD WORK) -----
+PING database (172.19.0.2): 56 data bytes
+64 bytes from 172.19.0.2: seq=0 ttl=64 time=3.536 ms
+64 bytes from 172.19.0.2: seq=1 ttl=64 time=0.180 ms
+64 bytes from 172.19.0.2: seq=2 ttl=64 time=0.135 ms
+
+--- database ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.135/1.283/3.536 ms
+
+----- frontend -> database (SHOULD FAIL) -----
+ping: bad address 'database'
+
+----- frontend -> backend (SHOULD WORK) -----
+PING backend (172.18.0.3): 56 data bytes
+64 bytes from 172.18.0.3: seq=0 ttl=64 time=0.128 ms
+64 bytes from 172.18.0.3: seq=1 ttl=64 time=0.170 ms
+64 bytes from 172.18.0.3: seq=2 ttl=64 time=0.158 ms
+
+--- backend ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.128/0.152/0.170 ms
+
+----- backend nc -zv database 3306 -----
+(1/3) Installing libmd (1.2.0-r0)
+(2/3) Installing libbsd (0.12.2-r0)
+(3/3) Installing netcat-openbsd (1.234.1-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 8359 KiB in 19 packages
+Connection to database (172.19.0.2) 3306 port [tcp/mysql] succeeded!
+
+===== network inspect =====
+frontend-net containers:
+frontend backend 
+
+backend-net containers:
+backend database 
+
+===== docker ps (task 1) =====
+CONTAINER ID   IMAGE           COMMAND                  CREATED              STATUS              PORTS                 NAMES
+d53d08700a2f   alpine:latest   "sleep infinity"         57 seconds ago       Up 56 seconds                             backend
+fdab9ce910e2   mysql:8.0       "docker-entrypoint.s…"   About a minute ago   Up About a minute   3306/tcp, 33060/tcp   database
+913bebd325aa   nginx:alpine    "/docker-entrypoint.…"   About a minute ago   Up About a minute   80/tcp                frontend
