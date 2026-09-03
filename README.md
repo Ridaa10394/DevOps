@@ -37,4 +37,3 @@ This is my homework for the devops-heros course (sessions 1-8): https://github.c
 - Git 2.49.0
 - systemd 255
 
-Docker wasn't installed on this machine originally, so sections 5-7 were written and reviewed without being able to run them. I later installed Docker (docker.io + the compose plugin) inside the WSL2 Ubuntu distro, built and ran every app/container in those three sections, and saved the raw terminal output to [docker-run-logs/](docker-run-logs/) at the repo root. Actual browser screenshots are still missing since there's no GUI browser in this setup - each of those three READMEs notes what's still missing at the bottom.
