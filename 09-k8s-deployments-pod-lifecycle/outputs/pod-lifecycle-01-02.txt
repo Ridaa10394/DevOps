@@ -1,0 +1,70 @@
+########## 01-running.yaml
+$ kubectl apply -n s10-lifecycle -f pod-lifecycle/01-running.yaml
+pod/lifecycle-running created
+
+$ kubectl wait -n s10-lifecycle --for=condition=Ready pod/lifecycle-running --timeout=90s
+pod/lifecycle-running condition met
+
+$ kubectl get pod lifecycle-running -n s10-lifecycle -o wide
+NAME                READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+lifecycle-running   1/1     Running   0          0s    10.244.0.152   minikube   <none>           <none>
+
+$ kubectl get pod lifecycle-running -n s10-lifecycle -o jsonpath='{.status.phase}{"
+"}{.status.containerStatuses[0].state}{"
+"}'
+Running
+{"running":{"startedAt":"2026-10-07T11:12:32Z"}}
+
+$ kubectl describe pod lifecycle-running -n s10-lifecycle | sed -n '/^Status:/p;/^QoS/p;/State:/,/Restart Count/p;/^Conditions:/,/^Volumes:/p;/^Events:/,$p'
+Status:           Running
+    State:          Running
+      Started:      Wed, 07 Oct 2026 16:42:32 +0530
+    Ready:          True
+    Restart Count:  0
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+QoS Class:                   BestEffort
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  0s    default-scheduler  Successfully assigned s10-lifecycle/lifecycle-running to minikube
+  Normal  Pulled     0s    kubelet            spec.containers{nginx}: Container image "nginx:1.27-alpine" already present on machine and can be accessed by the pod
+  Normal  Created    0s    kubelet            spec.containers{nginx}: Container created
+  Normal  Started    0s    kubelet            spec.containers{nginx}: Container started
+
+########## 02-pending.yaml
+$ kubectl apply -n s10-lifecycle -f pod-lifecycle/02-pending.yaml
+pod/lifecycle-pending created
+
+$ kubectl get pod lifecycle-pending -n s10-lifecycle -o wide
+NAME                READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+lifecycle-pending   0/1     Pending   0          10s   <none>   <none>   <none>           <none>
+
+$ kubectl get pod lifecycle-pending -n s10-lifecycle -o jsonpath='{.status.phase}{"
+"}'
+Pending
+
+$ kubectl describe pod lifecycle-pending -n s10-lifecycle | sed -n '/^Status:/p;/Requests:/,/memory/p;/^Conditions:/,/^Volumes:/p;/^Events:/,$p'
+Status:           Pending
+    Requests:
+      cpu:        1
+      memory:     9Gi
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  10s   default-scheduler  0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+
+$ kubectl describe node minikube | grep -A8 '^Allocatable' | grep -E 'cpu|memory'
+  cpu:                15
+  memory:             8123872Ki
+

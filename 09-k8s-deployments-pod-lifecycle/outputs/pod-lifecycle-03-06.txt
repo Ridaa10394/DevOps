@@ -1,0 +1,117 @@
+########## apply 03-06
+$ kubectl apply -n s10-lifecycle -f pod-lifecycle/03-succeeded.yaml -f pod-lifecycle/04-failed.yaml -f pod-lifecycle/05-crashloopbackoff.yaml -f pod-lifecycle/06-imagepullbackoff.yaml
+pod/lifecycle-succeeded created
+pod/lifecycle-failed created
+pod/lifecycle-crashloop created
+pod/lifecycle-image-error created
+
+$ kubectl get pods -n s10-lifecycle lifecycle-succeeded lifecycle-failed lifecycle-crashloop lifecycle-image-error -o wide
+NAME                    READY   STATUS              RESTARTS      AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+lifecycle-succeeded     0/1     Completed           0             90s   10.244.0.156   minikube   <none>           <none>
+lifecycle-failed        0/1     Error               0             90s   10.244.0.158   minikube   <none>           <none>
+lifecycle-crashloop     0/1     Error               3 (68s ago)   90s   10.244.0.157   minikube   <none>           <none>
+lifecycle-image-error   0/1     ContainerCreating   0             90s   <none>         minikube   <none>           <none>
+
+$ kubectl get pods -n s10-lifecycle -o custom-columns=NAME:.metadata.name,PHASE:.status.phase,REASON:.status.containerStatuses[0].state.*.reason,EXIT:.status.containerStatuses[0].state.terminated.exitCode
+(eval):1: no matches found: custom-columns=NAME:.metadata.name,PHASE:.status.phase,REASON:.status.containerStatuses[0].state.*.reason,EXIT:.status.containerStatuses[0].state.terminated.exitCode
+
+########## 03-succeeded.yaml
+$ kubectl logs lifecycle-succeeded -n s10-lifecycle
+Task started
+Task completed successfully
+
+$ kubectl describe pod lifecycle-succeeded -n s10-lifecycle | sed -n '/^Status:/p;/State:/,/Restart Count/p;/^Conditions:/,/^Volumes:/p;/^Events:/,$p'
+Status:           Succeeded
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Wed, 07 Oct 2026 16:43:02 +0530
+      Finished:     Wed, 07 Oct 2026 16:43:07 +0530
+    Ready:          False
+    Restart Count:  0
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   False 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  90s   default-scheduler  Successfully assigned s10-lifecycle/lifecycle-succeeded to minikube
+  Normal  Pulled     90s   kubelet            spec.containers{task}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Normal  Created    90s   kubelet            spec.containers{task}: Container created
+  Normal  Started    90s   kubelet            spec.containers{task}: Container started
+
+########## 04-failed.yaml
+$ kubectl logs lifecycle-failed -n s10-lifecycle
+Task started
+Task failed
+
+$ kubectl describe pod lifecycle-failed -n s10-lifecycle | sed -n '/^Status:/p;/State:/,/Restart Count/p;/^Conditions:/,/^Volumes:/p;/^Events:/,$p'
+Status:           Failed
+    State:          Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Wed, 07 Oct 2026 16:43:02 +0530
+      Finished:     Wed, 07 Oct 2026 16:43:07 +0530
+    Ready:          False
+    Restart Count:  0
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   False 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  90s   default-scheduler  Successfully assigned s10-lifecycle/lifecycle-failed to minikube
+  Normal  Pulled     90s   kubelet            spec.containers{task}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Normal  Created    90s   kubelet            spec.containers{task}: Container created
+  Normal  Started    90s   kubelet            spec.containers{task}: Container started
+
+########## 05-crashloopbackoff.yaml
+$ kubectl logs lifecycle-crashloop -n s10-lifecycle --previous
+unable to retrieve container logs for containerd://1b54869fb24dcc95106fc1159bc9ac6f17bc9ad7752c3dd7b68d0482764e0767
+$ kubectl describe pod lifecycle-crashloop -n s10-lifecycle | sed -n '/^Status:/p;/State:/,/Restart Count/p;/^Events:/,$p'
+Status:           Running
+    State:          Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Wed, 07 Oct 2026 16:43:50 +0530
+      Finished:     Wed, 07 Oct 2026 16:43:53 +0530
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Wed, 07 Oct 2026 16:43:21 +0530
+      Finished:     Wed, 07 Oct 2026 16:43:24 +0530
+    Ready:          False
+    Restart Count:  3
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  90s                default-scheduler  Successfully assigned s10-lifecycle/lifecycle-crashloop to minikube
+  Normal   Pulled     42s (x4 over 90s)  kubelet            spec.containers{crashing-app}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Normal   Created    42s (x4 over 90s)  kubelet            spec.containers{crashing-app}: Container created
+  Normal   Started    42s (x4 over 90s)  kubelet            spec.containers{crashing-app}: Container started
+  Warning  BackOff    39s (x3 over 83s)  kubelet            spec.containers{crashing-app}: Back-off restarting failed container crashing-app in pod lifecycle-crashloop_s10-lifecycle(ad1ff9f3-e912-4ac5-b022-6a910d649935)
+
+########## 06-imagepullbackoff.yaml
+$ kubectl describe pod lifecycle-image-error -n s10-lifecycle | sed -n '/^Status:/p;/Image:/p;/State:/,/Restart Count/p;/^Events:/,$p'
+Status:           Pending
+    Image:          jakwehrgkaejw:kahsdfgkhj
+    State:          Waiting
+      Reason:       ContainerCreating
+    Ready:          False
+    Restart Count:  0
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  90s   default-scheduler  Successfully assigned s10-lifecycle/lifecycle-image-error to minikube
+  Normal  Pulling    90s   kubelet            spec.containers{broken-image}: Pulling image "jakwehrgkaejw:kahsdfgkhj"
+

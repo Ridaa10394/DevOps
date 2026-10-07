@@ -1,0 +1,15 @@
+# Selects ONLY the shared label, so it picks up both stable (4) and canary (1) pods.
+# kube-proxy spreads connections across all 5 endpoints -> roughly 80% / 20%.
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-canary-service
+  namespace: s10-canary
+spec:
+  type: ClusterIP
+  selector:
+    app: myapp-canary
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5678

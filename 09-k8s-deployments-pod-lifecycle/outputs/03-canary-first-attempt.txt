@@ -1,0 +1,72 @@
+### Step 1 - stable (4) + canary (1) behind one Service
+$ kubectl apply -f 03-canary/
+deployment.apps/app-canary created
+deployment.apps/app-stable created
+service/myapp-canary-service created
+
+$ kubectl rollout status deployment/app-stable -n s10-canary --timeout=120s
+Waiting for deployment "app-stable" rollout to finish: 0 of 4 updated replicas are available...
+Waiting for deployment "app-stable" rollout to finish: 1 of 4 updated replicas are available...
+Waiting for deployment "app-stable" rollout to finish: 2 of 4 updated replicas are available...
+Waiting for deployment "app-stable" rollout to finish: 3 of 4 updated replicas are available...
+deployment "app-stable" successfully rolled out
+
+$ kubectl rollout status deployment/app-canary -n s10-canary --timeout=120s
+deployment "app-canary" successfully rolled out
+
+$ kubectl get deploy -n s10-canary
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+app-canary   1/1     1            1           7s
+app-stable   4/4     4            4           7s
+
+$ kubectl get pods -n s10-canary -l app=myapp-canary -L track,version
+NAME                          READY   STATUS    RESTARTS   AGE   TRACK    VERSION
+app-canary-95b9fdd57-xsv7r    1/1     Running   0          7s    canary   v2
+app-stable-68fd96966f-5z7jz   1/1     Running   0          7s    stable   v1
+app-stable-68fd96966f-tj47z   1/1     Running   0          7s    stable   v1
+app-stable-68fd96966f-x2m4g   1/1     Running   0          7s    stable   v1
+app-stable-68fd96966f-xkpwp   1/1     Running   0          7s    stable   v1
+
+$ kubectl get svc myapp-canary-service -n s10-canary -o wide
+NAME                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+myapp-canary-service   ClusterIP   10.100.183.255   <none>        80/TCP    7s    app=myapp-canary
+
+$ kubectl get endpointslices -n s10-canary -l kubernetes.io/service-name=myapp-canary-service
+NAME                         ADDRESSTYPE   PORTS   ENDPOINTS                                            AGE
+myapp-canary-service-z6t9k   IPv4          5678    10.244.0.114,10.244.0.116,10.244.0.118 + 2 more...   7s
+
+### Step 2 - 40 requests, count responses
+$ kubectl exec -n s10-canary client -- sh -c 'for i in $(seq 1 40); do curl -s http://myapp-canary-service; done' | sort | uniq -c
+  40 STABLE v1
+
+$ kubectl exec -n s10-canary client -- sh -c 'for i in $(seq 1 40); do curl -s http://myapp-canary-service; done' | sort | uniq -c
+  40 STABLE v1
+
+$ kubectl exec -n s10-canary client -- sh -c 'for i in $(seq 1 200); do curl -s http://myapp-canary-service; done' | sort | uniq -c
+  30 CANARY v2
+ 170 STABLE v1
+
+### Step 3 - canary looks good: bump to 50/50 (2 stable + 2 canary)
+$ kubectl scale deployment app-canary -n s10-canary --replicas=2
+deployment.apps/app-canary scaled
+
+$ kubectl scale deployment app-stable -n s10-canary --replicas=2
+deployment.apps/app-stable scaled
+
+$ kubectl rollout status deployment/app-canary -n s10-canary --timeout=120s
+Waiting for deployment "app-canary" rollout to finish: 1 of 2 updated replicas are available...
+deployment "app-canary" successfully rolled out
+
+$ kubectl get pods -n s10-canary -l app=myapp-canary -L track
+NAME                          READY   STATUS        RESTARTS   AGE   TRACK
+app-canary-95b9fdd57-dzmsk    1/1     Running       0          12s   canary
+app-canary-95b9fdd57-xsv7r    1/1     Running       0          20s   canary
+app-stable-68fd96966f-5z7jz   1/1     Running       0          20s   stable
+app-stable-68fd96966f-tj47z   1/1     Terminating   0          20s   stable
+app-stable-68fd96966f-x2m4g   1/1     Terminating   0          20s   stable
+app-stable-68fd96966f-xkpwp   1/1     Running       0          20s   stable
+
+$ kubectl exec -n s10-canary client -- sh -c 'for i in $(seq 1 40); do curl -s http://myapp-canary-service; done' | sort | uniq -c
+  23 CANARY v2
+  17 STABLE v1
+

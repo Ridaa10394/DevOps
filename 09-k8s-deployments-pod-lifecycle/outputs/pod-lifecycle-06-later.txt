@@ -1,0 +1,23 @@
+########## 06 later, once the kubelet got to the pull
+$ kubectl get pod lifecycle-image-error -n s10-lifecycle
+NAME                    READY   STATUS         RESTARTS   AGE
+lifecycle-image-error   0/1     ErrImagePull   0          15m
+
+$ kubectl describe pod lifecycle-image-error -n s10-lifecycle | sed -n '/^Status:/p;/State:/,/Restart Count/p;/^Events:/,$p'
+Status:           Pending
+    State:          Waiting
+      Reason:       ErrImagePull
+    Ready:          False
+    Restart Count:  0
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  15m                default-scheduler  Successfully assigned s10-lifecycle/lifecycle-image-error to minikube
+  Normal   Pulling    21s (x3 over 15m)  kubelet            spec.containers{broken-image}: Pulling image "jakwehrgkaejw:kahsdfgkhj"
+  Warning  Failed     17s (x3 over 91s)  kubelet            spec.containers{broken-image}: Failed to pull image "jakwehrgkaejw:kahsdfgkhj": failed to pull and unpack image "docker.io/library/jakwehrgkaejw:kahsdfgkhj": failed to resolve reference "docker.io/library/jakwehrgkaejw:kahsdfgkhj": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed
+  Warning  Failed     17s (x3 over 91s)  kubelet            spec.containers{broken-image}: Error: ErrImagePull
+  Normal   BackOff    3s (x3 over 90s)   kubelet            spec.containers{broken-image}: Back-off pulling image "jakwehrgkaejw:kahsdfgkhj"
+  Warning  Failed     3s (x3 over 90s)   kubelet            spec.containers{broken-image}: Error: ImagePullBackOff
+
+$ minikube ssh -- sudo crictl pull docker.io/library/jakwehrgkaejw:kahsdfgkhj
+time="2026-10-07T11:28:46Z" level=fatal msg="pulling image: failed to pull and unpack image \"docker.io/library/jakwehrgkaejw:kahsdfgkhj\": failed to resolve reference \"docker.io/library/jakwehrgkaejw:kahsdfgkhj\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed"

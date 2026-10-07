@@ -1,0 +1,7 @@
+EVENT      NAME                    READY   STATUS    RESTARTS   AGE
+ADDED      lifecycle-termination   1/1     Running   0          0s
+MODIFIED   lifecycle-termination   1/1     Terminating   0          2s
+MODIFIED   lifecycle-termination   1/1     Terminating   0          2s
+MODIFIED   lifecycle-termination   0/1     Completed     0          14s
+MODIFIED   lifecycle-termination   0/1     Completed     0          15s
+DELETED    lifecycle-termination   0/1     Completed     0          15s

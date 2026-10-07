@@ -1,0 +1,13 @@
+EVENT      NAME                  READY   STATUS              RESTARTS   AGE
+ADDED      lifecycle-crashloop   0/1     ContainerCreating   0          0s
+MODIFIED   lifecycle-crashloop   0/1     ContainerCreating   0          0s
+MODIFIED   lifecycle-crashloop   1/1     Running             0          0s
+MODIFIED   lifecycle-crashloop   0/1     Error               0          3s
+MODIFIED   lifecycle-crashloop   1/1     Running             1 (0s ago)   3s
+MODIFIED   lifecycle-crashloop   0/1     Error               1 (4s ago)   7s
+MODIFIED   lifecycle-crashloop   0/1     CrashLoopBackOff    1 (13s ago)   19s
+MODIFIED   lifecycle-crashloop   1/1     Running             2 (13s ago)   19s
+MODIFIED   lifecycle-crashloop   0/1     Error               2 (16s ago)   22s
+MODIFIED   lifecycle-crashloop   0/1     CrashLoopBackOff    2 (26s ago)   48s
+MODIFIED   lifecycle-crashloop   1/1     Running             3 (26s ago)   48s
+MODIFIED   lifecycle-crashloop   0/1     Error               3 (29s ago)   51s

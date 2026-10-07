@@ -1,0 +1,4 @@
+EVENT      NAME                        READY   STATUS              RESTARTS   AGE
+ADDED      lifecycle-multi-container   0/2     ContainerCreating   0          0s
+MODIFIED   lifecycle-multi-container   0/2     ContainerCreating   0          0s
+MODIFIED   lifecycle-multi-container   2/2     Running             0          0s

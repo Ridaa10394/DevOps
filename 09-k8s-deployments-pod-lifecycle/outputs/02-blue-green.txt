@@ -1,0 +1,97 @@
+### Step 1 - deploy blue + green, Service points at blue
+$ kubectl apply -f 02-blue-green/
+deployment.apps/app-blue created
+deployment.apps/app-green created
+service/myapp-service created
+
+$ kubectl rollout status deployment/app-blue -n s10-bluegreen --timeout=120s
+Waiting for deployment "app-blue" rollout to finish: 0 of 3 updated replicas are available...
+Waiting for deployment "app-blue" rollout to finish: 1 of 3 updated replicas are available...
+Waiting for deployment "app-blue" rollout to finish: 2 of 3 updated replicas are available...
+deployment "app-blue" successfully rolled out
+
+$ kubectl rollout status deployment/app-green -n s10-bluegreen --timeout=120s
+deployment "app-green" successfully rolled out
+
+$ kubectl get deploy,pods -n s10-bluegreen -L slot,version
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE   SLOT    VERSION
+deployment.apps/app-blue    3/3     3            3           7s    blue    
+deployment.apps/app-green   3/3     3            3           7s    green   
+
+NAME                             READY   STATUS    RESTARTS   AGE    SLOT    VERSION
+pod/app-blue-7886c94dd6-8pf64    1/1     Running   0          7s     blue    v1
+pod/app-blue-7886c94dd6-ftvkr    1/1     Running   0          7s     blue    v1
+pod/app-blue-7886c94dd6-js4pm    1/1     Running   0          7s     blue    v1
+pod/app-green-57d8bc4476-7mc4t   1/1     Running   0          7s     green   v2
+pod/app-green-57d8bc4476-nn64b   1/1     Running   0          7s     green   v2
+pod/app-green-57d8bc4476-t726d   1/1     Running   0          7s     green   v2
+pod/client                       1/1     Running   0          2m7s           
+
+$ kubectl get svc myapp-service -n s10-bluegreen -o wide
+NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+myapp-service   ClusterIP   10.102.239.40   <none>        80/TCP    8s    app=myapp,slot=blue
+
+$ kubectl get endpointslices -n s10-bluegreen -l kubernetes.io/service-name=myapp-service
+NAME                  ADDRESSTYPE   PORTS   ENDPOINTS                                AGE
+myapp-service-2pwbw   IPv4          5678    10.244.0.106,10.244.0.108,10.244.0.109   8s
+
+$ kubectl exec -n s10-bluegreen client -- sh -c 'for i in 1 2 3 4 5 6; do curl -s http://myapp-service; done'
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+
+### Step 2 - switch the selector to green
+$ kubectl patch service myapp-service -n s10-bluegreen -p '{"spec":{"selector":{"app":"myapp","slot":"green"}}}'
+service/myapp-service patched
+
+$ kubectl get svc myapp-service -n s10-bluegreen -o wide
+NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+myapp-service   ClusterIP   10.102.239.40   <none>        80/TCP    10s   app=myapp,slot=green
+
+$ kubectl get endpointslices -n s10-bluegreen -l kubernetes.io/service-name=myapp-service
+NAME                  ADDRESSTYPE   PORTS   ENDPOINTS                                AGE
+myapp-service-2pwbw   IPv4          5678    10.244.0.107,10.244.0.110,10.244.0.111   10s
+
+$ kubectl exec -n s10-bluegreen client -- sh -c 'for i in 1 2 3 4 5 6; do curl -s http://myapp-service; done'
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+
+### Step 3 - instant rollback: flip back to blue
+$ kubectl patch service myapp-service -n s10-bluegreen -p '{"spec":{"selector":{"slot":"blue"}}}'
+service/myapp-service patched
+
+$ kubectl exec -n s10-bluegreen client -- sh -c 'for i in 1 2 3 4 5 6; do curl -s http://myapp-service; done'
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+Hello from BLUE (v1)
+
+$ kubectl patch service myapp-service -n s10-bluegreen -p '{"spec":{"selector":{"slot":"green"}}}'
+service/myapp-service patched
+
+$ kubectl exec -n s10-bluegreen client -- sh -c 'for i in 1 2 3 4 5 6; do curl -s http://myapp-service; done'
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+Hello from GREEN (v2)
+
+### Step 4 - green is live and verified, so scale blue to 0 (keep the Deployment around for rollback)
+$ kubectl scale deployment app-blue -n s10-bluegreen --replicas=0
+deployment.apps/app-blue scaled
+
+$ kubectl get deploy -n s10-bluegreen
+NAME        READY   UP-TO-DATE   AVAILABLE   AGE
+app-blue    3/0     3            3           14s
+app-green   3/3     3            3           14s
+

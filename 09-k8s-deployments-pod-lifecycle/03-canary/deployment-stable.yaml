@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-stable
+  namespace: s10-canary
+  labels:
+    app: myapp-canary
+    track: stable
+spec:
+  # 4 pod(s) out of 5 total behind the Service
+  replicas: 4
+  selector:
+    matchLabels:
+      app: myapp-canary
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: myapp-canary
+        track: stable
+        version: v1
+    spec:
+      containers:
+        - name: web
+          image: busybox:latest
+          imagePullPolicy: IfNotPresent
+          # tiny web server: write the response text, then serve it with busybox httpd
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /www
+              echo "STABLE v1" > /www/index.html
+              exec httpd -f -p 5678 -h /www
+          ports:
+            - containerPort: 5678
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              cpu: "50m"
+              memory: "32Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5678
+            initialDelaySeconds: 2
+            periodSeconds: 5

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-recreate-service
+  namespace: s10-recreate
+spec:
+  type: ClusterIP
+  selector:
+    app: app-recreate
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

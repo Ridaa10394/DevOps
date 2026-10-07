@@ -1,0 +1,170 @@
+########## apply 07-11
+$ kubectl apply -n s10-lifecycle -f pod-lifecycle/07-readiness.yaml -f pod-lifecycle/08-liveness.yaml -f pod-lifecycle/09-startup.yaml -f pod-lifecycle/10-init-container.yaml -f pod-lifecycle/11-multi-container.yaml
+pod/lifecycle-readiness created
+pod/lifecycle-liveness created
+pod/lifecycle-startup created
+pod/lifecycle-init created
+pod/lifecycle-multi-container created
+
+$ kubectl get pods -n s10-lifecycle lifecycle-readiness lifecycle-liveness lifecycle-startup lifecycle-init lifecycle-multi-container
+NAME                        READY   STATUS     RESTARTS   AGE
+lifecycle-readiness         0/1     Running    0          4s
+lifecycle-liveness          1/1     Running    0          4s
+lifecycle-startup           0/1     Running    0          4s
+lifecycle-init              0/1     Init:0/1   0          4s
+lifecycle-multi-container   2/2     Running    0          4s
+
+$ kubectl get pods -n s10-lifecycle lifecycle-readiness lifecycle-liveness lifecycle-startup lifecycle-init lifecycle-multi-container
+NAME                        READY   STATUS    RESTARTS   AGE
+lifecycle-readiness         1/1     Running   0          20s
+lifecycle-liveness          1/1     Running   0          20s
+lifecycle-startup           0/1     Running   0          20s
+lifecycle-init              1/1     Running   0          20s
+lifecycle-multi-container   2/2     Running   0          20s
+
+$ kubectl get pods -n s10-lifecycle lifecycle-readiness lifecycle-liveness lifecycle-startup lifecycle-init lifecycle-multi-container
+NAME                        READY   STATUS    RESTARTS   AGE
+lifecycle-readiness         1/1     Running   0          60s
+lifecycle-liveness          1/1     Running   0          60s
+lifecycle-startup           1/1     Running   0          60s
+lifecycle-init              1/1     Running   0          60s
+lifecycle-multi-container   2/2     Running   0          60s
+
+########## 07-readiness.yaml
+$ kubectl describe pod lifecycle-readiness -n s10-lifecycle | sed -n '/^Status:/p;/Readiness:/p;/State:/,/Restart Count/p;/^Conditions:/,/^Volumes:/p'
+Status:           Running
+    State:          Running
+      Started:      Wed, 07 Oct 2026 16:44:52 +0530
+    Ready:          True
+    Restart Count:  0
+    Readiness:      http-get http://:80/ delay=5s timeout=1s period=5s successThreshold=1 failureThreshold=3
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+
+########## 08-liveness.yaml
+$ kubectl logs lifecycle-liveness -n s10-lifecycle --previous
+Error from server (BadRequest): previous terminated container "app" in pod "lifecycle-liveness" not found
+
+$ kubectl describe pod lifecycle-liveness -n s10-lifecycle | sed -n '/^Status:/p;/Liveness:/p;/State:/,/Restart Count/p;/^Events:/,$p'
+Status:           Running
+    State:          Running
+      Started:      Wed, 07 Oct 2026 16:44:52 +0530
+    Ready:          True
+    Restart Count:  0
+    Liveness:       exec [sh -c test -f /tmp/healthy] delay=5s timeout=1s period=5s successThreshold=1 failureThreshold=2
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  60s                default-scheduler  Successfully assigned s10-lifecycle/lifecycle-liveness to minikube
+  Normal   Pulled     60s                kubelet            spec.containers{app}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Normal   Created    60s                kubelet            spec.containers{app}: Container created
+  Normal   Started    60s                kubelet            spec.containers{app}: Container started
+  Warning  Unhealthy  30s (x2 over 35s)  kubelet            spec.containers{app}: Liveness probe failed:
+  Normal   Killing    30s                kubelet            spec.containers{app}: Container app failed liveness probe, will be restarted
+
+########## 09-startup.yaml
+$ kubectl logs lifecycle-startup -n s10-lifecycle
+Application starting...
+Application started
+
+$ kubectl describe pod lifecycle-startup -n s10-lifecycle | sed -n '/^Status:/p;/Startup:/p;/State:/,/Restart Count/p;/^Events:/,$p'
+Status:           Running
+    State:          Running
+      Started:      Wed, 07 Oct 2026 16:44:52 +0530
+    Ready:          True
+    Restart Count:  0
+    Startup:        exec [sh -c test -f /tmp/started] delay=0s timeout=1s period=5s successThreshold=1 failureThreshold=10
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  60s                default-scheduler  Successfully assigned s10-lifecycle/lifecycle-startup to minikube
+  Normal   Pulled     60s                kubelet            spec.containers{slow-app}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Normal   Created    60s                kubelet            spec.containers{slow-app}: Container created
+  Normal   Started    60s                kubelet            spec.containers{slow-app}: Container started
+  Warning  Unhealthy  30s (x6 over 55s)  kubelet            spec.containers{slow-app}: Startup probe failed:
+
+########## 10-init-container.yaml
+$ kubectl logs lifecycle-init -n s10-lifecycle -c setup
+Init container running
+Init complete
+
+$ kubectl describe pod lifecycle-init -n s10-lifecycle | sed -n '/^Init Containers:/,/^Containers:/p;/^Conditions:/,/^Volumes:/p;/^Events:/,$p'
+Init Containers:
+  setup:
+    Container ID:  containerd://faffe4fab1b568183289379aaf846774a3bc32f11ff4d2ad0c7f8cc4dff451cf
+    Image:         busybox:latest
+    Image ID:      docker.io/library/busybox@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      sh
+      -c
+      echo 'Init container running'; sleep 10; echo 'Init complete'
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Wed, 07 Oct 2026 16:44:52 +0530
+      Finished:     Wed, 07 Oct 2026 16:45:02 +0530
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-v5qgc (ro)
+Containers:
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  60s   default-scheduler  Successfully assigned s10-lifecycle/lifecycle-init to minikube
+  Normal  Pulled     60s   kubelet            spec.initContainers{setup}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Normal  Created    60s   kubelet            spec.initContainers{setup}: Container created
+  Normal  Started    60s   kubelet            spec.initContainers{setup}: Container started
+  Normal  Pulled     49s   kubelet            spec.containers{app}: Container image "nginx:1.27-alpine" already present on machine and can be accessed by the pod
+  Normal  Created    49s   kubelet            spec.containers{app}: Container created
+  Normal  Started    49s   kubelet            spec.containers{app}: Container started
+
+########## 11-multi-container.yaml
+$ kubectl get pod lifecycle-multi-container -n s10-lifecycle -o jsonpath='{range .status.containerStatuses[*]}{.name}{"  ready="}{.ready}{"  "}{.state}{"
+"}{end}'
+app  ready=true  {"running":{"startedAt":"2026-10-07T11:14:52Z"}}
+sidecar  ready=true  {"running":{"startedAt":"2026-10-07T11:14:52Z"}}
+
+$ kubectl logs lifecycle-multi-container -n s10-lifecycle -c sidecar
+Sidecar is running
+Sidecar is running
+Sidecar is running
+Sidecar is running
+Sidecar is running
+Sidecar is running
+
+$ kubectl exec lifecycle-multi-container -n s10-lifecycle -c sidecar -- wget -qO- http://localhost:80 | head -4
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+
+$ kubectl describe pod lifecycle-multi-container -n s10-lifecycle | sed -n '/^Events:/,$p'
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  60s   default-scheduler  Successfully assigned s10-lifecycle/lifecycle-multi-container to minikube
+  Normal  Pulled     60s   kubelet            spec.containers{app}: Container image "nginx:1.27-alpine" already present on machine and can be accessed by the pod
+  Normal  Created    60s   kubelet            spec.containers{app}: Container created
+  Normal  Started    60s   kubelet            spec.containers{app}: Container started
+  Normal  Pulled     60s   kubelet            spec.containers{sidecar}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Normal  Created    60s   kubelet            spec.containers{sidecar}: Container created
+  Normal  Started    60s   kubelet            spec.containers{sidecar}: Container started
+

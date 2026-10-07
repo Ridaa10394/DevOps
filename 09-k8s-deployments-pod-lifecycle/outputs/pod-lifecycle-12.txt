@@ -1,0 +1,28 @@
+########## 12-termination.yaml
+$ kubectl apply -n s10-lifecycle -f pod-lifecycle/12-termination.yaml
+pod/lifecycle-termination created
+
+$ kubectl wait -n s10-lifecycle --for=condition=Ready pod/lifecycle-termination --timeout=60s
+pod/lifecycle-termination condition met
+
+$ kubectl get pod lifecycle-termination -n s10-lifecycle -o jsonpath='{.spec.terminationGracePeriodSeconds}'
+20
+
+$ date +%T; kubectl delete pod lifecycle-termination -n s10-lifecycle; date +%T
+16:46:13
+pod "lifecycle-termination" deleted from s10-lifecycle namespace
+16:46:26
+
+$ cat logs captured with: kubectl logs -f lifecycle-termination --timestamps
+2026-10-07T11:16:11.809215013Z Application running
+2026-10-07T11:16:15.813241959Z SIGTERM received; cleaning up...
+2026-10-07T11:16:25.818793714Z Cleanup complete
+
+$ watch output (kubectl get pod lifecycle-termination -w)
+EVENT      NAME                    READY   STATUS    RESTARTS   AGE
+ADDED      lifecycle-termination   1/1     Running   0          0s
+MODIFIED   lifecycle-termination   1/1     Terminating   0          2s
+MODIFIED   lifecycle-termination   1/1     Terminating   0          2s
+MODIFIED   lifecycle-termination   0/1     Completed     0          14s
+MODIFIED   lifecycle-termination   0/1     Completed     0          15s
+DELETED    lifecycle-termination   0/1     Completed     0          15s

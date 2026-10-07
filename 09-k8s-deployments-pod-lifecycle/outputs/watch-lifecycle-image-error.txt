@@ -1,0 +1,3 @@
+EVENT      NAME                    READY   STATUS              RESTARTS   AGE
+ADDED      lifecycle-image-error   0/1     ContainerCreating   0          0s
+MODIFIED   lifecycle-image-error   0/1     ContainerCreating   0          0s

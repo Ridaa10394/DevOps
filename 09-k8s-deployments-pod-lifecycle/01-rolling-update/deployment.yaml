@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-rolling
+  namespace: s10-rolling
+  labels:
+    app: app-rolling
+spec:
+  replicas: 4
+  revisionHistoryLimit: 5
+  # RollingUpdate: swap pods a few at a time so the Service never goes empty.
+  # maxSurge: 1       -> at most 1 extra pod above 4 during the update (so max 5)
+  # maxUnavailable: 0 -> never drop below 4 ready pods (zero downtime)
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: app-rolling
+  template:
+    metadata:
+      labels:
+        app: app-rolling
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "30m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5

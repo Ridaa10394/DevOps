@@ -1,0 +1,182 @@
+### Step 1 - deploy v1 (nginx:1.27-alpine)
+$ kubectl apply -f 01-rolling-update/
+deployment.apps/app-rolling created
+service/app-rolling-service unchanged
+
+$ kubectl annotate deployment/app-rolling -n s10-rolling kubernetes.io/change-cause="v1: nginx:1.27-alpine"
+deployment.apps/app-rolling annotated
+
+$ kubectl rollout status deployment/app-rolling -n s10-rolling --timeout=180s
+Waiting for deployment "app-rolling" rollout to finish: 0 of 4 updated replicas are available...
+Waiting for deployment "app-rolling" rollout to finish: 1 of 4 updated replicas are available...
+Waiting for deployment "app-rolling" rollout to finish: 2 of 4 updated replicas are available...
+Waiting for deployment "app-rolling" rollout to finish: 3 of 4 updated replicas are available...
+deployment "app-rolling" successfully rolled out
+
+$ kubectl get deploy,rs,pods -n s10-rolling -l app=app-rolling -o wide
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES              SELECTOR
+deployment.apps/app-rolling   4/4     4            4           6s    web          nginx:1.27-alpine   app=app-rolling
+
+NAME                                     DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES              SELECTOR
+replicaset.apps/app-rolling-65d78b447c   4         4         4       6s    web          nginx:1.27-alpine   app=app-rolling,pod-template-hash=65d78b447c
+
+NAME                               READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+pod/app-rolling-65d78b447c-mc2fw   1/1     Running   0          6s    10.244.0.78   minikube   <none>           <none>
+pod/app-rolling-65d78b447c-np9qm   1/1     Running   0          6s    10.244.0.75   minikube   <none>           <none>
+pod/app-rolling-65d78b447c-qf4q5   1/1     Running   0          6s    10.244.0.76   minikube   <none>           <none>
+pod/app-rolling-65d78b447c-xwq4d   1/1     Running   0          6s    10.244.0.77   minikube   <none>           <none>
+
+$ kubectl exec -n s10-rolling client -- curl -sI http://app-rolling-service | grep -i ^server
+Server: nginx/1.27.5
+
+$ kubectl describe deployment app-rolling -n s10-rolling | grep -E 'StrategyType|RollingUpdateStrategy|Image'
+StrategyType:           RollingUpdate
+RollingUpdateStrategy:  0 max unavailable, 1 max surge
+    Image:      nginx:1.27-alpine
+
+### Step 2 - rolling update to v2 (nginx:1.28-alpine) with a pod watch running in the background
+$ kubectl set image deployment/app-rolling web=nginx:1.28-alpine -n s10-rolling
+deployment.apps/app-rolling image updated
+
+$ kubectl annotate deployment/app-rolling -n s10-rolling kubernetes.io/change-cause='v2: nginx:1.28-alpine' --overwrite
+deployment.apps/app-rolling annotated
+
+$ kubectl get rs,pods -n s10-rolling -l app=app-rolling
+NAME                                     DESIRED   CURRENT   READY   AGE
+replicaset.apps/app-rolling-65d78b447c   4         4         4       19s
+replicaset.apps/app-rolling-6b8f47864    1         1         0       0s
+
+NAME                               READY   STATUS              RESTARTS   AGE
+pod/app-rolling-65d78b447c-mc2fw   1/1     Running             0          19s
+pod/app-rolling-65d78b447c-np9qm   1/1     Running             0          19s
+pod/app-rolling-65d78b447c-qf4q5   1/1     Running             0          19s
+pod/app-rolling-65d78b447c-xwq4d   1/1     Running             0          19s
+pod/app-rolling-6b8f47864-7b72v    0/1     ContainerCreating   0          0s
+
+$ kubectl rollout status deployment/app-rolling -n s10-rolling --timeout=180s
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "app-rolling" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "app-rolling" rollout to finish: 1 old replicas are pending termination...
+deployment "app-rolling" successfully rolled out
+
+$ kubectl get rs -n s10-rolling -o wide
+NAME                     DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES              SELECTOR
+app-rolling-65d78b447c   0         0         0       46s   web          nginx:1.27-alpine   app=app-rolling,pod-template-hash=65d78b447c
+app-rolling-6b8f47864    4         4         4       27s   web          nginx:1.28-alpine   app=app-rolling,pod-template-hash=6b8f47864
+
+$ kubectl get pods -n s10-rolling -l app=app-rolling
+NAME                          READY   STATUS    RESTARTS   AGE
+app-rolling-6b8f47864-7b72v   1/1     Running   0          27s
+app-rolling-6b8f47864-82vv7   1/1     Running   0          9s
+app-rolling-6b8f47864-c4tl4   1/1     Running   0          21s
+app-rolling-6b8f47864-w7wzw   1/1     Running   0          15s
+
+$ kubectl exec -n s10-rolling client -- curl -sI http://app-rolling-service | grep -i ^server
+Server: nginx/1.28.3
+
+$ kubectl rollout history deployment/app-rolling -n s10-rolling
+deployment.apps/app-rolling 
+REVISION  CHANGE-CAUSE
+1         v1: nginx:1.27-alpine
+2         v2: nginx:1.28-alpine
+
+
+$ kubectl rollout history deployment/app-rolling -n s10-rolling --revision=2 | grep -E 'Image|change-cause'
+  Annotations:	kubernetes.io/change-cause: v2: nginx:1.28-alpine
+    Image:	nginx:1.28-alpine
+
+$ kubectl get events -n s10-rolling --field-selector involvedObject.kind=Deployment --sort-by=.lastTimestamp
+LAST SEEN   TYPE     REASON              OBJECT                   MESSAGE
+15m         Normal   ScalingReplicaSet   deployment/app-rolling   Scaled up replica set app-rolling-57dc7d44c from 0 to 4
+3m50s       Normal   ScalingReplicaSet   deployment/app-rolling   Scaled up replica set app-rolling-65d78b447c from 0 to 4
+46s         Normal   ScalingReplicaSet   deployment/app-rolling   Scaled up replica set app-rolling-65d78b447c from 0 to 4
+27s         Normal   ScalingReplicaSet   deployment/app-rolling   Scaled up replica set app-rolling-6b8f47864 from 0 to 1
+21s         Normal   ScalingReplicaSet   deployment/app-rolling   Scaled down replica set app-rolling-65d78b447c from 4 to 3
+21s         Normal   ScalingReplicaSet   deployment/app-rolling   Scaled up replica set app-rolling-6b8f47864 from 1 to 2
+15s         Normal   ScalingReplicaSet   deployment/app-rolling   Scaled down replica set app-rolling-65d78b447c from 3 to 2
+15s         Normal   ScalingReplicaSet   deployment/app-rolling   Scaled up replica set app-rolling-6b8f47864 from 2 to 3
+9s          Normal   ScalingReplicaSet   deployment/app-rolling   Scaled down replica set app-rolling-65d78b447c from 2 to 1
+9s          Normal   ScalingReplicaSet   deployment/app-rolling   Scaled up replica set app-rolling-6b8f47864 from 3 to 4
+3s          Normal   ScalingReplicaSet   deployment/app-rolling   Scaled down replica set app-rolling-65d78b447c from 1 to 0
+
+### Step 3 - rollback with rollout undo
+$ kubectl rollout undo deployment/app-rolling -n s10-rolling
+Warning: resource deployments/app-rolling was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/app-rolling rolled back
+
+$ kubectl rollout status deployment/app-rolling -n s10-rolling --timeout=180s
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "app-rolling" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "app-rolling" rollout to finish: 1 old replicas are pending termination...
+deployment "app-rolling" successfully rolled out
+
+$ kubectl get rs -n s10-rolling -o wide
+NAME                     DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES              SELECTOR
+app-rolling-65d78b447c   4         4         4       79s   web          nginx:1.27-alpine   app=app-rolling,pod-template-hash=65d78b447c
+app-rolling-6b8f47864    0         0         0       60s   web          nginx:1.28-alpine   app=app-rolling,pod-template-hash=6b8f47864
+
+$ kubectl exec -n s10-rolling client -- curl -sI http://app-rolling-service | grep -i ^server
+Server: nginx/1.27.5
+
+$ kubectl rollout history deployment/app-rolling -n s10-rolling
+deployment.apps/app-rolling 
+REVISION  CHANGE-CAUSE
+2         v2: nginx:1.28-alpine
+3         v1: nginx:1.27-alpine
+
+
+$ kubectl rollout undo deployment/app-rolling -n s10-rolling --to-revision=2
+Warning: resource deployments/app-rolling was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/app-rolling rolled back
+
+$ kubectl rollout status deployment/app-rolling -n s10-rolling --timeout=180s
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "app-rolling" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "app-rolling" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "app-rolling" rollout to finish: 1 old replicas are pending termination...
+deployment "app-rolling" successfully rolled out
+
+$ kubectl get deploy app-rolling -n s10-rolling -o wide
+NAME          READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES              SELECTOR
+app-rolling   4/4     4            4           103s   web          nginx:1.28-alpine   app=app-rolling
+
+$ kubectl rollout history deployment/app-rolling -n s10-rolling
+deployment.apps/app-rolling 
+REVISION  CHANGE-CAUSE
+3         v1: nginx:1.27-alpine
+4         v2: nginx:1.28-alpine
+
+

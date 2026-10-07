@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-recreate
+  namespace: s10-recreate
+  labels:
+    app: app-recreate
+spec:
+  replicas: 3
+  # Recreate: kill ALL old pods first, only then create the new ones.
+  # No mixed versions ever, but there is a short window with zero pods (downtime).
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: app-recreate
+  template:
+    metadata:
+      labels:
+        app: app-recreate
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "30m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"

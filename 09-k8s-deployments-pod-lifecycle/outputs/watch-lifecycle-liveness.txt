@@ -1,0 +1,5 @@
+EVENT      NAME                 READY   STATUS              RESTARTS   AGE
+ADDED      lifecycle-liveness   0/1     ContainerCreating   0          0s
+MODIFIED   lifecycle-liveness   0/1     ContainerCreating   0          0s
+MODIFIED   lifecycle-liveness   1/1     Running             0          0s
+MODIFIED   lifecycle-liveness   1/1     Running             1 (0s ago)   60s

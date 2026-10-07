@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-green
+  namespace: s10-bluegreen
+  labels:
+    app: myapp
+    slot: green
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+      slot: green
+  template:
+    metadata:
+      labels:
+        app: myapp
+        slot: green
+        version: v2
+    spec:
+      containers:
+        - name: web
+          image: busybox:latest
+          imagePullPolicy: IfNotPresent
+          # tiny web server: write the response text, then serve it with busybox httpd
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /www
+              echo "Hello from GREEN (v2)" > /www/index.html
+              exec httpd -f -p 5678 -h /www
+          ports:
+            - containerPort: 5678
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              cpu: "50m"
+              memory: "32Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5678
+            initialDelaySeconds: 2
+            periodSeconds: 5

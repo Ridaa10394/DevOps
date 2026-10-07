@@ -1,0 +1,17 @@
+# One Service. The "slot" label in the selector is the switch:
+#   slot: blue  -> all traffic to app-blue (v1)
+#   slot: green -> all traffic to app-green (v2)
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+  namespace: s10-bluegreen
+spec:
+  type: ClusterIP
+  selector:
+    app: myapp
+    slot: blue
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5678

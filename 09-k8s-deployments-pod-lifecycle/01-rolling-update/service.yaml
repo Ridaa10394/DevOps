@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-rolling-service
+  namespace: s10-rolling
+spec:
+  type: ClusterIP
+  selector:
+    app: app-rolling
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

@@ -1,0 +1,83 @@
+### Step 1 - deploy v1 (nginx:1.27-alpine) with strategy Recreate
+$ kubectl apply -f 04-recreate/
+deployment.apps/app-recreate created
+service/app-recreate-service created
+
+$ kubectl annotate deployment/app-recreate -n s10-recreate kubernetes.io/change-cause='v1: nginx:1.27-alpine'
+deployment.apps/app-recreate annotated
+
+$ kubectl rollout status deployment/app-recreate -n s10-recreate --timeout=120s
+Waiting for deployment "app-recreate" rollout to finish: 0 of 3 updated replicas are available...
+Waiting for deployment "app-recreate" rollout to finish: 1 of 3 updated replicas are available...
+Waiting for deployment "app-recreate" rollout to finish: 2 of 3 updated replicas are available...
+deployment "app-recreate" successfully rolled out
+
+$ kubectl describe deployment app-recreate -n s10-recreate | grep -E 'StrategyType|Image'
+StrategyType:       Recreate
+    Image:      nginx:1.27-alpine
+
+$ kubectl get rs,pods -n s10-recreate -l app=app-recreate
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/app-recreate-57ddb97459   3         3         3       1s
+
+NAME                                READY   STATUS    RESTARTS   AGE
+pod/app-recreate-57ddb97459-4mwmv   1/1     Running   0          1s
+pod/app-recreate-57ddb97459-stjrv   1/1     Running   0          1s
+pod/app-recreate-57ddb97459-ws2c9   1/1     Running   0          1s
+
+$ kubectl exec -n s10-recreate client -- curl -sI http://app-recreate-service | grep -i ^server
+command terminated with exit code 7
+
+### Step 2 - update to nginx:1.28-alpine while watching pods + probing the Service
+$ kubectl set image deployment/app-recreate web=nginx:1.28-alpine -n s10-recreate
+deployment.apps/app-recreate image updated
+
+$ kubectl annotate deployment/app-recreate -n s10-recreate kubernetes.io/change-cause='v2: nginx:1.28-alpine' --overwrite
+deployment.apps/app-recreate annotated
+
+$ kubectl get rs,pods -n s10-recreate -l app=app-recreate
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/app-recreate-57ddb97459   0         0         0       3s
+
+NAME                                READY   STATUS        RESTARTS   AGE
+pod/app-recreate-57ddb97459-4mwmv   1/1     Terminating   0          3s
+pod/app-recreate-57ddb97459-stjrv   1/1     Terminating   0          3s
+pod/app-recreate-57ddb97459-ws2c9   1/1     Terminating   0          3s
+
+$ kubectl rollout status deployment/app-recreate -n s10-recreate --timeout=120s
+Waiting for deployment "app-recreate" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "app-recreate" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "app-recreate" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "app-recreate" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "app-recreate" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "app-recreate" rollout to finish: 0 of 3 updated replicas are available...
+Waiting for deployment "app-recreate" rollout to finish: 1 of 3 updated replicas are available...
+Waiting for deployment "app-recreate" rollout to finish: 2 of 3 updated replicas are available...
+deployment "app-recreate" successfully rolled out
+
+$ kubectl get rs,pods -n s10-recreate -l app=app-recreate -o wide
+NAME                                      DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES              SELECTOR
+replicaset.apps/app-recreate-57ddb97459   0         0         0       34s   web          nginx:1.27-alpine   app=app-recreate,pod-template-hash=57ddb97459
+replicaset.apps/app-recreate-5f6f4f877b   3         3         3       30s   web          nginx:1.28-alpine   app=app-recreate,pod-template-hash=5f6f4f877b
+
+NAME                                READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+pod/app-recreate-5f6f4f877b-28dmd   1/1     Running   0          30s   10.244.0.151   minikube   <none>           <none>
+pod/app-recreate-5f6f4f877b-6h9sx   1/1     Running   0          30s   10.244.0.150   minikube   <none>           <none>
+pod/app-recreate-5f6f4f877b-7f49x   1/1     Running   0          30s   10.244.0.149   minikube   <none>           <none>
+
+$ kubectl exec -n s10-recreate client -- curl -sI http://app-recreate-service | grep -i ^server
+Server: nginx/1.28.3
+
+$ kubectl rollout history deployment/app-recreate -n s10-recreate
+deployment.apps/app-recreate 
+REVISION  CHANGE-CAUSE
+1         v1: nginx:1.27-alpine
+2         v2: nginx:1.28-alpine
+
+
+$ kubectl get events -n s10-recreate --field-selector involvedObject.kind=Deployment --sort-by=.lastTimestamp
+LAST SEEN   TYPE     REASON              OBJECT                    MESSAGE
+34s         Normal   ScalingReplicaSet   deployment/app-recreate   Scaled up replica set app-recreate-57ddb97459 from 0 to 3
+31s         Normal   ScalingReplicaSet   deployment/app-recreate   Scaled down replica set app-recreate-57ddb97459 from 3 to 0
+30s         Normal   ScalingReplicaSet   deployment/app-recreate   Scaled up replica set app-recreate-5f6f4f877b from 0 to 3
+

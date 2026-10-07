@@ -1,0 +1,6 @@
+EVENT      NAME             READY   STATUS     RESTARTS   AGE
+ADDED      lifecycle-init   0/1     Init:0/1   0          0s
+MODIFIED   lifecycle-init   0/1     Init:0/1   0          0s
+MODIFIED   lifecycle-init   0/1     Init:0/1   0          0s
+MODIFIED   lifecycle-init   0/1     PodInitializing   0          11s
+MODIFIED   lifecycle-init   1/1     Running           0          11s

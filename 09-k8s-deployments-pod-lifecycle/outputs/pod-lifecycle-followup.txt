@@ -1,0 +1,93 @@
+########## follow-up a couple of minutes later
+$ kubectl get pods -n s10-lifecycle
+NAME                        READY   STATUS              RESTARTS       AGE
+lifecycle-crashloop         0/1     Error               4 (2m7s ago)   2m58s
+lifecycle-failed            0/1     Error               0              2m58s
+lifecycle-image-error       0/1     ContainerCreating   0              2m58s
+lifecycle-init              1/1     Running             0              68s
+lifecycle-liveness          1/1     Running             1 (8s ago)     68s
+lifecycle-multi-container   2/2     Running             0              68s
+lifecycle-pending           0/1     Pending             0              3m27s
+lifecycle-readiness         1/1     Running             0              68s
+lifecycle-running           1/1     Running             0              3m28s
+lifecycle-startup           1/1     Running             0              68s
+lifecycle-succeeded         0/1     Completed           0              2m58s
+
+$ kubectl get pods -n s10-lifecycle -o 'custom-columns=NAME:.metadata.name,PHASE:.status.phase,RESTARTS:.status.containerStatuses[0].restartCount'
+NAME                        PHASE       RESTARTS
+lifecycle-crashloop         Running     4
+lifecycle-failed            Failed      0
+lifecycle-image-error       Pending     0
+lifecycle-init              Running     0
+lifecycle-liveness          Running     1
+lifecycle-multi-container   Running     0
+lifecycle-pending           Pending     <none>
+lifecycle-readiness         Running     0
+lifecycle-running           Running     0
+lifecycle-startup           Running     0
+lifecycle-succeeded         Succeeded   0
+
+$ kubectl logs lifecycle-liveness -n s10-lifecycle --previous
+App started
+Health file removed
+
+$ kubectl describe pod lifecycle-liveness -n s10-lifecycle | sed -n '/State:/,/Restart Count/p;/^Events:/,$p'
+    State:          Running
+      Started:      Wed, 07 Oct 2026 16:45:52 +0530
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    137
+      Started:      Wed, 07 Oct 2026 16:44:52 +0530
+      Finished:     Wed, 07 Oct 2026 16:45:52 +0530
+    Ready:          True
+    Restart Count:  1
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  69s                default-scheduler  Successfully assigned s10-lifecycle/lifecycle-liveness to minikube
+  Warning  Unhealthy  39s (x2 over 44s)  kubelet            spec.containers{app}: Liveness probe failed:
+  Normal   Killing    39s                kubelet            spec.containers{app}: Container app failed liveness probe, will be restarted
+  Normal   Pulled     9s (x2 over 69s)   kubelet            spec.containers{app}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Normal   Created    9s (x2 over 69s)   kubelet            spec.containers{app}: Container created
+  Normal   Started    9s (x2 over 69s)   kubelet            spec.containers{app}: Container started
+
+$ kubectl logs lifecycle-crashloop -n s10-lifecycle --previous
+unable to retrieve container logs for containerd://1ea8a64f0c9825b5c7715001195cbfa3ea5755fdadfd06f4520f445d240ff7e8
+$ kubectl describe pod lifecycle-crashloop -n s10-lifecycle | sed -n '/State:/,/Restart Count/p;/^Events:/,$p'
+    State:          Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Wed, 07 Oct 2026 16:44:43 +0530
+      Finished:     Wed, 07 Oct 2026 16:44:46 +0530
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Wed, 07 Oct 2026 16:43:50 +0530
+      Finished:     Wed, 07 Oct 2026 16:43:53 +0530
+    Ready:          False
+    Restart Count:  4
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  2m59s                default-scheduler  Successfully assigned s10-lifecycle/lifecycle-crashloop to minikube
+  Normal   Pulled     78s (x5 over 2m59s)  kubelet            spec.containers{crashing-app}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Normal   Created    78s (x5 over 2m59s)  kubelet            spec.containers{crashing-app}: Container created
+  Normal   Started    78s (x5 over 2m59s)  kubelet            spec.containers{crashing-app}: Container started
+  Warning  BackOff    74s (x4 over 2m52s)  kubelet            spec.containers{crashing-app}: Back-off restarting failed container crashing-app in pod lifecycle-crashloop_s10-lifecycle(ad1ff9f3-e912-4ac5-b022-6a910d649935)
+
+$ kubectl describe pod lifecycle-image-error -n s10-lifecycle | sed -n '/^Status:/p;/State:/,/Restart Count/p;/^Events:/,$p'
+Status:           Pending
+    State:          Waiting
+      Reason:       ContainerCreating
+    Ready:          False
+    Restart Count:  0
+Events:
+  Type    Reason     Age    From               Message
+  ----    ------     ----   ----               -------
+  Normal  Scheduled  2m59s  default-scheduler  Successfully assigned s10-lifecycle/lifecycle-image-error to minikube
+  Normal  Pulling    2m59s  kubelet            spec.containers{broken-image}: Pulling image "jakwehrgkaejw:kahsdfgkhj"
+
+$ kubectl logs lifecycle-crashloop -n s10-lifecycle
+Application started
+Application crashed
+
