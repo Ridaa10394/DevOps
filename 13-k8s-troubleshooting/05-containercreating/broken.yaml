@@ -1,0 +1,22 @@
+# BUG: mounts a ConfigMap and a Secret that were never created
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mount-demo
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.27
+      volumeMounts:
+        - name: site-config
+          mountPath: /usr/share/nginx/html
+        - name: tls
+          mountPath: /etc/tls
+          readOnly: true
+  volumes:
+    - name: site-config
+      configMap:
+        name: site-config
+    - name: tls
+      secret:
+        secretName: site-tls

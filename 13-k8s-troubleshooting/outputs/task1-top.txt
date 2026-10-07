@@ -1,0 +1,24 @@
+$ kubectl top nodes
+NAME       CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+minikube   2653m        17%      2318Mi          29%         
+
+$ kubectl -n s14 top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+get-demo    0m           11Mi            
+logs-demo   1m           0Mi             
+
+$ kubectl -n s14 top pod logs-demo --containers
+POD         NAME      CPU(cores)   MEMORY(bytes)   
+logs-demo   app       1m           0Mi             
+logs-demo   sidecar   1m           0Mi             
+
+$ kubectl top pods -A --sort-by=memory | grep -E "NAMESPACE|s14" | head -8
+NAMESPACE               NAME                                       CPU(cores)   MEMORY(bytes)   
+s14-oom                 oom-demo                                   2m           109Mi           
+s14-mount               mount-demo                                 0m           12Mi            
+s14-netpol              api                                        0m           11Mi            
+s14                     get-demo                                   0m           11Mi            
+s14-dns-backend         orders-75f4959994-42bfp                    1m           11Mi            
+s14-svc                 web-557577df75-fkwmb                       0m           11Mi            
+s14-pending             pending-demo                               0m           11Mi            
+

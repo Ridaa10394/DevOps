@@ -1,0 +1,71 @@
+### (earlier status sweep, trimmed to this pod)
+$ kubectl get pods -A | grep -E 's14-|metrics'
+s14-image               image-demo                                 0/1     ImagePullBackOff             0               34m
+
+### 1 identify
+$ kubectl -n s14-image get pods
+NAME         READY   STATUS         RESTARTS   AGE
+image-demo   0/1     ErrImagePull   0          34m
+
+### 2 investigate
+$ kubectl -n s14-image describe pod image-demo | sed -n "/^Containers:/,/Ready:/p;/^Events:/,\$p"
+Containers:
+  app:
+    Container ID:   
+    Image:          nginx:this-tag-does-not-exist
+    Image ID:       
+    Port:           <none>
+    Host Port:      <none>
+    State:          Waiting
+      Reason:       ErrImagePull
+    Ready:          False
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  34m                  default-scheduler  Successfully assigned s14-image/image-demo to minikube
+  Normal   Pulling    2m4s (x2 over 34m)   kubelet            spec.containers{app}: Pulling image "nginx:this-tag-does-not-exist"
+  Warning  Failed     23s (x2 over 2m19s)  kubelet            spec.containers{app}: Failed to pull image "nginx:this-tag-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/library/nginx:this-tag-does-not-exist": failed to resolve reference "docker.io/library/nginx:this-tag-does-not-exist": docker.io/library/nginx:this-tag-does-not-exist: not found
+  Warning  Failed     23s (x2 over 2m19s)  kubelet            spec.containers{app}: Error: ErrImagePull
+  Normal   BackOff    9s (x2 over 2m18s)   kubelet            spec.containers{app}: Back-off pulling image "nginx:this-tag-does-not-exist"
+  Warning  Failed     9s (x2 over 2m18s)   kubelet            spec.containers{app}: Error: ImagePullBackOff
+
+$ kubectl -n s14-image events --for pod/image-demo --types=Warning
+LAST SEEN             TYPE      REASON   OBJECT           MESSAGE
+23s (x2 over 2m19s)   Warning   Failed   Pod/image-demo   Failed to pull image "nginx:this-tag-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/library/nginx:this-tag-does-not-exist": failed to resolve reference "docker.io/library/nginx:this-tag-does-not-exist": docker.io/library/nginx:this-tag-does-not-exist: not found
+23s (x2 over 2m19s)   Warning   Failed   Pod/image-demo   Error: ErrImagePull
+9s (x2 over 2m18s)    Warning   Failed   Pod/image-demo   Error: ImagePullBackOff
+
+$ kubectl -n s14-image logs image-demo
+Error from server (BadRequest): container "app" in pod "image-demo" is waiting to start: image can't be pulled
+
+$ kubectl -n s14-image get pod image-demo -o jsonpath='{.spec.containers[0].image}{"\n"}{.status.containerStatuses[0].state.waiting.message}{"\n"}'
+nginx:this-tag-does-not-exist
+rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/library/nginx:this-tag-does-not-exist": failed to resolve reference "docker.io/library/nginx:this-tag-does-not-exist": docker.io/library/nginx:this-tag-does-not-exist: not found
+
+$ curl -s "https://hub.docker.com/v2/repositories/library/nginx/tags/this-tag-does-not-exist" ; echo
+{"message":"httperror 404: tag 'this-tag-does-not-exist' not found","errinfo":{"namespace":"library","repository":"nginx","tag":"this-tag-does-not-exist"}}
+
+$ curl -s "https://hub.docker.com/v2/repositories/library/nginx/tags/1.27" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[\"name\"], d[\"tag_status\"], d[\"last_updated\"])"
+1.27 active 2025-06-11T02:51:15.256329Z
+
+### 4 fix
+$ kubectl -n s14-image delete pod image-demo
+pod "image-demo" deleted from s14-image namespace
+
+$ kubectl -n s14-image apply -f 02-imagepullbackoff/fixed.yaml
+pod/image-demo created
+
+### 5 verify
+$ kubectl -n s14-image get pods
+NAME         READY   STATUS    RESTARTS   AGE
+image-demo   1/1     Running   0          11s
+
+$ kubectl -n s14-image describe pod image-demo | sed -n "/^Events:/,\$p"
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  11s   default-scheduler  Successfully assigned s14-image/image-demo to minikube
+  Normal  Pulled     10s   kubelet            spec.containers{app}: Container image "nginx:1.27" already present on machine and can be accessed by the pod
+  Normal  Created    10s   kubelet            spec.containers{app}: Container created
+  Normal  Started    10s   kubelet            spec.containers{app}: Container started
+

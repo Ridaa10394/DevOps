@@ -1,0 +1,23 @@
+# BUG: app needs ~100MB of RAM but the memory limit is 50Mi
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oom-demo
+spec:
+  containers:
+    - name: memory-hungry
+      image: python:3.11-alpine
+      command:
+        - python3
+        - -c
+        - |
+          import time
+          print("loading 100MB cache...", flush=True)
+          cache = [b"x" * (10 * 1024 * 1024) for _ in range(10)]
+          print("cache loaded, serving", flush=True)
+          time.sleep(3600)
+      resources:
+        requests:
+          memory: 32Mi
+        limits:
+          memory: 50Mi

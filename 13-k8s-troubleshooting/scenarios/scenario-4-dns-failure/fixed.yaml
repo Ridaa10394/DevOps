@@ -1,0 +1,50 @@
+# FIX: there was no "postgres-db-wrong-name" service and no "production" namespace.
+# Create a stand-in postgres-db (busybox nc listening on 5432) + Service in the same
+# namespace and point the client at the correct name.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres-db
+  labels:
+    tier: triage-gauntlet
+    app: postgres-db
+spec:
+  containers:
+    - name: fake-db
+      image: busybox:1.36
+      command: ["sh", "-c", "while true; do nc -l -p 5432 -e echo 'fake-postgres ready'; done"]
+      ports:
+        - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-db
+  labels:
+    tier: triage-gauntlet
+spec:
+  selector:
+    app: postgres-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fail-4-dns-failure-pod
+  labels:
+    tier: triage-gauntlet
+    scenario: dns-failure
+spec:
+  containers:
+    - name: client
+      image: curlimages/curl:8.6.0
+      command: ["sh", "-c"]
+      args:
+        - |
+          echo "Attempting connection to internal database...";
+          nslookup postgres-db.s14-triage.svc.cluster.local | tail -2
+          nc -z -w 3 postgres-db.s14-triage.svc.cluster.local 5432 && echo "DB port 5432 reachable" || echo "DB unreachable"
+          echo "Process sleeping...";
+          sleep 3600

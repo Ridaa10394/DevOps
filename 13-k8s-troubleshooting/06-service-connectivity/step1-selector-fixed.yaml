@@ -1,0 +1,12 @@
+# intermediate: selector fixed, targetPort still wrong (8080)
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP

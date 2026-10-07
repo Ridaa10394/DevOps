@@ -1,0 +1,90 @@
+### baseline (no policy yet)
+$ kubectl -n s14-netpol exec frontend -- wget -qO- -T 3 http://api | grep -o "<title>.*</title>"
+<title>Welcome to nginx!</title>
+
+### apply broken.yaml
+$ kubectl -n s14-netpol apply -f 08-pod-networking/broken.yaml
+networkpolicy.networking.k8s.io/api-ingress created
+
+### 1 identify
+$ kubectl -n s14-netpol exec frontend -- wget -qO- -T 3 http://api
+wget: download timed out
+command terminated with exit code 1
+
+### 2 investigate
+$ kubectl -n s14-netpol get pods -o wide --show-labels
+NAME       READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES   LABELS
+api        1/1     Running   0          29s   10.244.0.185   minikube   <none>           <none>            app=api
+frontend   1/1     Running   0          29s   10.244.0.186   minikube   <none>           <none>            role=frontend
+
+$ kubectl -n s14-netpol get svc,endpoints api
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/api   ClusterIP   10.100.181.254   <none>        80/TCP    29s
+
+NAME            ENDPOINTS         AGE
+endpoints/api   10.244.0.185:80   29s
+
+$ kubectl -n s14-netpol exec frontend -- nslookup api.s14-netpol.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	api.s14-netpol.svc.cluster.local
+Address: 10.100.181.254
+
+
+$ kubectl -n s14-netpol exec frontend -- wget -qO- -T 3 http://$(kubectl -n s14-netpol get pod api -o jsonpath={.status.podIP})
+wget: download timed out
+command terminated with exit code 1
+
+$ kubectl -n s14-netpol exec api -- curl -s -o /dev/null -w "%{http_code}\n" http://localhost
+200
+
+$ kubectl -n s14-netpol get networkpolicy
+NAME          POD-SELECTOR   AGE
+api-ingress   app=api        9s
+
+$ kubectl -n s14-netpol describe networkpolicy api-ingress
+Name:         api-ingress
+Namespace:    s14-netpol
+Created on:   2026-10-07 16:48:57 +0530 IST
+Labels:       <none>
+Annotations:  <none>
+Spec:
+  PodSelector:     app=api
+  Allowing ingress traffic:
+    To Port: 80/TCP
+    From:
+      PodSelector: role=admin
+  Not affecting egress traffic
+  Policy Types: Ingress
+
+$ kubectl -n kube-system get pods -l app=kindnet
+NAME            READY   STATUS    RESTARTS   AGE
+kindnet-kz4qr   1/1     Running   0          31m
+
+### 4 fix
+$ kubectl -n s14-netpol apply -f 08-pod-networking/fixed.yaml
+networkpolicy.networking.k8s.io/api-ingress configured
+
+### 5 verify
+$ kubectl -n s14-netpol describe networkpolicy api-ingress | sed -n "/Allowing ingress/,/Not affecting/p"
+  Allowing ingress traffic:
+    To Port: 80/TCP
+    From:
+      PodSelector: role=admin
+    From:
+      PodSelector: role=frontend
+  Not affecting egress traffic
+
+$ kubectl -n s14-netpol exec frontend -- wget -qO- -T 3 http://api | grep -o "<title>.*</title>"
+<title>Welcome to nginx!</title>
+
+$ kubectl -n s14-netpol run intruder --image=busybox:1.36 --labels=role=random --restart=Never --rm -i --command -- wget -qO- -T 3 http://api
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+wget: download timed out
+pod "intruder" deleted from s14-netpol namespace
+pod s14-netpol/intruder terminated (Error)
+

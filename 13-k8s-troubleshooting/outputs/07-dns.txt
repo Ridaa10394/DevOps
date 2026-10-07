@@ -1,0 +1,130 @@
+### 1 identify
+$ kubectl -n s14-dns get pods
+NAME         READY   STATUS    RESTARTS   AGE
+dns-client   1/1     Running   0          7m44s
+
+$ kubectl -n s14-dns logs dns-client --tail=4
+curl: (6) Could not resolve host: orders-service
+11:30:52 calling http://orders-service
+curl: (6) Could not resolve host: orders-service
+HTTP 000
+
+### 2 investigate
+$ kubectl -n s14-dns exec dns-client -- nslookup orders-service
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+** server can't find orders-service.cluster.local: NXDOMAIN
+
+** server can't find orders-service.s14-dns.svc.cluster.local: NXDOMAIN
+
+** server can't find orders-service.cluster.local: NXDOMAIN
+
+** server can't find orders-service.s14-dns.svc.cluster.local: NXDOMAIN
+
+** server can't find orders-service.svc.cluster.local: NXDOMAIN
+
+** server can't find orders-service.svc.cluster.local: NXDOMAIN
+
+command terminated with exit code 1
+
+$ kubectl -n s14-dns exec dns-client -- cat /etc/resolv.conf
+search s14-dns.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+
+$ kubectl -n kube-system get pods -l k8s-app=kube-dns
+NAME                       READY   STATUS    RESTARTS   AGE
+coredns-559f6c778d-hkp62   1/1     Running   0          42m
+
+$ kubectl -n s14-dns exec dns-client -- nslookup kubernetes.default
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Non-authoritative answer:
+
+** server can't find kubernetes.default: NXDOMAIN
+
+command terminated with exit code 1
+
+$ kubectl get svc -A | grep -E "NAMESPACE|orders"
+NAMESPACE               NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+s14-dns-backend         orders-api                           ClusterIP      10.96.140.1      <none>        80/TCP                       37m
+
+$ kubectl -n s14-dns exec dns-client -- nslookup orders-api
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+** server can't find orders-api.cluster.local: NXDOMAIN
+
+** server can't find orders-api.s14-dns.svc.cluster.local: NXDOMAIN
+
+** server can't find orders-api.svc.cluster.local: NXDOMAIN
+
+** server can't find orders-api.cluster.local: NXDOMAIN
+
+** server can't find orders-api.s14-dns.svc.cluster.local: NXDOMAIN
+
+** server can't find orders-api.svc.cluster.local: NXDOMAIN
+
+command terminated with exit code 1
+
+$ kubectl -n s14-dns exec dns-client -- nslookup orders-api.s14-dns-backend
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Non-authoritative answer:
+
+** server can't find orders-api.s14-dns-backend: NXDOMAIN
+
+command terminated with exit code 1
+
+$ kubectl -n s14-dns-backend get endpoints orders-api
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS         AGE
+orders-api   10.244.0.190:80   37m
+
+### 4 fix
+$ kubectl -n s14-dns delete pod dns-client
+pod "dns-client" deleted from s14-dns namespace
+
+$ kubectl apply -f 07-dns/fixed.yaml
+pod/dns-client created
+
+### 5 verify
+$ kubectl -n s14-dns get pods
+NAME         READY   STATUS    RESTARTS   AGE
+dns-client   1/1     Running   0          13s
+
+$ kubectl -n s14-dns logs dns-client --tail=4
+11:31:29 calling http://orders-api.s14-dns-backend.svc.cluster.local
+HTTP 200
+11:31:39 calling http://orders-api.s14-dns-backend.svc.cluster.local
+HTTP 200
+
+$ kubectl -n s14-dns exec dns-client -- nslookup orders-api.s14-dns-backend.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Name:	orders-api.s14-dns-backend.svc.cluster.local
+Address: 10.96.140.1
+
+
+
+### extra checks (run after the fix) - busybox nslookup vs the real resolver
+$ kubectl -n s14-dns exec dns-client -- nslookup kubernetes.default.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Name:	kubernetes.default.svc.cluster.local
+Address: 10.96.0.1
+
+
+
+$ kubectl -n s14-dns exec dns-client -- curl -s -o /dev/null -w "%{http_code}\n" http://orders-api.s14-dns-backend
+200
+
+$ kubectl -n s14-dns exec dns-client -- curl -sS -o /dev/null http://orders-api
+curl: (6) Could not resolve host: orders-api
+command terminated with exit code 6
+

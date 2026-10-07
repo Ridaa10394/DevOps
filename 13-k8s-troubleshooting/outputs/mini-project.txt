@@ -1,0 +1,185 @@
+### 1 deploy
+$ kubectl -n s14-mini apply -f mini-project/deployment.yaml
+deployment.apps/troubleshooting-app created
+
+$ kubectl -n s14-mini apply -f mini-project/service.yaml
+service/troubleshooting-service created
+
+$ kubectl -n s14-mini get pods
+NAME                                   READY   STATUS    RESTARTS   AGE
+troubleshooting-app-59d4957864-459gl   1/1     Running   0          1s
+troubleshooting-app-59d4957864-r6bbz   1/1     Running   0          1s
+
+$ kubectl -n s14-mini get service
+NAME                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+troubleshooting-service   ClusterIP   10.107.131.217   <none>        80/TCP    1s
+
+### 2 check the application
+$ kubectl -n s14-mini get pods -o wide
+NAME                                   READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+troubleshooting-app-59d4957864-459gl   1/1     Running   0          1s    10.244.0.62   minikube   <none>           <none>
+troubleshooting-app-59d4957864-r6bbz   1/1     Running   0          1s    10.244.0.63   minikube   <none>           <none>
+
+$ kubectl -n s14-mini describe pod troubleshooting-app-59d4957864-459gl | sed -n '/^Status:/p;/State:/,/Ready:/p;/^Events:/,$p'
+Status:           Running
+    State:          Running
+      Started:      Wed, 07 Oct 2026 17:08:41 +0530
+    Ready:          True
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  1s    default-scheduler  Successfully assigned s14-mini/troubleshooting-app-59d4957864-459gl to minikube
+  Normal  Pulled     0s    kubelet            spec.containers{app}: Container image "nginx:1.27" already present on machine and can be accessed by the pod
+  Normal  Created    0s    kubelet            spec.containers{app}: Container created
+  Normal  Started    0s    kubelet            spec.containers{app}: Container started
+
+$ kubectl -n s14-mini logs troubleshooting-app-59d4957864-459gl | tail -5
+2026/10/07 11:38:41 [notice] 1#1: start worker process 39
+2026/10/07 11:38:41 [notice] 1#1: start worker process 40
+2026/10/07 11:38:41 [notice] 1#1: start worker process 41
+2026/10/07 11:38:41 [notice] 1#1: start worker process 42
+2026/10/07 11:38:41 [notice] 1#1: start worker process 43
+
+$ printf 'curl -s localhost | grep -o "<title>.*</title>"\nexit\n' | kubectl -n s14-mini exec -i troubleshooting-app-59d4957864-459gl -- bash
+<title>Welcome to nginx!</title>
+
+### 3+4 service + endpoints
+$ kubectl -n s14-mini describe service troubleshooting-service
+Name:                     troubleshooting-service
+Namespace:                s14-mini
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=troubleshooting-app
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.107.131.217
+IPs:                      10.107.131.217
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+Endpoints:                10.244.0.62:80,10.244.0.63:80
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+$ kubectl -n s14-mini get endpoints troubleshooting-service
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                      ENDPOINTS                       AGE
+troubleshooting-service   10.244.0.62:80,10.244.0.63:80   1s
+
+$ kubectl -n s14-mini run tester --image=curlimages/curl:8.6.0 --restart=Never --rm -i --command -- curl -s -o /dev/null -w "%{http_code}\n" http://troubleshooting-service
+200
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+pod "tester" deleted from s14-mini namespace
+
+### 5 broken pod
+$ kubectl -n s14-mini apply -f mini-project/broken-pod.yaml
+pod/project-broken-pod created
+
+### 6 troubleshoot it
+$ kubectl -n s14-mini get pod project-broken-pod
+NAME                 READY   STATUS         RESTARTS   AGE
+project-broken-pod   0/1     ErrImagePull   0          40s
+
+$ kubectl -n s14-mini describe pod project-broken-pod | sed -n "/^Containers:/,/Ready:/p;/^Events:/,\$p"
+Containers:
+  app:
+    Container ID:   
+    Image:          nginx:this-tag-does-not-exist
+    Image ID:       
+    Port:           <none>
+    Host Port:      <none>
+    State:          Waiting
+      Reason:       ErrImagePull
+    Ready:          False
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  40s                default-scheduler  Successfully assigned s14-mini/project-broken-pod to minikube
+  Normal   Pulling    24s (x2 over 40s)  kubelet            spec.containers{app}: Pulling image "nginx:this-tag-does-not-exist"
+  Warning  Failed     20s (x2 over 37s)  kubelet            spec.containers{app}: Failed to pull image "nginx:this-tag-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/library/nginx:this-tag-does-not-exist": failed to resolve reference "docker.io/library/nginx:this-tag-does-not-exist": docker.io/library/nginx:this-tag-does-not-exist: not found
+  Warning  Failed     20s (x2 over 37s)  kubelet            spec.containers{app}: Error: ErrImagePull
+  Normal   BackOff    6s (x2 over 36s)   kubelet            spec.containers{app}: Back-off pulling image "nginx:this-tag-does-not-exist"
+  Warning  Failed     6s (x2 over 36s)   kubelet            spec.containers{app}: Error: ImagePullBackOff
+
+$ curl -s https://hub.docker.com/v2/repositories/library/nginx/tags/this-tag-does-not-exist; echo
+{"message":"httperror 404: tag 'this-tag-does-not-exist' not found","errinfo":{"namespace":"library","repository":"nginx","tag":"this-tag-does-not-exist"}}
+
+### fix broken pod
+$ kubectl -n s14-mini delete pod project-broken-pod
+pod "project-broken-pod" deleted from s14-mini namespace
+
+$ kubectl -n s14-mini apply -f mini-project/fixed-pod.yaml
+pod/project-broken-pod created
+
+$ kubectl -n s14-mini get pod project-broken-pod
+NAME                 READY   STATUS    RESTARTS   AGE
+project-broken-pod   1/1     Running   0          8s
+
+### 8 service selector challenge
+$ kubectl -n s14-mini apply -f mini-project/service-broken.yaml
+service/troubleshooting-service configured
+
+$ kubectl -n s14-mini get service
+NAME                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+troubleshooting-service   ClusterIP   10.107.131.217   <none>        80/TCP    66s
+
+$ kubectl -n s14-mini get endpoints troubleshooting-service
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                      ENDPOINTS   AGE
+troubleshooting-service   <none>      66s
+
+$ kubectl -n s14-mini run tester --image=curlimages/curl:8.6.0 --restart=Never --rm -i --command -- curl -sS --max-time 3 http://troubleshooting-service
+curl: (7) Failed to connect to troubleshooting-service port 80 after 1 ms: Couldn't connect to server
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+warning: couldn't attach to pod/tester, falling back to streaming logs: Internal error occurred: Internal error occurred: error attaching to container: failed to load task: no running task found: task 852ad8e78f6cfeca6f6d199fdda03618c647a17ecc27c7fda4651daeafc4802b not found
+curl: (7) Failed to connect to troubleshooting-service port 80 after 1 ms: Couldn't connect to server
+pod "tester" deleted from s14-mini namespace
+pod s14-mini/tester terminated (Error)
+
+### 9 root cause
+$ kubectl -n s14-mini get pods --show-labels
+NAME                                   READY   STATUS    RESTARTS   AGE   LABELS
+project-broken-pod                     1/1     Running   0          23s   app=project-pod
+troubleshooting-app-59d4957864-459gl   1/1     Running   0          69s   app=troubleshooting-app,pod-template-hash=59d4957864
+troubleshooting-app-59d4957864-r6bbz   1/1     Running   0          69s   app=troubleshooting-app,pod-template-hash=59d4957864
+
+$ kubectl -n s14-mini describe service troubleshooting-service | grep -E "Selector|Endpoints"
+Selector:                 app=wrong-app
+Endpoints:                
+
+### fix
+$ kubectl -n s14-mini apply -f mini-project/service.yaml
+service/troubleshooting-service configured
+
+$ kubectl -n s14-mini get endpoints troubleshooting-service
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                      ENDPOINTS                       AGE
+troubleshooting-service   10.244.0.62:80,10.244.0.63:80   72s
+
+$ kubectl -n s14-mini run tester --image=curlimages/curl:8.6.0 --restart=Never --rm -i --command -- sh -c "for i in 1 2 3 4; do curl -s -o /dev/null -w \"%{http_code}\n\" http://troubleshooting-service.s14-mini.svc.cluster.local; done"
+200
+200
+200
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+pod "tester" deleted from s14-mini namespace
+
+### final state
+$ kubectl -n s14-mini get all -o wide
+NAME                                       READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+pod/project-broken-pod                     1/1     Running   0          28s   10.244.0.66   minikube   <none>           <none>
+pod/troubleshooting-app-59d4957864-459gl   1/1     Running   0          74s   10.244.0.62   minikube   <none>           <none>
+pod/troubleshooting-app-59d4957864-r6bbz   1/1     Running   0          74s   10.244.0.63   minikube   <none>           <none>
+
+NAME                              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+service/troubleshooting-service   ClusterIP   10.107.131.217   <none>        80/TCP    74s   app=troubleshooting-app
+
+NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES       SELECTOR
+deployment.apps/troubleshooting-app   2/2     2            2           74s   app          nginx:1.27   app=troubleshooting-app
+
+NAME                                             DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES       SELECTOR
+replicaset.apps/troubleshooting-app-59d4957864   2         2         2       74s   app          nginx:1.27   app=troubleshooting-app,pod-template-hash=59d4957864
+

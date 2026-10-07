@@ -1,0 +1,107 @@
+$ kubectl -n s14 describe pod restart-demo
+Name:             restart-demo
+Namespace:        s14
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Wed, 07 Oct 2026 16:21:31 +0530
+Labels:           app=restart-demo
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.9
+IPs:
+  IP:  10.244.0.9
+Containers:
+  app:
+    Container ID:  containerd://35819f1a5cb0c9732d42f010c650761fd6d9ab37f768f965ac0510c62cc55aab
+    Image:         busybox:1.36
+    Image ID:      docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      sh
+      -c
+      echo "run started at $(date +%T)"
+      sleep 10
+      echo "simulated failure, exiting with code 1"
+      exit 1
+      
+    State:          Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Wed, 07 Oct 2026 16:47:19 +0530
+      Finished:     Wed, 07 Oct 2026 16:47:29 +0530
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Wed, 07 Oct 2026 16:42:06 +0530
+      Finished:     Wed, 07 Oct 2026 16:42:16 +0530
+    Ready:          False
+    Restart Count:  7
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-wxm7c (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-wxm7c:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                 From               Message
+  ----     ------     ----                ----               -------
+  Normal   Scheduled  26m                 default-scheduler  Successfully assigned s14/restart-demo to minikube
+  Normal   Pulling    26m                 kubelet            spec.containers{app}: Pulling image "busybox:1.36"
+  Normal   Pulled     12m                 kubelet            spec.containers{app}: Successfully pulled image "busybox:1.36" in 3.802s (13m54.26s including waiting). Image size: 1906887 bytes.
+  Normal   Created    23s (x8 over 12m)   kubelet            spec.containers{app}: Container created
+  Normal   Started    23s (x8 over 12m)   kubelet            spec.containers{app}: Container started
+  Normal   Pulled     23s (x7 over 12m)   kubelet            spec.containers{app}: Container image "busybox:1.36" already present on machine and can be accessed by the pod
+  Warning  BackOff    13s (x14 over 11m)  kubelet            spec.containers{app}: Back-off restarting failed container app in pod restart-demo_s14(f5883243-94cf-4382-b278-45038e7d616a)
+
+$ kubectl -n s14 describe pod get-demo | grep -A6 -E "^    (Limits|Requests):|QoS"
+    Limits:
+      cpu:     200m
+      memory:  128Mi
+    Requests:
+      cpu:        50m
+      memory:     32Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-7s2c7 (ro)
+Conditions:
+--
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+
+$ kubectl describe node minikube | grep -A12 "^Allocated resources:"
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests      Limits
+  --------           --------      ------
+  cpu                2440m (16%)   5300m (35%)
+  memory             2334Mi (29%)  4430Mi (55%)
+  ephemeral-storage  0 (0%)        0 (0%)
+  hugepages-1Gi      0 (0%)        0 (0%)
+  hugepages-2Mi      0 (0%)        0 (0%)
+  hugepages-32Mi     0 (0%)        0 (0%)
+  hugepages-64Ki     0 (0%)        0 (0%)
+Events:
+  Type    Reason                   Age   From             Message
+

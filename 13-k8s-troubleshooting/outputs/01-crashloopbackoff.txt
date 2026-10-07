@@ -1,0 +1,80 @@
+### 1 identify
+$ kubectl -n s14-crash get pods
+NAME         READY   STATUS             RESTARTS      AGE
+crash-demo   0/1     CrashLoopBackOff   5 (70s ago)   4m6s
+
+### 2 investigate
+$ kubectl -n s14-crash describe pod crash-demo | sed -n "/^Containers:/,/^Conditions:/p;/^Events:/,\$p"
+Containers:
+  app:
+    Container ID:  containerd://11a81000d57ed71871889fd1620c2d37769444d3f67fe0267801365fca237721
+    Image:         busybox:1.36
+    Image ID:      docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      sh
+      -c
+      echo "Application starting..."
+      if [ -z "$DATABASE_URL" ]; then
+        echo "[FATAL] DATABASE_URL environment variable is MISSING" >&2
+        exit 1
+      fi
+      echo "Connected to $DATABASE_URL"
+      sleep 3600
+      
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Wed, 07 Oct 2026 16:56:07 +0530
+      Finished:     Wed, 07 Oct 2026 16:56:07 +0530
+    Ready:          False
+    Restart Count:  5
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-lc66k (ro)
+Conditions:
+Events:
+  Type     Reason     Age                 From               Message
+  ----     ------     ----                ----               -------
+  Normal   Scheduled  4m7s                default-scheduler  Successfully assigned s14-crash/crash-demo to minikube
+  Normal   Pulled     72s (x6 over 4m7s)  kubelet            spec.containers{app}: Container image "busybox:1.36" already present on machine and can be accessed by the pod
+  Normal   Created    72s (x6 over 4m7s)  kubelet            spec.containers{app}: Container created
+  Normal   Started    71s (x6 over 4m7s)  kubelet            spec.containers{app}: Container started
+  Warning  BackOff    3s (x6 over 4m5s)   kubelet            spec.containers{app}: Back-off restarting failed container app in pod crash-demo_s14-crash(1e910145-19ae-4117-8d63-defda18df3a6)
+
+$ kubectl -n s14-crash logs crash-demo
+[FATAL] DATABASE_URL environment variable is MISSING
+Application starting...
+
+$ kubectl -n s14-crash logs crash-demo --previous
+[FATAL] DATABASE_URL environment variable is MISSING
+Application starting...
+
+$ kubectl -n s14-crash get pod crash-demo -o jsonpath='{.status.containerStatuses[0].lastState.terminated}'; echo
+{"containerID":"containerd://11a81000d57ed71871889fd1620c2d37769444d3f67fe0267801365fca237721","exitCode":1,"finishedAt":"2026-10-07T11:26:07Z","reason":"Error","startedAt":"2026-10-07T11:26:07Z"}
+
+$ kubectl -n s14-crash exec crash-demo -- env
+error: unable to upgrade connection: container not found ("app")
+
+### 4 fix
+$ kubectl -n s14-crash delete pod crash-demo
+pod "crash-demo" deleted from s14-crash namespace
+
+$ kubectl -n s14-crash apply -f 01-crashloopbackoff/fixed.yaml
+pod/crash-demo created
+
+### 5 verify
+$ kubectl -n s14-crash get pods
+NAME         READY   STATUS    RESTARTS   AGE
+crash-demo   1/1     Running   0          15s
+
+$ kubectl -n s14-crash logs crash-demo
+Application starting...
+Connected to postgres://db.s14.svc.cluster.local:5432/app
+
+$ kubectl -n s14-crash exec crash-demo -- printenv DATABASE_URL
+postgres://db.s14.svc.cluster.local:5432/app
+

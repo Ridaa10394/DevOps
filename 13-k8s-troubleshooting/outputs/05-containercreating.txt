@@ -1,0 +1,74 @@
+### 1 identify
+$ kubectl -n s14-mount get pods
+NAME         READY   STATUS              RESTARTS   AGE
+mount-demo   0/1     ContainerCreating   0          36m
+
+### 2 investigate
+$ kubectl -n s14-mount describe pod mount-demo | sed -n "/State:/,/Ready:/p;/^Volumes:/,/^QoS/p;/^Events:/,\$p"
+    State:          Waiting
+      Reason:       ContainerCreating
+    Ready:          False
+Volumes:
+  site-config:
+    Type:      ConfigMap (a volume populated by a ConfigMap)
+    Name:      site-config
+    Optional:  false
+  tls:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  site-tls
+    Optional:    false
+  kube-api-access-l5zt2:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Events:
+  Type     Reason       Age                  From               Message
+  ----     ------       ----                 ----               -------
+  Normal   Scheduled    36m                  default-scheduler  Successfully assigned s14-mount/mount-demo to minikube
+  Warning  FailedMount  26m (x13 over 36m)   kubelet            MountVolume.SetUp failed for volume "site-config" : configmap "site-config" not found
+  Warning  FailedMount  6m5s (x23 over 36m)  kubelet            MountVolume.SetUp failed for volume "tls" : secret "site-tls" not found
+
+$ kubectl -n s14-mount logs mount-demo
+Error from server (BadRequest): container "nginx" in pod "mount-demo" is waiting to start: ContainerCreating
+
+$ kubectl -n s14-mount get configmap,secret
+NAME                         DATA   AGE
+configmap/kube-root-ca.crt   1      36m
+
+$ kubectl -n s14-mount events --types=Warning
+LAST SEEN             TYPE      REASON        OBJECT           MESSAGE
+26m (x13 over 36m)    Warning   FailedMount   Pod/mount-demo   MountVolume.SetUp failed for volume "site-config" : configmap "site-config" not found
+6m5s (x23 over 36m)   Warning   FailedMount   Pod/mount-demo   MountVolume.SetUp failed for volume "tls" : secret "site-tls" not found
+
+### 4 fix
+$ kubectl -n s14-mount apply -f 05-containercreating/fixed.yaml
+configmap/site-config created
+secret/site-tls created
+pod/mount-demo configured
+
+(no pod restart needed - kubelet retries the mount on its own; waited until Running)
+### 5 verify
+$ kubectl -n s14-mount get pods
+NAME         READY   STATUS    RESTARTS   AGE
+mount-demo   1/1     Running   0          36m
+
+$ kubectl -n s14-mount exec mount-demo -- curl -s http://localhost
+<h1>Hello from site-config ConfigMap</h1>
+
+$ kubectl -n s14-mount exec mount-demo -- ls /etc/tls
+tls.key
+
+$ kubectl -n s14-mount describe pod mount-demo | sed -n "/^Events:/,\$p"
+Events:
+  Type     Reason       Age                  From               Message
+  ----     ------       ----                 ----               -------
+  Normal   Scheduled    36m                  default-scheduler  Successfully assigned s14-mount/mount-demo to minikube
+  Warning  FailedMount  26m (x13 over 36m)   kubelet            MountVolume.SetUp failed for volume "site-config" : configmap "site-config" not found
+  Warning  FailedMount  6m7s (x23 over 36m)  kubelet            MountVolume.SetUp failed for volume "tls" : secret "site-tls" not found
+  Normal   Pulled       1s                   kubelet            spec.containers{nginx}: Container image "nginx:1.27" already present on machine and can be accessed by the pod
+  Normal   Created      1s                   kubelet            spec.containers{nginx}: Container created
+  Normal   Started      1s                   kubelet            spec.containers{nginx}: Container started
+

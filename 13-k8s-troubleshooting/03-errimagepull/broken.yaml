@@ -1,0 +1,9 @@
+# BUG: image points at a registry host that does not exist (typo'd registry)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: errpull-demo
+spec:
+  containers:
+    - name: app
+      image: registry.example.invalid/team/api:1.0

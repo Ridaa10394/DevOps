@@ -1,0 +1,19 @@
+# runs for ~10s then exits 1, so the container restarts and --previous has something to show
+apiVersion: v1
+kind: Pod
+metadata:
+  name: restart-demo
+  labels:
+    app: restart-demo
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          echo "run started at $(date +%T)"
+          sleep 10
+          echo "simulated failure, exiting with code 1"
+          exit 1

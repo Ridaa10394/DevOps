@@ -1,0 +1,70 @@
+### (earlier status sweep, trimmed to this pod)
+$ kubectl get pods -A | grep -E 's14-|metrics'
+s14-oom                 oom-demo                                   0/1     OOMKilled                    2 (21s ago)     4m46s
+
+### 1 identify
+$ kubectl -n s14-oom get pods
+NAME       READY   STATUS             RESTARTS      AGE
+oom-demo   0/1     CrashLoopBackOff   5 (93s ago)   8m50s
+
+### 2 investigate
+$ kubectl -n s14-oom describe pod oom-demo | sed -n "/State:/,/Restart Count/p;/Limits:/,/memory:/p;/Requests:/,/memory:/p"
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       OOMKilled
+      Exit Code:    137
+      Started:      Wed, 07 Oct 2026 17:00:28 +0530
+      Finished:     Wed, 07 Oct 2026 17:00:28 +0530
+    Ready:          False
+    Restart Count:  5
+    Limits:
+      memory:  50Mi
+    Requests:
+      memory:     32Mi
+
+$ kubectl -n s14-oom logs oom-demo --previous
+loading 100MB cache...
+
+$ kubectl -n s14-oom get pod oom-demo -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason} exitCode={.status.containerStatuses[0].lastState.terminated.exitCode}{"\n"}'
+OOMKilled exitCode=137
+
+$ kubectl -n s14-oom events --for pod/oom-demo
+LAST SEEN             TYPE      REASON      OBJECT         MESSAGE
+38m                   Normal    Scheduled   Pod/oom-demo   Successfully assigned s14-oom/oom-demo to minikube
+38m                   Normal    Pulling     Pod/oom-demo   Pulling image "python:3.11-alpine"
+8m50s                 Normal    Scheduled   Pod/oom-demo   Successfully assigned s14-oom/oom-demo to minikube
+8m49s                 Normal    Pulling     Pod/oom-demo   Pulling image "python:3.11-alpine"
+5m53s                 Normal    Started     Pod/oom-demo   Container started
+5m53s                 Normal    Created     Pod/oom-demo   Container created
+5m53s                 Normal    Pulled      Pod/oom-demo   Successfully pulled image "python:3.11-alpine" in 4.217s (32m24.24s including waiting). Image size: 23808448 bytes.
+5m53s                 Normal    Killing     Pod/oom-demo   Stopping container memory-hungry
+4m25s                 Normal    Pulled      Pod/oom-demo   Successfully pulled image "python:3.11-alpine" in 3.375s (4m24.051s including waiting). Image size: 23808448 bytes.
+94s (x6 over 4m25s)   Normal    Created     Pod/oom-demo   Container created
+94s (x5 over 4m25s)   Normal    Pulled      Pod/oom-demo   Container image "python:3.11-alpine" already present on machine and can be accessed by the pod
+93s (x6 over 4m25s)   Normal    Started     Pod/oom-demo   Container started
+11s (x8 over 4m24s)   Warning   BackOff     Pod/oom-demo   Back-off restarting failed container memory-hungry in pod oom-demo_s14-oom(daeba8f1-203e-49d9-8f35-97e92b266e2f)
+
+### 4 fix
+$ kubectl -n s14-oom delete pod oom-demo
+pod "oom-demo" deleted from s14-oom namespace
+
+$ kubectl -n s14-oom apply -f 10-oomkilled/fixed.yaml
+pod/oom-demo created
+
+### 5 verify
+$ kubectl -n s14-oom get pods
+NAME       READY   STATUS    RESTARTS   AGE
+oom-demo   1/1     Running   0          31s
+
+$ kubectl -n s14-oom logs oom-demo
+loading 100MB cache...
+cache loaded, serving
+
+$ kubectl -n s14-oom top pod oom-demo
+Error from server (NotFound): podmetrics.metrics.k8s.io "s14-oom/oom-demo" not found
+
+$ kubectl -n s14-oom top pod oom-demo
+NAME       CPU(cores)   MEMORY(bytes)   
+oom-demo   2m           109Mi           
+

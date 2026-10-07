@@ -1,0 +1,88 @@
+$ kubectl -n s14 events
+LAST SEEN            TYPE      REASON      OBJECT             MESSAGE
+26m                  Normal    Scheduled   Pod/get-demo       Successfully assigned s14/get-demo to minikube
+26m                  Normal    Pulling     Pod/get-demo       Pulling image "nginx:1.27"
+26m                  Normal    Scheduled   Pod/logs-demo      Successfully assigned s14/logs-demo to minikube
+26m                  Normal    Scheduled   Pod/restart-demo   Successfully assigned s14/restart-demo to minikube
+26m                  Normal    Pulling     Pod/logs-demo      Pulling image "busybox:1.36"
+26m                  Normal    Pulling     Pod/restart-demo   Pulling image "busybox:1.36"
+14m                  Normal    Pulled      Pod/get-demo       Successfully pulled image "nginx:1.27" in 8m34.064s (11m45.798s including waiting). Image size: 68857691 bytes.
+14m                  Normal    Created     Pod/get-demo       Container created
+14m                  Normal    Started     Pod/get-demo       Container started
+12m                  Normal    Pulled      Pod/logs-demo      Container image "busybox:1.36" already present on machine and can be accessed by the pod
+12m                  Normal    Started     Pod/logs-demo      Container started
+12m                  Normal    Created     Pod/logs-demo      Container created
+12m                  Normal    Started     Pod/logs-demo      Container started
+12m                  Normal    Created     Pod/logs-demo      Container created
+12m                  Normal    Pulled      Pod/logs-demo      Successfully pulled image "busybox:1.36" in 2m4.673s (13m50.467s including waiting). Image size: 1906887 bytes.
+12m                  Normal    Pulled      Pod/restart-demo   Successfully pulled image "busybox:1.36" in 3.802s (13m54.26s including waiting). Image size: 1906887 bytes.
+34s (x8 over 12m)    Normal    Created     Pod/restart-demo   Container created
+34s (x8 over 12m)    Normal    Started     Pod/restart-demo   Container started
+34s (x7 over 12m)    Normal    Pulled      Pod/restart-demo   Container image "busybox:1.36" already present on machine and can be accessed by the pod
+24s (x14 over 12m)   Warning   BackOff     Pod/restart-demo   Back-off restarting failed container app in pod restart-demo_s14(f5883243-94cf-4382-b278-45038e7d616a)
+
+$ kubectl -n s14 events --for pod/restart-demo
+LAST SEEN            TYPE      REASON      OBJECT             MESSAGE
+26m                  Normal    Scheduled   Pod/restart-demo   Successfully assigned s14/restart-demo to minikube
+26m                  Normal    Pulling     Pod/restart-demo   Pulling image "busybox:1.36"
+12m                  Normal    Pulled      Pod/restart-demo   Successfully pulled image "busybox:1.36" in 3.802s (13m54.26s including waiting). Image size: 1906887 bytes.
+34s (x8 over 12m)    Normal    Created     Pod/restart-demo   Container created
+34s (x8 over 12m)    Normal    Started     Pod/restart-demo   Container started
+34s (x7 over 12m)    Normal    Pulled      Pod/restart-demo   Container image "busybox:1.36" already present on machine and can be accessed by the pod
+24s (x14 over 12m)   Warning   BackOff     Pod/restart-demo   Back-off restarting failed container app in pod restart-demo_s14(f5883243-94cf-4382-b278-45038e7d616a)
+
+$ kubectl -n s14 events --types=Warning
+LAST SEEN            TYPE      REASON    OBJECT             MESSAGE
+24s (x14 over 12m)   Warning   BackOff   Pod/restart-demo   Back-off restarting failed container app in pod restart-demo_s14(f5883243-94cf-4382-b278-45038e7d616a)
+
+$ kubectl -n s14 get events --sort-by=.lastTimestamp
+LAST SEEN   TYPE      REASON      OBJECT             MESSAGE
+26m         Normal    Scheduled   pod/get-demo       Successfully assigned s14/get-demo to minikube
+26m         Normal    Pulling     pod/get-demo       Pulling image "nginx:1.27"
+26m         Normal    Scheduled   pod/logs-demo      Successfully assigned s14/logs-demo to minikube
+26m         Normal    Scheduled   pod/restart-demo   Successfully assigned s14/restart-demo to minikube
+26m         Normal    Pulling     pod/logs-demo      Pulling image "busybox:1.36"
+26m         Normal    Pulling     pod/restart-demo   Pulling image "busybox:1.36"
+14m         Normal    Pulled      pod/get-demo       Successfully pulled image "nginx:1.27" in 8m34.064s (11m45.798s including waiting). Image size: 68857691 bytes.
+14m         Normal    Created     pod/get-demo       Container created
+14m         Normal    Started     pod/get-demo       Container started
+12m         Normal    Pulled      pod/logs-demo      Container image "busybox:1.36" already present on machine and can be accessed by the pod
+12m         Normal    Started     pod/logs-demo      Container started
+12m         Normal    Created     pod/logs-demo      Container created
+12m         Normal    Started     pod/logs-demo      Container started
+12m         Normal    Created     pod/logs-demo      Container created
+12m         Normal    Pulled      pod/logs-demo      Successfully pulled image "busybox:1.36" in 2m4.673s (13m50.467s including waiting). Image size: 1906887 bytes.
+12m         Normal    Pulled      pod/restart-demo   Successfully pulled image "busybox:1.36" in 3.802s (13m54.26s including waiting). Image size: 1906887 bytes.
+34s         Normal    Created     pod/restart-demo   Container created
+34s         Normal    Started     pod/restart-demo   Container started
+34s         Normal    Pulled      pod/restart-demo   Container image "busybox:1.36" already present on machine and can be accessed by the pod
+24s         Warning   BackOff     pod/restart-demo   Back-off restarting failed container app in pod restart-demo_s14(f5883243-94cf-4382-b278-45038e7d616a)
+
+$ kubectl -n s14 get events --field-selector type=Warning,involvedObject.name=restart-demo
+LAST SEEN   TYPE      REASON    OBJECT             MESSAGE
+24s         Warning   BackOff   pod/restart-demo   Back-off restarting failed container app in pod restart-demo_s14(f5883243-94cf-4382-b278-45038e7d616a)
+
+$ kubectl -n s14 events --watch   # ran ~25s then Ctrl+C
+LAST SEEN   TYPE     REASON      OBJECT         MESSAGE
+26m         Normal   Scheduled   Pod/get-demo   Successfully assigned s14/get-demo to minikube
+26m         Normal   Pulling     Pod/get-demo   Pulling image "nginx:1.27"
+14m         Normal   Pulled      Pod/get-demo   Successfully pulled image "nginx:1.27" in 8m34.064s (11m45.798s including waiting). Image size: 68857691 bytes.
+14m         Normal   Created     Pod/get-demo   Container created
+14m         Normal   Started     Pod/get-demo   Container started
+26m         Normal   Scheduled   Pod/logs-demo   Successfully assigned s14/logs-demo to minikube
+26m         Normal   Pulling     Pod/logs-demo   Pulling image "busybox:1.36"
+12m         Normal   Pulled      Pod/logs-demo   Successfully pulled image "busybox:1.36" in 2m4.673s (13m50.467s including waiting). Image size: 1906887 bytes.
+12m         Normal   Created     Pod/logs-demo   Container created
+12m         Normal   Started     Pod/logs-demo   Container started
+12m         Normal   Pulled      Pod/logs-demo   Container image "busybox:1.36" already present on machine and can be accessed by the pod
+12m         Normal   Created     Pod/logs-demo   Container created
+12m         Normal   Started     Pod/logs-demo   Container started
+26m         Normal   Scheduled   Pod/restart-demo   Successfully assigned s14/restart-demo to minikube
+26m         Normal   Pulling     Pod/restart-demo   Pulling image "busybox:1.36"
+12m         Normal   Pulled      Pod/restart-demo   Successfully pulled image "busybox:1.36" in 3.802s (13m54.26s including waiting). Image size: 1906887 bytes.
+34s (x8 over 12m)   Normal   Created     Pod/restart-demo   Container created
+34s (x8 over 12m)   Normal   Started     Pod/restart-demo   Container started
+34s (x7 over 12m)   Normal   Pulled      Pod/restart-demo   Container image "busybox:1.36" already present on machine and can be accessed by the pod
+24s (x14 over 12m)   Warning   BackOff     Pod/restart-demo   Back-off restarting failed container app in pod restart-demo_s14(f5883243-94cf-4382-b278-45038e7d616a)
+^C
+

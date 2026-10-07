@@ -1,0 +1,22 @@
+# BUG: app refuses to start without DATABASE_URL, and the env var was never set
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crash-demo
+  labels:
+    app: crash-demo
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          echo "Application starting..."
+          if [ -z "$DATABASE_URL" ]; then
+            echo "[FATAL] DATABASE_URL environment variable is MISSING" >&2
+            exit 1
+          fi
+          echo "Connected to $DATABASE_URL"
+          sleep 3600

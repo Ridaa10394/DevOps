@@ -1,0 +1,12 @@
+# FIX: nginx has no tag called "this-tag-does-not-exist" -> pin to a real one.
+# also gave it a label so it's easy to find with -l
+apiVersion: v1
+kind: Pod
+metadata:
+  name: project-broken-pod
+  labels:
+    app: project-pod
+spec:
+  containers:
+    - name: app
+      image: nginx:1.27

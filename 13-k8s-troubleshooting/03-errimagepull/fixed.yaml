@@ -1,0 +1,9 @@
+# FIX: point at the real registry / image
+apiVersion: v1
+kind: Pod
+metadata:
+  name: errpull-demo
+spec:
+  containers:
+    - name: app
+      image: docker.io/library/nginx:1.27

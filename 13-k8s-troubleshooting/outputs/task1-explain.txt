@@ -1,0 +1,116 @@
+$ kubectl explain pod.spec.containers.resources
+KIND:       Pod
+VERSION:    v1
+
+FIELD: resources <ResourceRequirements>
+
+
+DESCRIPTION:
+    Compute Resources required by this container. Cannot be updated. More info:
+    https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ResourceRequirements describes the compute resource requirements.
+    
+FIELDS:
+  claims	<[]ResourceClaim>
+    Claims lists the names of resources, defined in spec.resourceClaims, that
+    are used by this container.
+    
+    This field depends on the DynamicResourceAllocation feature gate.
+    
+    This field is immutable. It can only be set for containers.
+
+  limits	<map[string]Quantity>
+    Limits describes the maximum amount of compute resources allowed. More info:
+    https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+  requests	<map[string]Quantity>
+    Requests describes the minimum amount of compute resources required. If
+    Requests is omitted for a container, it defaults to Limits if that is
+    explicitly specified, otherwise to an implementation-defined value. Requests
+    cannot exceed Limits. More info:
+    https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+
+
+$ kubectl explain pod.spec.containers.livenessProbe | head -25
+KIND:       Pod
+VERSION:    v1
+
+FIELD: livenessProbe <Probe>
+
+
+DESCRIPTION:
+    Periodic probe of container liveness. Container will be restarted if the
+    probe fails. Cannot be updated. More info:
+    https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
+    Probe describes a health check to be performed against a container to
+    determine whether it is alive or ready to receive traffic.
+    
+FIELDS:
+  exec	<ExecAction>
+    Exec specifies a command to execute in the container.
+
+  failureThreshold	<integer>
+    Minimum consecutive failures for the probe to be considered failed after
+    having succeeded. Defaults to 3. Minimum value is 1.
+
+  grpc	<GRPCAction>
+    GRPC specifies a GRPC HealthCheckRequest.
+
+  httpGet	<HTTPGetAction>
+
+$ kubectl explain service.spec.ports.targetPort
+KIND:       Service
+VERSION:    v1
+
+FIELD: targetPort <IntOrString>
+
+
+DESCRIPTION:
+    Number or name of the port to access on the pods targeted by the service.
+    Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME. If
+    this is a string, it will be looked up as a named port in the target Pod's
+    container ports. If this is not specified, the value of the 'port' field is
+    used (an identity map). This field is ignored for services with
+    clusterIP=None, and should be omitted or set equal to the 'port' field. More
+    info:
+    https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service
+    IntOrString is a type that can hold an int32 or a string.  When used in JSON
+    or YAML marshalling and unmarshalling, it produces or consumes the inner
+    type.  This allows you to have, for example, a JSON field that can accept a
+    name or number.
+    
+
+
+$ kubectl explain deployment.spec --recursive | head -30
+GROUP:      apps
+KIND:       Deployment
+VERSION:    v1
+
+FIELD: spec <DeploymentSpec>
+
+
+DESCRIPTION:
+    Specification of the desired behavior of the Deployment.
+    DeploymentSpec is the specification of the desired behavior of the
+    Deployment.
+    
+FIELDS:
+  minReadySeconds	<integer>
+  paused	<boolean>
+  progressDeadlineSeconds	<integer>
+  replicas	<integer>
+  revisionHistoryLimit	<integer>
+  selector	<LabelSelector> -required-
+    matchExpressions	<[]LabelSelectorRequirement>
+      key	<string> -required-
+      operator	<string> -required-
+      values	<[]string>
+    matchLabels	<map[string]string>
+  strategy	<DeploymentStrategy>
+    rollingUpdate	<RollingUpdateDeployment>
+      maxSurge	<IntOrString>
+      maxUnavailable	<IntOrString>
+    type	<string>
+    enum: Recreate, RollingUpdate
+

@@ -1,0 +1,21 @@
+# FIX: correct service name + namespace-qualified FQDN
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dns-client
+  namespace: s14-dns
+spec:
+  containers:
+    - name: client
+      image: curlimages/curl:8.6.0
+      env:
+        - name: ORDERS_URL
+          value: "http://orders-api.s14-dns-backend.svc.cluster.local"
+      command: ["sh", "-c"]
+      args:
+        - |
+          while true; do
+            echo "$(date +%T) calling $ORDERS_URL"
+            curl -sS --connect-timeout 3 -o /dev/null -w "HTTP %{http_code}\n" "$ORDERS_URL" || true
+            sleep 10
+          done

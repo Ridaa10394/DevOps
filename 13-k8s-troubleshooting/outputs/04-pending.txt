@@ -1,0 +1,63 @@
+### 1 identify
+$ kubectl -n s14-pending get pods -o wide
+NAME           READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+pending-demo   0/1     Pending   0          36m   <none>   <none>   <none>           <none>
+
+### 2 investigate
+$ kubectl -n s14-pending describe pod pending-demo | sed -n "/Requests:/,/memory/p;/^Node-Selectors:/p;/^Events:/,\$p"
+    Requests:
+      cpu:        64
+      memory:     200Gi
+Node-Selectors:              disktype=ssd
+Events:
+  Type     Reason            Age                From               Message
+  ----     ------            ----               ----               -------
+  Warning  FailedScheduling  67s (x8 over 36m)  default-scheduler  0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+
+$ kubectl get nodes --show-labels
+NAME       STATUS   ROLES           AGE   VERSION   LABELS
+minikube   Ready    control-plane   42m   v1.37.0   beta.kubernetes.io/arch=arm64,beta.kubernetes.io/os=linux,kubernetes.io/arch=arm64,kubernetes.io/hostname=minikube,kubernetes.io/os=linux,minikube.k8s.io/commit=7a9f6a841470a207de8cf4bafcccee0969d8ba10,minikube.k8s.io/name=minikube,minikube.k8s.io/primary=true,minikube.k8s.io/updated_at=2026_10_07T16_17_56_0700,minikube.k8s.io/version=v1.39.0,node-role.kubernetes.io/control-plane=,node.kubernetes.io/exclude-from-external-load-balancers=
+
+$ kubectl get nodes -l disktype=ssd
+No resources found
+
+$ kubectl get node minikube -o jsonpath="cpu={.status.allocatable.cpu} memory={.status.allocatable.memory}"; echo
+cpu=15 memory=8123872Ki
+
+### 3a remove the nodeSelector only -> still Pending, new reason
+$ kubectl -n s14-pending delete pod pending-demo
+pod "pending-demo" deleted from s14-pending namespace
+
+$ kubectl -n s14-pending apply -f 04-pending/step1-selector-removed.yaml
+pod/pending-demo created
+
+$ kubectl -n s14-pending get pods
+NAME           READY   STATUS    RESTARTS   AGE
+pending-demo   0/1     Pending   0          5s
+
+$ kubectl -n s14-pending events --for pod/pending-demo
+LAST SEEN           TYPE      REASON             OBJECT             MESSAGE
+72s (x8 over 36m)   Warning   FailedScheduling   Pod/pending-demo   0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+5s                  Warning   FailedScheduling   Pod/pending-demo   0/1 nodes are available: 1 Insufficient cpu, 1 Insufficient memory. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+
+### 4 fix
+$ kubectl -n s14-pending delete pod pending-demo
+pod "pending-demo" deleted from s14-pending namespace
+
+$ kubectl -n s14-pending apply -f 04-pending/fixed.yaml
+pod/pending-demo created
+
+### 5 verify
+$ kubectl -n s14-pending get pods -o wide
+NAME           READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+pending-demo   1/1     Running   0          8s    10.244.0.11   minikube   <none>           <none>
+
+$ kubectl -n s14-pending describe pod pending-demo | sed -n "/^Events:/,\$p"
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  8s    default-scheduler  Successfully assigned s14-pending/pending-demo to minikube
+  Normal  Pulled     7s    kubelet            spec.containers{nginx}: Container image "nginx:1.27" already present on machine and can be accessed by the pod
+  Normal  Created    7s    kubelet            spec.containers{nginx}: Container created
+  Normal  Started    7s    kubelet            spec.containers{nginx}: Container started
+

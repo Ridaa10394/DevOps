@@ -1,0 +1,55 @@
+$ kubectl -n s14 get pods
+NAME           READY   STATUS             RESTARTS       AGE
+get-demo       1/1     Running            0              22m
+logs-demo      2/2     Running            0              22m
+restart-demo   0/1     CrashLoopBackOff   6 (105s ago)   22m
+
+$ kubectl -n s14 get pods -o wide
+NAME           READY   STATUS             RESTARTS       AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+get-demo       1/1     Running            0              22m   10.244.0.7   minikube   <none>           <none>
+logs-demo      2/2     Running            0              22m   10.244.0.8   minikube   <none>           <none>
+restart-demo   0/1     CrashLoopBackOff   6 (105s ago)   22m   10.244.0.9   minikube   <none>           <none>
+
+$ kubectl -n s14 get pods --show-labels
+NAME           READY   STATUS             RESTARTS       AGE   LABELS
+get-demo       1/1     Running            0              22m   app=get-demo
+logs-demo      2/2     Running            0              22m   app=logs-demo
+restart-demo   0/1     CrashLoopBackOff   6 (105s ago)   22m   app=restart-demo
+
+$ kubectl -n s14 get all
+NAME               READY   STATUS             RESTARTS       AGE
+pod/get-demo       1/1     Running            0              22m
+pod/logs-demo      2/2     Running            0              22m
+pod/restart-demo   0/1     CrashLoopBackOff   6 (105s ago)   22m
+
+$ kubectl get nodes -o wide
+NAME       STATUS   ROLES           AGE   VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION            CONTAINER-RUNTIME
+minikube   Ready    control-plane   26m   v1.37.0   192.168.49.2   <none>        Debian GNU/Linux 12 (bookworm)   7.0.12-linuxkit (arm64)   containerd://2.3.4
+
+$ kubectl -n s14 get pod get-demo -o jsonpath='{.status.phase} {.status.podIP}'
+Running 10.244.0.7
+
+$ kubectl -n s14 get pods -o custom-columns='NAME:.metadata.name,STATUS:.status.phase,RESTARTS:.status.containerStatuses[*].restartCount'
+NAME           STATUS    RESTARTS
+get-demo       Running   0
+logs-demo      Running   0,0
+restart-demo   Running   6
+
+$ kubectl -n s14 get pod restart-demo -o yaml | sed -n '/containerStatuses:/,/started:/p'
+  containerStatuses:
+  - containerID: containerd://4dd63c28ad24c5f6cf29f58fac7b1905cd29b2a4e3def5918e95e2f9c7fa03ee
+    image: docker.io/library/busybox:1.36
+    imageID: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+    lastState:
+      terminated:
+        containerID: containerd://4dd63c28ad24c5f6cf29f58fac7b1905cd29b2a4e3def5918e95e2f9c7fa03ee
+        exitCode: 1
+        finishedAt: "2026-10-07T11:12:16Z"
+        reason: Error
+        startedAt: "2026-10-07T11:12:06Z"
+    name: app
+    ready: false
+    resources: {}
+    restartCount: 6
+    started: false
+

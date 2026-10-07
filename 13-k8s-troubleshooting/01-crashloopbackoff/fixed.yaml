@@ -1,0 +1,25 @@
+# FIX: provide the DATABASE_URL the app expects
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crash-demo
+  labels:
+    app: crash-demo
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36
+      env:
+        - name: DATABASE_URL
+          value: "postgres://db.s14.svc.cluster.local:5432/app"
+      command:
+        - sh
+        - -c
+        - |
+          echo "Application starting..."
+          if [ -z "$DATABASE_URL" ]; then
+            echo "[FATAL] DATABASE_URL environment variable is MISSING" >&2
+            exit 1
+          fi
+          echo "Connected to $DATABASE_URL"
+          sleep 3600

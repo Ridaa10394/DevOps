@@ -1,0 +1,47 @@
+$ kubectl get pods -A | grep -E "^s14" 
+s14-config              config-demo                                             1/1     Running             0               18m
+s14-crash               crash-demo                                              1/1     Running             0               18m
+s14-dns-backend         orders-75f4959994-42bfp                                 1/1     Running             0               26m
+s14-dns                 dns-client                                              1/1     Running             0               14m
+s14-errpull             errpull-demo                                            1/1     Running             0               16m
+s14-image               image-demo                                              1/1     Running             0               17m
+s14-mini                project-broken-pod                                      1/1     Running             0               6m19s
+s14-mini                troubleshooting-app-59d4957864-459gl                    1/1     Running             0               7m5s
+s14-mini                troubleshooting-app-59d4957864-r6bbz                    1/1     Running             0               7m5s
+s14-mount               mount-demo                                              1/1     Running             0               52m
+s14-netpol              api                                                     1/1     Running             0               27m
+s14-netpol              frontend                                                1/1     Running             0               27m
+s14-oom                 oom-demo                                                1/1     Running             0               13m
+s14-pending             pending-demo                                            1/1     Running             0               15m
+s14-svc                 client                                                  1/1     Running             0               22m
+s14-svc                 web-557577df75-fkwmb                                    1/1     Running             0               26m
+s14-svc                 web-557577df75-nbz94                                    1/1     Running             0               26m
+s14-triage              fail-1-crashloop-pod                                    1/1     Running             0               10m
+s14-triage              fail-2-imagepull-pod                                    1/1     Running             0               10m
+s14-triage              fail-3-pending-pod                                      1/1     Running             0               10m
+s14-triage              fail-4-dns-failure-pod                                  1/1     Running             0               9m45s
+s14-triage              fail-5-oomkilled-pod                                    1/1     Running             0               9m44s
+s14-triage              postgres-db                                             1/1     Running             0               9m45s
+s14                     get-demo                                                1/1     Running             0               54m
+s14                     logs-demo                                               2/2     Running             0               54m
+s14                     restart-demo                                            0/1     CrashLoopBackOff    12 (2m1s ago)   54m
+
+$ kubectl delete ns s14 s14-crash s14-image s14-errpull s14-pending s14-mount s14-svc s14-dns s14-dns-backend s14-netpol s14-config s14-oom s14-triage s14-mini --timeout=180s
+namespace "s14" deleted
+namespace "s14-crash" deleted
+namespace "s14-image" deleted
+namespace "s14-errpull" deleted
+namespace "s14-pending" deleted
+namespace "s14-mount" deleted
+namespace "s14-svc" deleted
+namespace "s14-dns" deleted
+namespace "s14-dns-backend" deleted
+namespace "s14-netpol" deleted
+namespace "s14-config" deleted
+namespace "s14-oom" deleted
+namespace "s14-triage" deleted
+namespace "s14-mini" deleted
+
+$ kubectl get ns | grep -E "^s14" || echo "no s14 namespaces left"
+no s14 namespaces left
+

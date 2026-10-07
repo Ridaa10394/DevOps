@@ -1,0 +1,62 @@
+$ kubectl -n s14-errpull apply -f 03-errimagepull/broken.yaml
+pod/errpull-demo created
+
+### 1 identify
+$ kubectl -n s14-errpull get pods -w   # watched ~70s then Ctrl+C
+NAME           READY   STATUS              RESTARTS   AGE
+errpull-demo   0/1     ContainerCreating   0          1s
+errpull-demo   0/1     ContainerCreating   0          1s
+errpull-demo   0/1     ErrImagePull        0          2s
+errpull-demo   0/1     ImagePullBackOff    0          16s
+errpull-demo   0/1     ErrImagePull        0          29s
+errpull-demo   0/1     ImagePullBackOff    0          44s
+errpull-demo   0/1     ErrImagePull        0          58s
+^C
+
+### 2 investigate
+$ kubectl -n s14-errpull describe pod errpull-demo | sed -n "/^Events:/,\$p"
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  71s                default-scheduler  Successfully assigned s14-errpull/errpull-demo to minikube
+  Normal   Pulling    27s (x3 over 70s)  kubelet            spec.containers{app}: Pulling image "registry.example.invalid/team/api:1.0"
+  Warning  Failed     24s (x3 over 69s)  kubelet            spec.containers{app}: Failed to pull image "registry.example.invalid/team/api:1.0": failed to pull and unpack image "registry.example.invalid/team/api:1.0": failed to resolve reference "registry.example.invalid/team/api:1.0": failed to do request: Head "https://registry.example.invalid/v2/team/api/manifests/1.0": dial tcp: lookup registry.example.invalid on 192.168.65.254:53: no such host
+  Warning  Failed     24s (x3 over 69s)  kubelet            spec.containers{app}: Error: ErrImagePull
+  Normal   BackOff    13s (x3 over 69s)  kubelet            spec.containers{app}: Back-off pulling image "registry.example.invalid/team/api:1.0"
+  Warning  Failed     13s (x3 over 69s)  kubelet            spec.containers{app}: Error: ImagePullBackOff
+
+$ kubectl -n s14-errpull get pod errpull-demo -o jsonpath='{.status.containerStatuses[0].state.waiting.reason}: {.status.containerStatuses[0].state.waiting.message}{"\n"}'
+ErrImagePull: failed to pull and unpack image "registry.example.invalid/team/api:1.0": failed to resolve reference "registry.example.invalid/team/api:1.0": failed to do request: Head "https://registry.example.invalid/v2/team/api/manifests/1.0": dial tcp: lookup registry.example.invalid on 192.168.65.254:53: no such host
+
+$ minikube ssh -- nslookup registry.example.invalid
+Server:		192.168.65.254
+Address:	192.168.65.254#53
+
+** server can't find registry.example.invalid: NXDOMAIN
+
+ssh: Process exited with status 1
+
+$ minikube ssh -- nslookup registry-1.docker.io | tail -4
+Address: 52.86.134.208
+Name:	registry-1.docker.io
+Address: 100.48.137.92
+
+
+$ kubectl -n s14-errpull get pod errpull-demo -o jsonpath="{.spec.imagePullSecrets}"; echo "(no imagePullSecrets)"
+(no imagePullSecrets)
+
+### 4 fix
+$ kubectl -n s14-errpull delete pod errpull-demo
+pod "errpull-demo" deleted from s14-errpull namespace
+
+$ kubectl -n s14-errpull apply -f 03-errimagepull/fixed.yaml
+pod/errpull-demo created
+
+### 5 verify
+$ kubectl -n s14-errpull get pods
+NAME           READY   STATUS    RESTARTS   AGE
+errpull-demo   1/1     Running   0          10s
+
+$ kubectl -n s14-errpull get pod errpull-demo -o jsonpath="{.status.containerStatuses[0].imageID}"; echo
+docker.io/library/nginx@sha256:6784fb0834aa7dbbe12e3d7471e69c290df3e6ba810dc38b34ae33d3c1c05f7d
+

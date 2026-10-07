@@ -1,0 +1,11 @@
+$ kubectl -n s14 get pod restart-demo
+NAME           READY   STATUS    RESTARTS       AGE
+restart-demo   1/1     Running   7 (5m4s ago)   25m
+
+$ kubectl -n s14 logs restart-demo
+run started at 11:17:19
+
+$ kubectl -n s14 logs restart-demo --previous
+run started at 11:12:06
+simulated failure, exiting with code 1
+

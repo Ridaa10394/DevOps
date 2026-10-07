@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fail-5-oomkilled-pod
+  labels:
+    tier: triage-gauntlet
+    scenario: oomkilled
+spec:
+  containers:
+    - name: memory-leaker
+      image: python:3.11-alpine
+      command:
+        - "python3"
+        - "-c"
+        - |
+          # FIX (two parts): stop holding every chunk forever (process one at a time),
+          # and give the container a sane limit for the python runtime itself
+          import time
+          print("Processing memory in 10MB chunks...", flush=True)
+          for i in range(100):
+              chunk = b"x" * (10 * 1024 * 1024)
+              del chunk
+          print("Done, peak stayed around one chunk. Sleeping.", flush=True)
+          time.sleep(3600)
+      resources:
+        requests:
+          memory: "32Mi"
+        limits:
+          memory: "64Mi"

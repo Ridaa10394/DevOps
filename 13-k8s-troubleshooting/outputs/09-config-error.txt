@@ -1,0 +1,56 @@
+### 1 identify
+$ kubectl -n s14-config get pods
+NAME          READY   STATUS                       RESTARTS   AGE
+config-demo   0/1     CreateContainerConfigError   0          4m30s
+
+### 2 investigate
+$ kubectl -n s14-config describe pod config-demo | sed -n "/State:/,/Ready:/p;/Environment:/,/Mounts:/p;/^Events:/,\$p"
+    State:          Waiting
+      Reason:       CreateContainerConfigError
+    Ready:          False
+    Environment:
+      DB_HOST:      <set to the key 'DB_HOST' of config map 'app-config'>    Optional: false
+      LOG_LEVEL:    <set to the key 'log_level' of config map 'app-config'>  Optional: false
+      DB_PASSWORD:  <set to the key 'password' in secret 'db-credentials'>   Optional: false
+    Mounts:
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  4m30s                default-scheduler  Successfully assigned s14-config/config-demo to minikube
+  Normal   Pulled     7s (x22 over 4m30s)  kubelet            spec.containers{app}: Container image "busybox:1.36" already present on machine and can be accessed by the pod
+  Warning  Failed     7s (x22 over 4m30s)  kubelet            spec.containers{app}: Error: couldn't find key DB_HOST in ConfigMap s14-config/app-config
+
+$ kubectl -n s14-config logs config-demo
+Error from server (BadRequest): container "app" in pod "config-demo" is waiting to start: CreateContainerConfigError
+
+$ kubectl -n s14-config get configmap app-config -o yaml | sed -n "/^data:/,/^kind:/p"
+data:
+  database_host: postgres.s14.svc.cluster.local
+  log_level: info
+kind: ConfigMap
+
+$ kubectl -n s14-config get secret db-credentials
+Error from server (NotFound): secrets "db-credentials" not found
+
+### (what the pod spec actually references)
+$ kubectl -n s14-config get pod config-demo -o jsonpath="{.spec.containers[0].env[*].valueFrom}"; echo
+{"configMapKeyRef":{"key":"DB_HOST","name":"app-config"}} {"configMapKeyRef":{"key":"log_level","name":"app-config"}} {"secretKeyRef":{"key":"password","name":"db-credentials"}}
+
+### 4 fix
+$ kubectl -n s14-config delete pod config-demo
+pod "config-demo" deleted from s14-config namespace
+
+$ kubectl -n s14-config apply -f 09-config-error/fixed.yaml
+configmap/app-config unchanged
+secret/db-credentials created
+pod/config-demo created
+
+### 5 verify
+$ kubectl -n s14-config get pods
+NAME          READY   STATUS    RESTARTS   AGE
+config-demo   1/1     Running   0          10s
+
+$ kubectl -n s14-config logs config-demo
+DB_HOST=postgres.s14.svc.cluster.local LOG_LEVEL=info
+password length: 11
+

@@ -1,0 +1,36 @@
+$ kubectl -n s14 exec get-demo -- hostname
+get-demo
+
+$ kubectl -n s14 exec get-demo -- ls /usr/share/nginx/html
+50x.html
+index.html
+
+$ kubectl -n s14 exec get-demo -- cat /etc/resolv.conf
+search s14.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+
+$ kubectl -n s14 exec get-demo -- curl -s -o /dev/null -w "%{http_code}\n" http://localhost
+200
+
+$ kubectl -n s14 exec get-demo -- env | grep -i kubernetes_service
+KUBERNETES_SERVICE_HOST=10.96.0.1
+KUBERNETES_SERVICE_PORT=443
+KUBERNETES_SERVICE_PORT_HTTPS=443
+
+$ kubectl -n s14 exec logs-demo -c sidecar -- ps
+PID   USER     TIME  COMMAND
+    1 root      0:00 sh -c while true; do   echo "$(date +%T) [sidecar] shipping logs..."   sleep 7 done 
+  118 root      0:00 ps
+
+$ printf "nginx -v\nls /etc/nginx/conf.d\nexit\n" | kubectl -n s14 exec -i get-demo -- bash
+nginx version: nginx/1.27.5
+default.conf
+
+$ kubectl -n s14 exec logs-demo -c app -- bash
+error: Internal error occurred: Internal error occurred: error executing command in container: failed to exec in container: failed to start exec "9bb7af96427ea6d00778d9def944ee2a7200f9ee44a97fbe67edc6a683439b66": OCI runtime exec failed: exec failed: unable to start container process: exec: "bash": executable file not found in $PATH
+
+$ kubectl -n s14 exec logs-demo -- hostname
+Defaulted container "app" out of: app, sidecar
+logs-demo
+

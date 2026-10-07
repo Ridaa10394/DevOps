@@ -1,0 +1,47 @@
+$ kubectl -n s14 logs logs-demo | head -6
+Defaulted container "app" out of: app, sidecar
+Application started
+Connecting to database...
+Database connection successful
+11:05:22 Application is healthy
+11:05:27 Application is healthy
+11:05:32 Application is healthy
+
+$ kubectl -n s14 logs logs-demo -c app --tail=5
+11:13:37 Application is healthy
+11:13:42 Application is healthy
+11:13:47 Application is healthy
+11:13:52 Application is healthy
+11:13:57 Application is healthy
+
+$ kubectl -n s14 logs logs-demo -c sidecar --tail=3
+11:13:46 [sidecar] shipping logs...
+11:13:53 [sidecar] shipping logs...
+11:14:00 [sidecar] shipping logs...
+
+$ kubectl -n s14 logs logs-demo --all-containers --prefix --tail=2
+[pod/logs-demo/app] 11:13:52 Application is healthy
+[pod/logs-demo/app] 11:13:57 Application is healthy
+[pod/logs-demo/sidecar] 11:13:53 [sidecar] shipping logs...
+[pod/logs-demo/sidecar] 11:14:00 [sidecar] shipping logs...
+
+$ kubectl -n s14 logs restart-demo
+run started at 11:12:06
+simulated failure, exiting with code 1
+
+$ kubectl -n s14 logs restart-demo --previous
+run started at 11:12:06
+simulated failure, exiting with code 1
+
+$ kubectl -n s14 logs -f logs-demo -c app --tail=1   # left running ~12s, then Ctrl+C
+11:16:17 Application is healthy
+11:16:22 Application is healthy
+11:16:27 Application is healthy
+11:16:32 Application is healthy
+^C
+
+$ kubectl -n s14 logs logs-demo -c app --since=15s --timestamps
+2026-10-07T11:16:22.737559962Z 11:16:22 Application is healthy
+2026-10-07T11:16:27.738839506Z 11:16:27 Application is healthy
+2026-10-07T11:16:32.740371884Z 11:16:32 Application is healthy
+

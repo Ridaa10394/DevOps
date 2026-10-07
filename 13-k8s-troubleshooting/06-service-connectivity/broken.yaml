@@ -1,0 +1,13 @@
+# BUG 1: selector says app: web-app but pods are labelled app: web  -> no endpoints
+# BUG 2: targetPort 8080 but nginx listens on 80                    -> connection refused
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  selector:
+    app: web-app
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP

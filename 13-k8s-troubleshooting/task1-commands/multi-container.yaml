@@ -1,0 +1,32 @@
+# two containers in one pod -> need -c to pick which logs you want
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logs-demo
+  labels:
+    app: logs-demo
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          echo "Application started"
+          echo "Connecting to database..."
+          echo "Database connection successful"
+          while true; do
+            echo "$(date +%T) Application is healthy"
+            sleep 5
+          done
+    - name: sidecar
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          while true; do
+            echo "$(date +%T) [sidecar] shipping logs..."
+            sleep 7
+          done

@@ -1,0 +1,13 @@
+# intermediate: nodeSelector removed, requests still huge -> still Pending, different reason
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pending-demo
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.27
+      resources:
+        requests:
+          cpu: "64"
+          memory: 200Gi
