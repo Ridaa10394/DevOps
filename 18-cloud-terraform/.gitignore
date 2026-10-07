@@ -1,0 +1,13 @@
+# Terraform working dir + provider binaries
+.terraform/
+.terraform.tfstate.lock.info
+
+# State files - contain resource IDs and can hold secrets
+*.tfstate
+*.tfstate.*
+
+# Real variable values
+*.tfvars
+!terraform.tfvars.example
+crash.log
+*.tfplan

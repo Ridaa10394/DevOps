@@ -1,0 +1,2 @@
+$ terraform fmt -check -recursive
+exit code: 0

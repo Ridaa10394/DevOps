@@ -1,0 +1,11 @@
+# copy to terraform.tfvars and edit - terraform.tfvars is gitignored
+aws_region         = "ap-south-1"
+project_name       = "session19-ridaa"
+vpc_cidr           = "10.20.0.0/16"
+public_subnet_cidr = "10.20.1.0/24"
+instance_type      = "t3.micro"
+
+# find your IP with: curl -s https://checkip.amazonaws.com
+ssh_allowed_cidr = "203.0.113.10/32"
+
+# key_name = "my-keypair"
