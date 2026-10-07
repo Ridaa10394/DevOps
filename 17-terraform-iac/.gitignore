@@ -1,0 +1,13 @@
+# Terraform working dirs and state - never commit these
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.DS_Store

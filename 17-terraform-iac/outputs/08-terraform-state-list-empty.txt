@@ -1,0 +1,7 @@
+$ terraform state list
+No state file was found!
+
+State management commands require a state file. Run this command
+in a directory where Terraform has been run or use the -state flag
+to point the command to a specific state location.
+exit code: 1

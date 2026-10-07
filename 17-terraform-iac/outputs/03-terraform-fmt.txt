@@ -1,0 +1,5 @@
+$ terraform fmt -check -diff
+exit code: 0
+
+$ terraform fmt
+exit code: 0
