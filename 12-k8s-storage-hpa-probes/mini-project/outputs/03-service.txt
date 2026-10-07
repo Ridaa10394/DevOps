@@ -1,0 +1,20 @@
+$ kubectl get svc web-service -n s13-production-webapp
+NAME          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+web-service   ClusterIP   10.101.203.114   <none>        80/TCP    36s
+
+$ kubectl get endpointslices -n s13-production-webapp -l kubernetes.io/service-name=web-service
+NAME                ADDRESSTYPE   PORTS   ENDPOINTS                   AGE
+web-service-5g5vp   IPv4          80      10.244.0.192,10.244.0.193   36s
+
+# port-forward running: kubectl port-forward -n s13-production-webapp svc/web-service 18080:80  (used 18080 instead of 8080 to avoid clashing with other local stuff)
+$ curl -s http://localhost:18080 | head -5
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+
+$ curl -s -o /dev/null -w 'HTTP %{http_code}
+' http://localhost:18080
+HTTP 200
+

@@ -1,0 +1,17 @@
+# Static PV (cluster scoped). storageClassName "s13-manual" is just a label
+# for matching - no provisioner exists for it, so the default "standard"
+# class won't jump in and dynamically create a different volume.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: s13-student-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: s13-manual
+  hostPath:
+    path: /tmp/s13-student-data
+    type: DirectoryOrCreate

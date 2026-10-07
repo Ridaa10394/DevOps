@@ -1,0 +1,58 @@
+$ kubectl get storageclass
+NAME                 PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+standard (default)   k8s.io/minikube-hostpath   Delete          Immediate           false                  18m
+
+$ kubectl describe storageclass standard | grep -E 'Name|IsDefault|Provisioner|ReclaimPolicy|VolumeBindingMode'
+Name:            standard
+IsDefaultClass:  Yes
+Provisioner:           k8s.io/minikube-hostpath
+ReclaimPolicy:         Delete
+VolumeBindingMode:     Immediate
+
+$ kubectl get pv | grep s13/ || echo '(no PV for s13 dynamic claim yet)'
+s13-student-pv   1Gi        RWO            Retain           Bound    s13/student-pvc   s13-manual     <unset>                          14s
+
+$ kubectl apply -f dynamic-pvc.yaml
+persistentvolumeclaim/dynamic-pvc created
+
+$ kubectl get pvc dynamic-pvc -n s13
+NAME          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+dynamic-pvc   Bound    pvc-5096f513-b53e-4299-8c30-6b858702c63b   500Mi      RWO            standard       <unset>                 4s
+
+$ kubectl get pv pvc-5096f513-b53e-4299-8c30-6b858702c63b
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+pvc-5096f513-b53e-4299-8c30-6b858702c63b   500Mi      RWO            Delete           Bound    s13/dynamic-pvc   standard       <unset>                          4s
+
+$ kubectl get pv pvc-5096f513-b53e-4299-8c30-6b858702c63b -o jsonpath='{.spec.hostPath.path}{"
+"}{.metadata.annotations}{"
+"}'
+/tmp/hostpath-provisioner/s13/dynamic-pvc
+{"hostPathProvisionerIdentity":"94ac1bf6-c028-43b0-918b-e4d573f8c78b","pv.kubernetes.io/provisioned-by":"k8s.io/minikube-hostpath"}
+
+$ kubectl get events -n s13 --field-selector involvedObject.name=dynamic-pvc
+LAST SEEN   TYPE     REASON                  OBJECT                              MESSAGE
+4s          Normal   ExternalProvisioning    persistentvolumeclaim/dynamic-pvc   Waiting for a volume to be created either by the external provisioner 'k8s.io/minikube-hostpath' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
+4s          Normal   Provisioning            persistentvolumeclaim/dynamic-pvc   External provisioner is provisioning volume for claim "s13/dynamic-pvc"
+4s          Normal   ProvisioningSucceeded   persistentvolumeclaim/dynamic-pvc   Successfully provisioned volume pvc-5096f513-b53e-4299-8c30-6b858702c63b
+
+$ kubectl apply -f pod-dynamic-pvc.yaml
+pod/dynamic-demo created
+
+$ kubectl wait --for=condition=Ready pod/dynamic-demo -n s13 --timeout=120s
+pod/dynamic-demo condition met
+
+$ kubectl exec -n s13 dynamic-demo -- sh -c 'echo dynamic-volume-works > /data/hello.txt; cat /data/hello.txt; df -h /data'
+dynamic-volume-works
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda1       911G  294G  572G  34% /data
+
+# reclaim policy Delete: removing the claim removes the auto-created PV too
+$ kubectl delete pod dynamic-demo -n s13
+pod "dynamic-demo" deleted from s13 namespace
+
+$ kubectl delete pvc dynamic-pvc -n s13
+persistentvolumeclaim "dynamic-pvc" deleted from s13 namespace
+
+$ kubectl get pv pvc-5096f513-b53e-4299-8c30-6b858702c63b
+Error from server (NotFound): persistentvolumes "pvc-5096f513-b53e-4299-8c30-6b858702c63b" not found
+

@@ -1,0 +1,9 @@
+$ kubectl delete -f hpa-backend.yaml -f backend-service.yaml -f backend-deployment.yaml
+horizontalpodautoscaler.autoscaling "yatri-backend-hpa" deleted from s13 namespace
+service "yatri-backend-service" deleted from s13 namespace
+deployment.apps "yatri-backend" deleted from s13 namespace
+
+$ kubectl get all -n s13
+NAME                                 READY   STATUS        RESTARTS   AGE
+pod/yatri-backend-54f8858c86-8dgmt   1/1     Terminating   0          32m
+pod/yatri-backend-54f8858c86-bxtgw   1/1     Terminating   0          32m

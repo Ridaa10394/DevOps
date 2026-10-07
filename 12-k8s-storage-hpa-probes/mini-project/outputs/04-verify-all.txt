@@ -1,0 +1,72 @@
+$ kubectl get all,pvc -n s13-production-webapp
+NAME                          READY   STATUS    RESTARTS   AGE
+pod/web-app-d45775485-7hqhq   1/1     Running   0          13m
+pod/web-app-d45775485-rfbx4   1/1     Running   0          13m
+
+NAME                  TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/web-service   ClusterIP   10.101.203.114   <none>        80/TCP    16m
+
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web-app   2/2     2            2           16m
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/web-app-5945bfc776   0         0         0       15m
+replicaset.apps/web-app-85d86b65d    0         0         0       14m
+replicaset.apps/web-app-d45775485    2         2         2       16m
+
+NAME                                              REFERENCE            TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/web-app-hpa   Deployment/web-app   cpu: 1%/50%   2         5         2          16m
+
+NAME                             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/web-data   Bound    pvc-bd177c19-16d3-44b5-9236-b7d7c3b0b048   500Mi      RWO            standard       <unset>                 16m
+
+$ kubectl get hpa web-app-hpa -n s13-production-webapp
+NAME          REFERENCE            TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+web-app-hpa   Deployment/web-app   cpu: 1%/50%   2         5         2          16m
+
+$ kubectl describe hpa web-app-hpa -n s13-production-webapp | sed -n '/Metrics:/,/Max replicas/p;/Conditions:/,$p'
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  1% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          5
+Conditions:
+  Type            Status  Reason            Message
+  ----            ------  ------            -------
+  AbleToScale     True    ReadyForNewScale  recommended size matches current size
+  ScalingActive   True    ValidMetricFound  the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  True    TooFewReplicas    the desired replica count is less than the minimum replica count
+Events:
+  Type     Reason                        Age                 From                       Message
+  ----     ------                        ----                ----                       -------
+  Warning  FailedComputeMetricsReplicas  13m (x12 over 16m)  horizontal-pod-autoscaler  invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io)
+  Warning  FailedGetResourceMetric       11m (x21 over 16m)  horizontal-pod-autoscaler  failed to get cpu utilization: unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io)
+
+$ kubectl top pods -n s13-production-webapp
+NAME                      CPU(cores)   MEMORY(bytes)   
+web-app-d45775485-7hqhq   1m           11Mi            
+web-app-d45775485-rfbx4   1m           11Mi            
+
+$ kubectl describe pod web-app-d45775485-7hqhq -n s13-production-webapp | grep -E 'Liveness|Readiness|Startup|Requests|Limits|cpu|memory|/data|Ready|Restart'
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     200m
+      memory:  128Mi
+    Requests:
+      cpu:        100m
+      memory:     64Mi
+    Liveness:     http-get http://:80/ delay=5s timeout=2s period=5s successThreshold=1 failureThreshold=3
+    Readiness:    http-get http://:80/ delay=5s timeout=2s period=5s successThreshold=1 failureThreshold=2
+    Startup:      http-get http://:80/ delay=0s timeout=1s period=2s successThreshold=1 failureThreshold=30
+      /data from persistent-storage (rw)
+  PodReadyToStartContainers   True 
+  Ready                       True 
+  ContainersReady             True 
+
+$ kubectl get events -n s13-production-webapp --field-selector reason=Unhealthy --sort-by=.lastTimestamp | tail -5
+LAST SEEN   TYPE      REASON      OBJECT                         MESSAGE
+14m         Warning   Unhealthy   pod/web-app-5945bfc776-c75tw   Readiness probe failed: HTTP probe failed with statuscode: 404
+14m         Warning   Unhealthy   pod/web-app-5945bfc776-p8kmr   Readiness probe failed: HTTP probe failed with statuscode: 404
+13m         Warning   Unhealthy   pod/web-app-85d86b65d-2ddcz    Liveness probe failed: HTTP probe failed with statuscode: 404
+13m         Warning   Unhealthy   pod/web-app-85d86b65d-tqtsx    Liveness probe failed: HTTP probe failed with statuscode: 404
+

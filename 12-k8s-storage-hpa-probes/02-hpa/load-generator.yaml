@@ -1,0 +1,36 @@
+# In-cluster version of load_generator.sh: busybox pods hammering the service
+# with wget in a tight loop. Each replica runs 2 parallel loops.
+# Scale it with: kubectl scale deploy/load-generator -n s13 --replicas=N
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+  namespace: s13
+  labels:
+    app: load-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+    spec:
+      containers:
+        - name: busybox
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "hitting http://yatri-backend-service.s13.svc.cluster.local"
+              for i in 1 2; do
+                (while true; do wget -q -O- http://yatri-backend-service.s13.svc.cluster.local > /dev/null 2>&1; done) &
+              done
+              wait
+          resources:
+            requests:
+              cpu: 50m
+            limits:
+              cpu: 300m

@@ -1,0 +1,28 @@
+POD_NAME=web-app-d45775485-5bqzh
+
+$ kubectl exec -n s13-production-webapp web-app-d45775485-5bqzh -- sh -c 'echo "Student: Ridaa Mirza (24BCS10394)" > /data/student.txt'
+
+$ kubectl exec -n s13-production-webapp web-app-d45775485-5bqzh -- cat /data/student.txt
+Student: Ridaa Mirza (24BCS10394)
+
+# same PVC is mounted in the 2nd replica too (RWO = one node, and minikube has one node)
+$ kubectl exec -n s13-production-webapp web-app-d45775485-7pwgw -- cat /data/student.txt
+Student: Ridaa Mirza (24BCS10394)
+
+$ kubectl delete pod -n s13-production-webapp web-app-d45775485-5bqzh
+pod "web-app-d45775485-5bqzh" deleted from s13-production-webapp namespace
+
+$ kubectl wait --for=condition=Ready pod -l app=web-app -n s13-production-webapp --timeout=120s
+pod/web-app-d45775485-6m4qb condition met
+pod/web-app-d45775485-7pwgw condition met
+
+$ kubectl get pods -n s13-production-webapp
+NAME                      READY   STATUS    RESTARTS   AGE
+web-app-d45775485-6m4qb   1/1     Running   0          8s
+web-app-d45775485-7pwgw   1/1     Running   0          26s
+
+NEW_POD=web-app-d45775485-6m4qb
+
+$ kubectl exec -n s13-production-webapp web-app-d45775485-6m4qb -- cat /data/student.txt
+Student: Ridaa Mirza (24BCS10394)
+

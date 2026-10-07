@@ -1,0 +1,38 @@
+# "yatri-backend" from the class hpa/ folder. The class version expects a
+# Flask image on :5000 that I don't have, so I'm using plain nginx on :80
+# (same as 04-hpa). The important bit for HPA is resources.requests.cpu -
+# utilization % is calculated against the request, without it HPA shows <unknown>.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yatri-backend
+  namespace: s13
+  labels:
+    app: yatri-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: yatri-backend
+  template:
+    metadata:
+      labels:
+        app: yatri-backend
+    spec:
+      containers:
+        - name: backend
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 5

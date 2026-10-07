@@ -1,0 +1,6 @@
+$ kubectl get all,pvc -n s13
+No resources found in s13 namespace.
+
+$ kubectl delete namespace s13
+namespace "s13" deleted
+

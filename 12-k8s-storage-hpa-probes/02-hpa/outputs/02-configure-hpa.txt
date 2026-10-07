@@ -1,0 +1,48 @@
+$ kubectl top nodes
+NAME       CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+minikube   349m         2%       2638Mi          33%         
+
+$ kubectl apply -f hpa-backend.yaml
+horizontalpodautoscaler.autoscaling/yatri-backend-hpa created
+
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         2          0s
+
+$ kubectl describe hpa yatri-backend-hpa -n s13
+Name:                                                  yatri-backend-hpa
+Namespace:                                             s13
+Labels:                                                app=yatri-backend
+Annotations:                                           <none>
+CreationTimestamp:                                     Wed, 07 Oct 2026 16:58:13 +0530
+Reference:                                             Deployment/yatri-backend
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+

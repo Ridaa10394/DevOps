@@ -1,0 +1,18 @@
+# Same slow boot (20s) but startupProbe only allows 3 x 2s = 6s,
+# so the kubelet kills it before nginx ever comes up -> restart loop.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: startup-fail-demo
+  namespace: s13
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.27
+      command: ["/bin/sh", "-c", "echo slow boot...; sleep 20; exec nginx -g 'daemon off;'"]
+      startupProbe:
+        httpGet:
+          path: /
+          port: 80
+        failureThreshold: 3
+        periodSeconds: 2

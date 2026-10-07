@@ -1,0 +1,24 @@
+$ kubectl apply -f backend-deployment.yaml -f backend-service.yaml
+deployment.apps/yatri-backend created
+service/yatri-backend-service created
+
+$ kubectl rollout status deploy/yatri-backend -n s13 --timeout=180s
+Waiting for deployment "yatri-backend" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "yatri-backend" rollout to finish: 1 of 2 updated replicas are available...
+deployment "yatri-backend" successfully rolled out
+
+$ kubectl get deploy,svc,pods -n s13 -l app=yatri-backend -o wide
+NAME                            READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES       SELECTOR
+deployment.apps/yatri-backend   2/2     2            2           1s    backend      nginx:1.27   app=yatri-backend
+
+NAME                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+service/yatri-backend-service   ClusterIP   10.107.15.225   <none>        80/TCP    1s    app=yatri-backend
+
+NAME                                 READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+pod/yatri-backend-54f8858c86-8dgmt   1/1     Running   0          1s    10.244.0.133   minikube   <none>           <none>
+pod/yatri-backend-54f8858c86-bxtgw   1/1     Running   0          1s    10.244.0.134   minikube   <none>           <none>
+
+$ kubectl get deploy yatri-backend -n s13 -o jsonpath='{.spec.template.spec.containers[0].resources}{"
+"}'
+{"limits":{"cpu":"200m","memory":"128Mi"},"requests":{"cpu":"50m","memory":"32Mi"}}
+

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: student-pvc
+  namespace: s13
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: s13-manual
+  resources:
+    requests:
+      storage: 500Mi

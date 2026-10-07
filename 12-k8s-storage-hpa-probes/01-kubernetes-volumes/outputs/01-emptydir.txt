@@ -1,0 +1,49 @@
+$ kubectl get pod emptydir-demo -n s13 -o wide
+NAME            READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+emptydir-demo   2/2     Running   0          14m   10.244.0.10   minikube   <none>           <none>
+
+$ kubectl exec -n s13 emptydir-demo -c reader -- cat /usr/share/nginx/html/index.html | head -5
+written by writer at Wed Oct  7 11:05:28 UTC 2026
+written by writer at Wed Oct  7 11:05:33 UTC 2026
+written by writer at Wed Oct  7 11:05:38 UTC 2026
+written by writer at Wed Oct  7 11:05:43 UTC 2026
+
+$ kubectl exec -n s13 emptydir-demo -c reader -- sh -c 'echo hello-from-reader > /usr/share/nginx/html/from-reader.txt'
+
+$ kubectl exec -n s13 emptydir-demo -c writer -- cat /shared/from-reader.txt
+hello-from-reader
+
+$ kubectl exec -n s13 emptydir-demo -c writer -- ls -la /shared
+total 16
+drwxrwxrwx    2 root     root          4096 Oct  7 11:05 .
+drwxr-xr-x    1 root     root          4096 Oct  7 11:05 ..
+-rw-r--r--    1 root     root            18 Oct  7 11:05 from-reader.txt
+-rw-r--r--    1 root     root           200 Oct  7 11:05 index.html
+
+$ kubectl exec -n s13 emptydir-demo -c reader -- curl -s localhost | tail -3
+written by writer at Wed Oct  7 11:05:33 UTC 2026
+written by writer at Wed Oct  7 11:05:38 UTC 2026
+written by writer at Wed Oct  7 11:05:43 UTC 2026
+
+$ kubectl get pod emptydir-demo -n s13 -o jsonpath='{.spec.volumes[0]}'
+{"emptyDir":{},"name":"shared-data"}
+# delete + recreate the pod: emptyDir lives only as long as the pod
+$ kubectl delete pod emptydir-demo -n s13
+pod "emptydir-demo" deleted from s13 namespace
+
+$ kubectl apply -f emptydir-pod.yaml
+pod/emptydir-demo created
+
+$ kubectl wait --for=condition=Ready pod/emptydir-demo -n s13 --timeout=120s
+pod/emptydir-demo condition met
+
+$ kubectl exec -n s13 emptydir-demo -c writer -- ls -la /shared
+total 12
+drwxrwxrwx    2 root     root          4096 Oct  7 11:06 .
+drwxr-xr-x    1 root     root          4096 Oct  7 11:06 ..
+-rw-r--r--    1 root     root            50 Oct  7 11:06 index.html
+
+$ kubectl exec -n s13 emptydir-demo -c writer -- cat /shared/from-reader.txt
+cat: can't open '/shared/from-reader.txt': No such file or directory
+command terminated with exit code 1
+

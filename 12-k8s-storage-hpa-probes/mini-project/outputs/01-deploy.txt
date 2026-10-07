@@ -1,0 +1,36 @@
+$ kubectl apply -f namespace.yaml
+namespace/s13-production-webapp created
+
+$ kubectl apply -f pvc.yaml
+persistentvolumeclaim/web-data created
+
+$ kubectl get pvc -n s13-production-webapp
+NAME       STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+web-data   Bound    pvc-bd177c19-16d3-44b5-9236-b7d7c3b0b048   500Mi      RWO            standard       <unset>                 3s
+
+$ kubectl get pv | grep s13-production-webapp
+pvc-bd177c19-16d3-44b5-9236-b7d7c3b0b048   500Mi      RWO            Delete           Bound    s13-production-webapp/web-data   standard       <unset>                          3s
+
+$ kubectl apply -f deployment.yaml
+deployment.apps/web-app created
+
+$ kubectl apply -f service.yaml
+service/web-service created
+
+$ kubectl rollout status deploy/web-app -n s13-production-webapp --timeout=180s
+Waiting for deployment "web-app" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "web-app" rollout to finish: 1 of 2 updated replicas are available...
+deployment "web-app" successfully rolled out
+
+$ kubectl get pods -n s13-production-webapp -o wide
+NAME                      READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+web-app-d45775485-5bqzh   1/1     Running   0          9s    10.244.0.191   minikube   <none>           <none>
+web-app-d45775485-7pwgw   1/1     Running   0          9s    10.244.0.192   minikube   <none>           <none>
+
+$ kubectl apply -f hpa.yaml
+horizontalpodautoscaler.autoscaling/web-app-hpa created
+
+$ kubectl get hpa -n s13-production-webapp
+NAME          REFERENCE            TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+web-app-hpa   Deployment/web-app   cpu: <unknown>/50%   2         5         2          0s
+

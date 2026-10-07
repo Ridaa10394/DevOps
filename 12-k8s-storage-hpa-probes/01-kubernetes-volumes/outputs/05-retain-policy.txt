@@ -1,0 +1,19 @@
+# reclaim policy Retain: delete the claim, PV stays (Released) and data is still on the node
+$ kubectl delete pod storage-demo -n s13
+pod "storage-demo" deleted from s13 namespace
+
+$ kubectl delete pvc student-pvc -n s13
+persistentvolumeclaim "student-pvc" deleted from s13 namespace
+
+$ kubectl get pv s13-student-pv
+NAME             CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM             STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+s13-student-pv   1Gi        RWO            Retain           Released   s13/student-pvc   s13-manual     <unset>                          34s
+
+$ minikube ssh -- 'cat /tmp/s13-student-data/student.txt'
+Student: Ridaa Mirza (24BCS10394)
+Wed Oct  7 11:06:35 UTC 2026
+
+# a Released PV is not handed to a new claim automatically - admin has to clean it up
+$ kubectl delete pv s13-student-pv
+persistentvolume "s13-student-pv" deleted
+

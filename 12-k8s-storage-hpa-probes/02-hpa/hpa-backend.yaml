@@ -1,0 +1,26 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: yatri-backend-hpa
+  namespace: s13
+  labels:
+    app: yatri-backend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: yatri-backend
+  minReplicas: 2
+  # class file uses 10; capped at 6 because the minikube is shared with other labs
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  behavior:
+    scaleDown:
+      # this is the default anyway, written out so it's visible
+      stabilizationWindowSeconds: 300

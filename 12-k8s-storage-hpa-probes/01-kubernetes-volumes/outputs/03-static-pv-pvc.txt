@@ -1,0 +1,58 @@
+$ kubectl apply -f pv.yaml
+persistentvolume/s13-student-pv created
+
+$ kubectl get pv s13-student-pv
+NAME             CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+s13-student-pv   1Gi        RWO            Retain           Available           s13-manual     <unset>                          0s
+
+$ kubectl apply -f pvc.yaml
+persistentvolumeclaim/student-pvc created
+
+$ kubectl get pvc student-pvc -n s13
+NAME          STATUS   VOLUME           CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+student-pvc   Bound    s13-student-pv   1Gi        RWO            s13-manual     <unset>                 3s
+
+$ kubectl get pv s13-student-pv
+NAME             CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+s13-student-pv   1Gi        RWO            Retain           Bound    s13/student-pvc   s13-manual     <unset>                          3s
+
+$ kubectl apply -f pod-static-pvc.yaml
+pod/storage-demo created
+
+$ kubectl wait --for=condition=Ready pod/storage-demo -n s13 --timeout=120s
+pod/storage-demo condition met
+
+$ kubectl exec -n s13 storage-demo -- sh -c 'echo "Student: Ridaa Mirza (24BCS10394)" > /data/student.txt; date >> /data/student.txt'
+
+$ kubectl exec -n s13 storage-demo -- cat /data/student.txt
+Student: Ridaa Mirza (24BCS10394)
+Wed Oct  7 11:06:35 UTC 2026
+
+# delete the pod completely, then bring up a fresh one on the same claim
+$ kubectl delete pod storage-demo -n s13
+pod "storage-demo" deleted from s13 namespace
+
+$ kubectl get pvc student-pvc -n s13
+NAME          STATUS   VOLUME           CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+student-pvc   Bound    s13-student-pv   1Gi        RWO            s13-manual     <unset>                 5s
+
+$ kubectl apply -f pod-static-pvc.yaml
+pod/storage-demo created
+
+$ kubectl wait --for=condition=Ready pod/storage-demo -n s13 --timeout=120s
+pod/storage-demo condition met
+
+$ kubectl exec -n s13 storage-demo -- cat /data/student.txt
+Student: Ridaa Mirza (24BCS10394)
+Wed Oct  7 11:06:35 UTC 2026
+
+$ kubectl describe pvc student-pvc -n s13 | grep -E 'Name:|Status|Volume:|Capacity|Access|StorageClass|Used By'
+Name:          student-pvc
+StorageClass:  s13-manual
+Status:        Bound
+Volume:        s13-student-pv
+Capacity:      1Gi
+Access Modes:  RWO
+Used By:       storage-demo
+  Type     Status  LastProbeTime                     LastTransitionTime                Reason        Message
+

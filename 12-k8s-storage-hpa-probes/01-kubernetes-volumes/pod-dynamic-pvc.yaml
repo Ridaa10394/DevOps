@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dynamic-demo
+  namespace: s13
+spec:
+  containers:
+    - name: app
+      image: nginx:1.27
+      volumeMounts:
+        - name: dyn-storage
+          mountPath: /data
+  volumes:
+    - name: dyn-storage
+      persistentVolumeClaim:
+        claimName: dynamic-pvc

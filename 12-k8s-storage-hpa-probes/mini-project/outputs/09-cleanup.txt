@@ -1,0 +1,17 @@
+$ kubectl delete namespace s13-production-webapp
+namespace "s13-production-webapp" deleted
+
+$ kubectl get pv | grep s13-production-webapp || echo 'no PVs left for s13-production-webapp'
+pvc-bd177c19-16d3-44b5-9236-b7d7c3b0b048   500Mi      RWO            Delete           Released   s13-production-webapp/web-data   standard       <unset>                          39m
+
+$ kubectl get namespace s13-production-webapp
+Error from server (NotFound): namespaces "s13-production-webapp" not found
+
+# a few seconds later
+$ kubectl get pv pvc-bd177c19-16d3-44b5-9236-b7d7c3b0b048
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM                            STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+pvc-bd177c19-16d3-44b5-9236-b7d7c3b0b048   500Mi      RWO            Delete           Released   s13-production-webapp/web-data   standard       <unset>                          39m
+
+# ~2 min later it was still Released (the minikube storage-provisioner pod had restarted around then and didn't pick it up), so I removed it by hand
+$ kubectl delete pv pvc-bd177c19-16d3-44b5-9236-b7d7c3b0b048
+persistentvolume "pvc-bd177c19-16d3-44b5-9236-b7d7c3b0b048" deleted

@@ -1,0 +1,2154 @@
+=================== 2026-10-07 16:58:27 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         2          14s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          17m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          17m
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+=================== 2026-10-07 16:58:47 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         2          34s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          17m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          17m
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+>>>>>>>>>>>> 2026-10-07 16:59:06 EVENT: start load (1 load-generator pod, 2 wget loops) kubectl apply -f load-generator.yaml
+$ kubectl apply -f load-generator.yaml
+deployment.apps/load-generator created
+
+=================== 2026-10-07 16:59:07 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         2          54s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          18m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          18m
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+=================== 2026-10-07 16:59:27 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         2          74s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          18m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          18m
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+=================== 2026-10-07 16:59:47 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         2          94s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          18m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          18m
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+=================== 2026-10-07 17:00:08 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         2          115s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          19m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          19m
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    15m          13Mi            
+yatri-backend-54f8858c86-bxtgw    16m          15Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+>>>>>>>>>>>> 2026-10-07 17:00:22 EVENT: increase load - 1 generator pod only gets backend to ~30% of request, scale generator to 3 pods
+$ kubectl scale deploy/load-generator -n s13 --replicas=3
+deployment.apps/load-generator scaled
+
+=================== 2026-10-07 17:00:28 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 31%/50%   2         6         2          2m15s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          19m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          19m
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    15m          13Mi            
+yatri-backend-54f8858c86-bxtgw    16m          15Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  31% (15m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+Events:           <none>
+
+=================== 2026-10-07 17:00:48 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 31%/50%   2         6         2          2m35s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          19m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          19m
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    15m          13Mi            
+yatri-backend-54f8858c86-bxtgw    16m          15Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  31% (15m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+Events:           <none>
+
+=================== 2026-10-07 17:01:08 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 31%/50%   2         6         2          2m55s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          20m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          20m
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         5Mi             
+load-generator-5996bf6749-vckx6   300m         3Mi             
+load-generator-5996bf6749-z6jdt   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    37m          14Mi            
+yatri-backend-54f8858c86-bxtgw    36m          15Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  31% (15m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+Events:           <none>
+
+=================== 2026-10-07 17:01:29 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 73%/50%   2         6         2          3m16s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          20m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          20m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          15s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         5Mi             
+load-generator-5996bf6749-vckx6   300m         3Mi             
+load-generator-5996bf6749-z6jdt   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    37m          14Mi            
+yatri-backend-54f8858c86-bxtgw    36m          15Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  73% (36m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       3 current / 3 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  15s   horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:01:49 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 73%/50%   2         6         3          3m36s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          20m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          20m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          35s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         5Mi             
+load-generator-5996bf6749-vckx6   300m         3Mi             
+load-generator-5996bf6749-z6jdt   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    37m          14Mi            
+yatri-backend-54f8858c86-bxtgw    36m          15Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  73% (36m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       3 current / 3 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  35s   horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:02:09 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 73%/50%   2         6         3          3m56s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          21m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          21m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          55s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         4Mi             
+load-generator-5996bf6749-vckx6   300m         4Mi             
+load-generator-5996bf6749-z6jdt   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    39m          13Mi            
+yatri-backend-54f8858c86-bxtgw    37m          14Mi            
+yatri-backend-54f8858c86-k9xhb    34m          13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  73% (36m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       3 current / 3 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  55s   horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:02:29 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 76%/50%   2         6         3          4m16s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          21m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          21m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          75s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         4Mi             
+load-generator-5996bf6749-vckx6   300m         4Mi             
+load-generator-5996bf6749-z6jdt   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    39m          13Mi            
+yatri-backend-54f8858c86-bxtgw    37m          14Mi            
+yatri-backend-54f8858c86-k9xhb    34m          13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  76% (38m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       3 current / 3 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  75s   horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:02:49 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 76%/50%   2         6         3          4m36s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          21m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          21m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          95s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         4Mi             
+load-generator-5996bf6749-vckx6   300m         4Mi             
+load-generator-5996bf6749-z6jdt   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    39m          13Mi            
+yatri-backend-54f8858c86-bxtgw    37m          14Mi            
+yatri-backend-54f8858c86-k9xhb    34m          13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  76% (38m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       3 current / 3 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  95s   horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:03:09 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 76%/50%   2         6         3          4m56s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          22m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          22m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          115s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   299m         5Mi             
+load-generator-5996bf6749-vckx6   298m         4Mi             
+load-generator-5996bf6749-z6jdt   300m         6Mi             
+yatri-backend-54f8858c86-8dgmt    34m          13Mi            
+yatri-backend-54f8858c86-bxtgw    34m          15Mi            
+yatri-backend-54f8858c86-k9xhb    34m          14Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  76% (38m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       3 current / 3 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  116s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:03:30 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 68%/50%   2         6         5          5m17s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          22m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          16s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          22m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          2m16s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          16s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   299m         5Mi             
+load-generator-5996bf6749-vckx6   298m         4Mi             
+load-generator-5996bf6749-z6jdt   300m         6Mi             
+yatri-backend-54f8858c86-8dgmt    34m          13Mi            
+yatri-backend-54f8858c86-bxtgw    34m          15Mi            
+yatri-backend-54f8858c86-k9xhb    34m          14Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  68% (34m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  2m16s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  16s    horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:03:50 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 68%/50%   2         6         5          5m37s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          22m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          36s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          22m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          2m36s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          36s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   299m         5Mi             
+load-generator-5996bf6749-vckx6   298m         4Mi             
+load-generator-5996bf6749-z6jdt   300m         6Mi             
+yatri-backend-54f8858c86-8dgmt    34m          13Mi            
+yatri-backend-54f8858c86-bxtgw    34m          15Mi            
+yatri-backend-54f8858c86-k9xhb    34m          14Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  68% (34m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  2m36s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  36s    horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:04:10 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 68%/50%   2         6         5          5m57s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          23m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          56s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          23m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          2m56s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          56s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   299m         4Mi             
+load-generator-5996bf6749-vckx6   298m         5Mi             
+load-generator-5996bf6749-z6jdt   298m         4Mi             
+yatri-backend-54f8858c86-8dgmt    25m          12Mi            
+yatri-backend-54f8858c86-97m4p    22m          12Mi            
+yatri-backend-54f8858c86-bxtgw    26m          14Mi            
+yatri-backend-54f8858c86-k9xhb    24m          13Mi            
+yatri-backend-54f8858c86-prq57    22m          12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  68% (34m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  2m56s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  56s    horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:04:30 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 47%/50%   2         6         5          6m17s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          23m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          76s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          23m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          3m16s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          76s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   299m         4Mi             
+load-generator-5996bf6749-vckx6   298m         5Mi             
+load-generator-5996bf6749-z6jdt   298m         4Mi             
+yatri-backend-54f8858c86-8dgmt    25m          12Mi            
+yatri-backend-54f8858c86-97m4p    22m          12Mi            
+yatri-backend-54f8858c86-bxtgw    26m          14Mi            
+yatri-backend-54f8858c86-k9xhb    24m          13Mi            
+yatri-backend-54f8858c86-prq57    22m          12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  47% (23m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  3m16s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  76s    horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:04:50 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 47%/50%   2         6         5          6m37s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          23m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          96s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          23m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          3m36s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          96s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   299m         4Mi             
+load-generator-5996bf6749-vckx6   298m         5Mi             
+load-generator-5996bf6749-z6jdt   298m         4Mi             
+yatri-backend-54f8858c86-8dgmt    25m          12Mi            
+yatri-backend-54f8858c86-97m4p    22m          12Mi            
+yatri-backend-54f8858c86-bxtgw    26m          14Mi            
+yatri-backend-54f8858c86-k9xhb    24m          13Mi            
+yatri-backend-54f8858c86-prq57    22m          12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  47% (23m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  3m37s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  97s    horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:05:11 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 47%/50%   2         6         5          6m58s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          24m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          117s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          24m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          3m57s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          117s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   299m         4Mi             
+load-generator-5996bf6749-vckx6   299m         4Mi             
+load-generator-5996bf6749-z6jdt   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    21m          12Mi            
+yatri-backend-54f8858c86-97m4p    21m          13Mi            
+yatri-backend-54f8858c86-bxtgw    21m          14Mi            
+yatri-backend-54f8858c86-k9xhb    22m          13Mi            
+yatri-backend-54f8858c86-prq57    21m          12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  47% (23m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  3m57s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  117s   horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:05:31 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 42%/50%   2         6         5          7m18s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          24m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          2m17s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          24m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          4m17s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          2m17s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   299m         4Mi             
+load-generator-5996bf6749-vckx6   299m         4Mi             
+load-generator-5996bf6749-z6jdt   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    21m          12Mi            
+yatri-backend-54f8858c86-97m4p    21m          13Mi            
+yatri-backend-54f8858c86-bxtgw    21m          14Mi            
+yatri-backend-54f8858c86-k9xhb    22m          13Mi            
+yatri-backend-54f8858c86-prq57    21m          12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  42% (21m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  4m17s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  2m17s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+>>>>>>>>>>>> 2026-10-07 17:05:44 EVENT: stop load
+$ kubectl delete -f load-generator.yaml
+deployment.apps "load-generator" deleted from s13 namespace
+
+=================== 2026-10-07 17:05:51 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 42%/50%   2         6         5          7m38s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          25m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          2m37s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          25m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          4m37s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          2m37s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   299m         4Mi             
+load-generator-5996bf6749-vckx6   299m         4Mi             
+load-generator-5996bf6749-z6jdt   300m         5Mi             
+yatri-backend-54f8858c86-8dgmt    21m          12Mi            
+yatri-backend-54f8858c86-97m4p    21m          13Mi            
+yatri-backend-54f8858c86-bxtgw    21m          14Mi            
+yatri-backend-54f8858c86-k9xhb    22m          13Mi            
+yatri-backend-54f8858c86-prq57    21m          12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  42% (21m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  4m37s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  2m37s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:06:11 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 42%/50%   2         6         5          7m58s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          25m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          2m57s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          25m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          4m57s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          2m57s
+
+$ kubectl top pods -n s13
+NAME                              CPU(cores)   MEMORY(bytes)   
+load-generator-5996bf6749-n6htc   300m         5Mi             
+load-generator-5996bf6749-vckx6   300m         5Mi             
+load-generator-5996bf6749-z6jdt   300m         4Mi             
+yatri-backend-54f8858c86-8dgmt    21m          12Mi            
+yatri-backend-54f8858c86-97m4p    21m          12Mi            
+yatri-backend-54f8858c86-bxtgw    22m          15Mi            
+yatri-backend-54f8858c86-k9xhb    21m          13Mi            
+yatri-backend-54f8858c86-prq57    21m          13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  42% (21m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  4m57s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  2m57s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:06:31 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 42%/50%   2         6         5          8m18s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          25m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          3m17s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          25m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          5m17s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          3m17s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   21m          12Mi            
+yatri-backend-54f8858c86-97m4p   21m          12Mi            
+yatri-backend-54f8858c86-bxtgw   22m          15Mi            
+yatri-backend-54f8858c86-k9xhb   21m          13Mi            
+yatri-backend-54f8858c86-prq57   21m          13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  42% (21m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  5m18s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  3m18s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:06:52 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 42%/50%   2         6         5          8m39s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          26m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          3m38s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          26m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          5m38s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          3m38s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   21m          12Mi            
+yatri-backend-54f8858c86-97m4p   21m          12Mi            
+yatri-backend-54f8858c86-bxtgw   22m          15Mi            
+yatri-backend-54f8858c86-k9xhb   21m          13Mi            
+yatri-backend-54f8858c86-prq57   21m          13Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  42% (21m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  5m38s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  3m38s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:07:12 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 42%/50%   2         6         5          8m59s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          26m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          3m58s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          26m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          5m58s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          3m58s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   7m           11Mi            
+yatri-backend-54f8858c86-97m4p   7m           11Mi            
+yatri-backend-54f8858c86-bxtgw   10m          13Mi            
+yatri-backend-54f8858c86-k9xhb   8m           12Mi            
+yatri-backend-54f8858c86-prq57   5m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  42% (21m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero     the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  5m58s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  3m58s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:07:32 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 14%/50%   2         6         5          9m19s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          26m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          4m18s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          26m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          6m18s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          4m18s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   7m           11Mi            
+yatri-backend-54f8858c86-97m4p   7m           11Mi            
+yatri-backend-54f8858c86-bxtgw   10m          13Mi            
+yatri-backend-54f8858c86-k9xhb   8m           12Mi            
+yatri-backend-54f8858c86-prq57   5m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  14% (7m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  6m18s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  4m18s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:07:52 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 14%/50%   2         6         5          9m39s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          27m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          4m38s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          27m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          6m38s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          4m38s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   7m           11Mi            
+yatri-backend-54f8858c86-97m4p   7m           11Mi            
+yatri-backend-54f8858c86-bxtgw   10m          13Mi            
+yatri-backend-54f8858c86-k9xhb   8m           12Mi            
+yatri-backend-54f8858c86-prq57   5m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  14% (7m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  6m38s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  4m38s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:08:12 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 14%/50%   2         6         5          9m59s
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          27m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          4m59s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          27m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          6m59s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          4m59s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  14% (7m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  6m59s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  4m59s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:08:33 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          10m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          27m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          5m19s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          27m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          7m19s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          5m19s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  7m19s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  5m19s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:08:53 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          10m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          28m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          5m39s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          28m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          7m39s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          5m39s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  7m39s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  5m39s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:09:13 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          11m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          28m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          5m59s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          28m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          7m59s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          5m59s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  7m59s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  5m59s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:09:33 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          11m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          28m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          6m19s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          28m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          8m19s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          6m19s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  8m19s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  6m19s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:09:53 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          11m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          29m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          6m39s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          29m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          8m39s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          6m39s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  8m39s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  6m39s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:10:13 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          12m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          29m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          7m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          29m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          9m
+yatri-backend-54f8858c86-prq57   1/1     Running   0          7m
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           12Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  9m    horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  7m    horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:10:34 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          12m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          29m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          7m20s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          29m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          9m20s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          7m20s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           12Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  9m20s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  7m20s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:10:54 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          12m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          30m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          7m40s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          30m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          9m40s
+yatri-backend-54f8858c86-prq57   1/1     Running   0          7m40s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           12Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           13Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  9m40s  horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  7m40s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:11:14 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          13m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          30m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          8m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          30m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          10m
+yatri-backend-54f8858c86-prq57   1/1     Running   0          8m
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           11Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  10m   horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  8m1s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:11:35 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          13m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          30m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          8m21s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          30m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          10m
+yatri-backend-54f8858c86-prq57   1/1     Running   0          8m21s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           11Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  10m    horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  8m21s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:11:55 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         5          13m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          31m
+yatri-backend-54f8858c86-97m4p   1/1     Running   0          8m41s
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          31m
+yatri-backend-54f8858c86-k9xhb   1/1     Running   0          10m
+yatri-backend-54f8858c86-prq57   1/1     Running   0          8m41s
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-97m4p   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           11Mi            
+yatri-backend-54f8858c86-k9xhb   1m           11Mi            
+yatri-backend-54f8858c86-prq57   1m           12Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  10m    horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  8m41s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+=================== 2026-10-07 17:12:15 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         2          14m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          31m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          31m
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  11m   horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  9m1s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  16s   horizontal-pod-autoscaler  New size: 2; reason: All metrics below target
+
+=================== 2026-10-07 17:12:35 ===================
+$ kubectl get hpa yatri-backend-hpa -n s13
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+yatri-backend-hpa   Deployment/yatri-backend   cpu: 2%/50%   2         6         2          14m
+
+$ kubectl get pods -n s13 -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-54f8858c86-8dgmt   1/1     Running   0          31m
+yatri-backend-54f8858c86-bxtgw   1/1     Running   0          31m
+
+$ kubectl top pods -n s13
+NAME                             CPU(cores)   MEMORY(bytes)   
+yatri-backend-54f8858c86-8dgmt   1m           11Mi            
+yatri-backend-54f8858c86-bxtgw   1m           11Mi            
+
+$ kubectl describe hpa yatri-backend-hpa -n s13 (tail)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  2% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+  ScaledToZero    False   NotScaledToZero      the HPA controller did not scale the workload to zero
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  11m    horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  9m22s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  37s    horizontal-pod-autoscaler  New size: 2; reason: All metrics below target
+

@@ -1,0 +1,40 @@
+# Bonus challenge 2 - readiness gating: point readinessProbe at /does-not-exist
+$ kubectl patch deploy web-app -n s13-production-webapp --type=json -p='[{"op":"replace","path":"/spec/template/spec/containers/0/readinessProbe/httpGet/path","value":"/does-not-exist"}]'
+deployment.apps/web-app patched
+
+$ kubectl get pods -n s13-production-webapp -l app=web-app
+NAME                       READY   STATUS    RESTARTS   AGE
+web-app-5945bfc776-c75tw   0/1     Running   0          30s
+web-app-5945bfc776-p8kmr   0/1     Running   0          30s
+
+$ kubectl get endpoints web-service -n s13-production-webapp
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME          ENDPOINTS   AGE
+web-service               79s
+
+$ kubectl get endpointslices -n s13-production-webapp -l kubernetes.io/service-name=web-service -o jsonpath='{range .items[0].endpoints[*]}{.addresses[0]} ready={.conditions.ready}{"
+"}{end}'
+10.244.0.194 ready=false
+10.244.0.195 ready=false
+
+$ kubectl describe pod web-app-5945bfc776-c75tw -n s13-production-webapp | grep -E 'Readiness probe failed' | head -2
+  Warning  Unhealthy  2s (x5 over 22s)  kubelet            spec.containers{nginx}: Readiness probe failed: HTTP probe failed with statuscode: 404
+
+# revert
+$ kubectl apply -f deployment.yaml
+deployment.apps/web-app configured
+
+$ kubectl rollout status deploy/web-app -n s13-production-webapp --timeout=120s
+Waiting for deployment "web-app" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "web-app" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "web-app" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "web-app" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "web-app" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "web-app" rollout to finish: 1 of 2 updated replicas are available...
+deployment "web-app" successfully rolled out
+
+$ kubectl get endpoints web-service -n s13-production-webapp
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME          ENDPOINTS                         AGE
+web-service   10.244.0.196:80,10.244.0.197:80   88s
+

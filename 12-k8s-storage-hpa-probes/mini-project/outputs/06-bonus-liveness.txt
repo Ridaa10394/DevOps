@@ -1,0 +1,50 @@
+# Bonus challenge 3 - liveness restart loop: point livenessProbe at /crash
+$ kubectl patch deploy web-app -n s13-production-webapp --type=json -p='[{"op":"replace","path":"/spec/template/spec/containers/0/livenessProbe/httpGet/path","value":"/crash"}]'
+deployment.apps/web-app patched
+
+# 16:51:32
+NAME                      READY   STATUS    RESTARTS     AGE
+web-app-85d86b65d-2ddcz   0/1     Running   1 (4s ago)   20s
+web-app-85d86b65d-tqtsx   0/1     Running   1 (4s ago)   20s
+
+# 16:51:52
+NAME                      READY   STATUS    RESTARTS     AGE
+web-app-85d86b65d-2ddcz   1/1     Running   2 (9s ago)   40s
+web-app-85d86b65d-tqtsx   1/1     Running   2 (9s ago)   40s
+
+# 16:52:12
+NAME                      READY   STATUS    RESTARTS      AGE
+web-app-85d86b65d-2ddcz   1/1     Running   3 (14s ago)   60s
+web-app-85d86b65d-tqtsx   1/1     Running   3 (14s ago)   60s
+
+# 16:52:32
+NAME                      READY   STATUS             RESTARTS      AGE
+web-app-85d86b65d-2ddcz   0/1     CrashLoopBackOff   3 (19s ago)   80s
+web-app-85d86b65d-tqtsx   0/1     CrashLoopBackOff   3 (19s ago)   80s
+
+$ kubectl describe pod web-app-85d86b65d-2ddcz -n s13-production-webapp | grep -E 'Liveness probe failed|failed liveness' | head -3
+  Warning  Unhealthy  19s (x12 over 74s)  kubelet            spec.containers{nginx}: Liveness probe failed: HTTP probe failed with statuscode: 404
+  Normal   Killing    19s (x4 over 64s)   kubelet            spec.containers{nginx}: Container nginx failed liveness probe, will be restarted
+
+# revert
+$ kubectl apply -f deployment.yaml
+deployment.apps/web-app configured
+
+$ kubectl rollout status deploy/web-app -n s13-production-webapp --timeout=120s
+Waiting for deployment "web-app" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "web-app" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "web-app" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "web-app" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "web-app" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "web-app" rollout to finish: 1 of 2 updated replicas are available...
+deployment "web-app" successfully rolled out
+
+$ kubectl get pods -n s13-production-webapp -l app=web-app
+NAME                      READY   STATUS    RESTARTS   AGE
+web-app-d45775485-7hqhq   1/1     Running   0          9s
+web-app-d45775485-rfbx4   1/1     Running   0          9s
+
+# and the PVC data is still there after all those restarts/rollouts
+$ kubectl exec -n s13-production-webapp web-app-d45775485-7hqhq -- cat /data/student.txt
+Student: Ridaa Mirza (24BCS10394)
+

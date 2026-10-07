@@ -1,0 +1,44 @@
+$ kubectl apply -f liveness.yaml
+pod/liveness-demo created
+
+$ kubectl wait --for=condition=Ready pod/liveness-demo -n s13 --timeout=120s
+pod/liveness-demo condition met
+
+$ kubectl get pod liveness-demo -n s13
+NAME            READY   STATUS    RESTARTS   AGE
+liveness-demo   1/1     Running   0          1s
+
+# break it: remove index.html so GET / returns 403 -> liveness fails
+$ kubectl exec -n s13 liveness-demo -- rm /usr/share/nginx/html/index.html
+
+$ kubectl exec -n s13 liveness-demo -- curl -s -o /dev/null -w '%{http_code}
+' localhost/
+403
+
+# ~25s later (3 failures x 5s period)
+$ kubectl get pod liveness-demo -n s13
+NAME            READY   STATUS    RESTARTS      AGE
+liveness-demo   1/1     Running   1 (10s ago)   26s
+
+$ kubectl describe pod liveness-demo -n s13 | sed -n '/Events:/,$p'
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  26s                default-scheduler  Successfully assigned s13/liveness-demo to minikube
+  Normal   Pulled     10s (x2 over 25s)  kubelet            spec.containers{nginx}: Container image "nginx:1.27" already present on machine and can be accessed by the pod
+  Normal   Created    10s (x2 over 25s)  kubelet            spec.containers{nginx}: Container created
+  Normal   Started    10s (x2 over 25s)  kubelet            spec.containers{nginx}: Container started
+  Warning  Unhealthy  10s (x3 over 20s)  kubelet            spec.containers{nginx}: Liveness probe failed: HTTP probe failed with statuscode: 403
+  Normal   Killing    10s                kubelet            spec.containers{nginx}: Container nginx failed liveness probe, will be restarted
+
+# restarted container gets a fresh filesystem from the image -> index.html is back, probe passes again
+$ kubectl exec -n s13 liveness-demo -- curl -s -o /dev/null -w '%{http_code}
+' localhost/
+200
+
+$ kubectl get pod liveness-demo -n s13 -o jsonpath='{.status.containerStatuses[0].restartCount}{"
+"}{.status.containerStatuses[0].lastState}{"
+"}'
+1
+{"terminated":{"containerID":"containerd://32f6caa9a2eceb5bffd8f652269ebe624f33bc762f411eca0691fe38438c959f","exitCode":0,"finishedAt":"2026-10-07T11:07:42Z","reason":"Completed","startedAt":"2026-10-07T11:07:27Z"}}
+

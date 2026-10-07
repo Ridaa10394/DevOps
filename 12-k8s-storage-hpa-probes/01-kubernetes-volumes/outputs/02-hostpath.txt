@@ -1,0 +1,28 @@
+$ kubectl apply -f hostpath-pod.yaml
+pod/hostpath-demo created
+
+$ kubectl wait --for=condition=Ready pod/hostpath-demo -n s13 --timeout=120s
+pod/hostpath-demo condition met
+
+$ kubectl exec -n s13 hostpath-demo -- sh -c 'echo "written from pod hostpath-demo" > /data/note.txt'
+
+# file is now on the minikube node itself (the 'host')
+$ minikube ssh -- 'ls -la /tmp/s13-hostpath-data && cat /tmp/s13-hostpath-data/note.txt'
+total 4
+drwxr-xr-x 2 root root  60 Oct  7 11:06 .
+drwxrwxrwt 6 root root 160 Oct  7 11:06 ..
+-rw-r--r-- 1 root root  31 Oct  7 11:06 note.txt
+written from pod hostpath-demo
+
+$ kubectl delete pod hostpath-demo -n s13
+pod "hostpath-demo" deleted from s13 namespace
+
+$ kubectl apply -f hostpath-pod.yaml
+pod/hostpath-demo created
+
+$ kubectl wait --for=condition=Ready pod/hostpath-demo -n s13 --timeout=120s
+pod/hostpath-demo condition met
+
+$ kubectl exec -n s13 hostpath-demo -- cat /data/note.txt
+written from pod hostpath-demo
+

@@ -1,0 +1,63 @@
+$ kubectl apply -f readiness.yaml
+pod/readiness-demo created
+service/readiness-svc created
+
+# readiness probe checks /ready.html which doesn't exist yet -> 404
+$ kubectl get pod readiness-demo -n s13
+NAME             READY   STATUS    RESTARTS   AGE
+readiness-demo   0/1     Running   0          15s
+
+$ kubectl get endpointslices -n s13 -l kubernetes.io/service-name=readiness-svc
+NAME                  ADDRESSTYPE   PORTS   ENDPOINTS     AGE
+readiness-svc-ns6ts   IPv4          80      10.244.0.99   15s
+
+$ kubectl get endpoints readiness-svc -n s13
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME            ENDPOINTS   AGE
+readiness-svc               15s
+
+$ kubectl describe pod readiness-demo -n s13 | grep -E 'Ready|Unhealthy'
+    Ready:          False
+  PodReadyToStartContainers   True 
+  Ready                       False 
+  ContainersReady             False 
+  Warning  Unhealthy  4s (x2 over 9s)  kubelet            spec.containers{nginx}: Readiness probe failed: HTTP probe failed with statuscode: 404
+
+# make the app 'ready'
+$ kubectl exec -n s13 readiness-demo -- sh -c 'echo ok > /usr/share/nginx/html/ready.html'
+
+$ kubectl get pod readiness-demo -n s13 -o wide
+NAME             READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+readiness-demo   1/1     Running   0          23s   10.244.0.99   minikube   <none>           <none>
+
+$ kubectl get endpoints readiness-svc -n s13
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME            ENDPOINTS        AGE
+readiness-svc   10.244.0.99:80   23s
+
+# take it out of rotation again - note it is NOT restarted, just removed from the service
+$ kubectl exec -n s13 readiness-demo -- rm /usr/share/nginx/html/ready.html
+
+$ kubectl get pod readiness-demo -n s13
+NAME             READY   STATUS    RESTARTS   AGE
+readiness-demo   1/1     Running   0          31s
+
+$ kubectl get endpoints readiness-svc -n s13
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME            ENDPOINTS        AGE
+readiness-svc   10.244.0.99:80   31s
+
+# ~20s after removing ready.html (default failureThreshold 3 x 5s period = 15s)
+$ kubectl get pod readiness-demo -n s13
+NAME             READY   STATUS    RESTARTS   AGE
+readiness-demo   0/1     Running   0          49s
+
+$ kubectl get endpoints readiness-svc -n s13
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME            ENDPOINTS   AGE
+readiness-svc               49s
+
+$ kubectl get endpointslices -n s13 -l kubernetes.io/service-name=readiness-svc -o jsonpath='{.items[0].endpoints[0].addresses} ready={.items[0].endpoints[0].conditions.ready}{"
+"}'
+["10.244.0.99"] ready=false
+

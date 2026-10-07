@@ -1,0 +1,40 @@
+$ kubectl describe hpa web-app-hpa -n s13-production-webapp | sed -n '/Metrics:/,/Max replicas/p;/Events:/,$p'
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  1% (1m) / 50%
+Min replicas:                                          2
+Max replicas:                                          5
+Events:
+  Type     Reason                        Age                 From                       Message
+  ----     ------                        ----                ----                       -------
+  Warning  FailedComputeMetricsReplicas  35m (x12 over 37m)  horizontal-pod-autoscaler  invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io)
+  Warning  FailedGetResourceMetric       32m (x21 over 37m)  horizontal-pod-autoscaler  failed to get cpu utilization: unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io)
+  Normal   SuccessfulRescale             12m                 horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal   SuccessfulRescale             10m                 horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
+  Normal   SuccessfulRescale             3m1s                horizontal-pod-autoscaler  New size: 3; reason: All metrics below target
+  Normal   SuccessfulRescale             84s                 horizontal-pod-autoscaler  New size: 2; reason: All metrics below target
+
+$ kubectl get events -n s13-production-webapp --field-selector involvedObject.kind=Deployment --sort-by=.lastTimestamp
+LAST SEEN   TYPE     REASON              OBJECT                      MESSAGE
+37m         Normal   ScalingReplicaSet   deployment/web-app          Scaled up replica set web-app-5945bfc776 from 0 to 2
+36m         Normal   ScalingReplicaSet   deployment/web-app          Scaled down replica set web-app-5945bfc776 from 2 to 0
+36m         Normal   ScalingReplicaSet   deployment/web-app          Scaled down replica set web-app-d45775485 from 2 to 0
+36m         Normal   ScalingReplicaSet   deployment/web-app          Scaled up replica set web-app-85d86b65d from 0 to 2
+35m         Normal   ScalingReplicaSet   deployment/web-app          Scaled up replica set web-app-d45775485 from 0 to 2
+35m         Normal   ScalingReplicaSet   deployment/web-app          Scaled down replica set web-app-85d86b65d from 2 to 0
+14m         Normal   ScalingReplicaSet   deployment/load-generator   Scaled up replica set load-generator-84c55d9497 from 0 to 3
+12m         Normal   ScalingReplicaSet   deployment/web-app          Scaled up replica set web-app-d45775485 from 2 to 3
+10m         Normal   ScalingReplicaSet   deployment/web-app          Scaled up replica set web-app-d45775485 from 3 to 4
+3m          Normal   ScalingReplicaSet   deployment/web-app          Scaled down replica set web-app-d45775485 from 4 to 3
+83s         Normal   ScalingReplicaSet   deployment/web-app          Scaled down replica set web-app-d45775485 from 3 to 2
+
+$ kubectl get pods,pvc,hpa -n s13-production-webapp
+NAME                          READY   STATUS    RESTARTS   AGE
+pod/web-app-d45775485-7hqhq   1/1     Running   0          35m
+pod/web-app-d45775485-rfbx4   1/1     Running   0          35m
+
+NAME                             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/web-data   Bound    pvc-bd177c19-16d3-44b5-9236-b7d7c3b0b048   500Mi      RWO            standard       <unset>                 38m
+
+NAME                                              REFERENCE            TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/web-app-hpa   Deployment/web-app   cpu: 1%/50%   2         5         2          37m
+

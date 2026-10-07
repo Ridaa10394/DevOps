@@ -1,0 +1,60 @@
+$ kubectl apply -f startup.yaml -f startup-fail.yaml
+pod/startup-demo created
+pod/startup-fail-demo created
+
+# t=5s
+NAME                READY   STATUS              RESTARTS   AGE
+startup-demo        0/1     ContainerCreating   0          0s
+startup-fail-demo   0/1     ContainerCreating   0          0s
+
+# t=15s
+NAME                READY   STATUS    RESTARTS   AGE
+startup-demo        0/1     Running   0          10s
+startup-fail-demo   0/1     Running   0          10s
+
+# t=25s
+NAME                READY   STATUS    RESTARTS   AGE
+startup-demo        0/1     Running   0          20s
+startup-fail-demo   0/1     Running   0          20s
+
+# t=35s
+NAME                READY   STATUS    RESTARTS   AGE
+startup-demo        1/1     Running   0          30s
+startup-fail-demo   0/1     Running   0          30s
+
+# t=45s
+NAME                READY   STATUS    RESTARTS     AGE
+startup-demo        1/1     Running   0            40s
+startup-fail-demo   0/1     Running   1 (4s ago)   40s
+
+$ kubectl describe pod startup-demo -n s13 | sed -n '/Events:/,$p'
+Events:
+  Type     Reason     Age                 From               Message
+  ----     ------     ----                ----               -------
+  Normal   Scheduled  50s                 default-scheduler  Successfully assigned s13/startup-demo to minikube
+  Normal   Pulled     50s                 kubelet            spec.containers{nginx}: Container image "nginx:1.27" already present on machine and can be accessed by the pod
+  Normal   Created    50s                 kubelet            spec.containers{nginx}: Container created
+  Normal   Started    50s                 kubelet            spec.containers{nginx}: Container started
+  Warning  Unhealthy  30s (x10 over 48s)  kubelet            spec.containers{nginx}: Startup probe failed: Get "http://10.244.0.113:80/": dial tcp 10.244.0.113:80: connect: connection refused
+
+$ kubectl describe pod startup-fail-demo -n s13 | sed -n '/Events:/,$p'
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  50s                default-scheduler  Successfully assigned s13/startup-fail-demo to minikube
+  Normal   Pulled     14s (x2 over 50s)  kubelet            spec.containers{nginx}: Container image "nginx:1.27" already present on machine and can be accessed by the pod
+  Normal   Created    14s (x2 over 50s)  kubelet            spec.containers{nginx}: Container created
+  Normal   Started    14s (x2 over 50s)  kubelet            spec.containers{nginx}: Container started
+  Warning  Unhealthy  8s (x6 over 48s)   kubelet            spec.containers{nginx}: Startup probe failed: Get "http://10.244.0.112:80/": dial tcp 10.244.0.112:80: connect: connection refused
+  Normal   Killing    8s (x2 over 44s)   kubelet            spec.containers{nginx}: Container nginx failed startup probe, will be restarted
+
+$ kubectl logs startup-demo -n s13 --tail=3
+10.244.0.1 - - [07/Oct/2026:11:09:38 +0000] "GET / HTTP/1.1" 200 615 "-" "kube-probe/1.37" "-"
+10.244.0.1 - - [07/Oct/2026:11:09:40 +0000] "GET / HTTP/1.1" 200 615 "-" "kube-probe/1.37" "-"
+10.244.0.1 - - [07/Oct/2026:11:09:43 +0000] "GET / HTTP/1.1" 200 615 "-" "kube-probe/1.37" "-"
+
+# ~90s later
+$ kubectl get pod startup-demo startup-fail-demo -n s13
+NAME                READY   STATUS    RESTARTS      AGE
+startup-demo        1/1     Running   0             96s
+startup-fail-demo   0/1     Running   2 (24s ago)   96s
