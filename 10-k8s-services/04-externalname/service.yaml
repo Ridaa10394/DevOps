@@ -1,0 +1,9 @@
+# No selector, no pods, no ClusterIP. CoreDNS just answers with a CNAME.
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-api-service
+  namespace: s11
+spec:
+  type: ExternalName
+  externalName: example.com

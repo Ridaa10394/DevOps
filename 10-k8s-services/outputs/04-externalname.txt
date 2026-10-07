@@ -1,0 +1,65 @@
+$ kubectl get svc,endpoints -n s11 external-api-service -o wide
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                   TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+external-api-service   ExternalName   <none>       example.com   <none>    36m   <none>
+Error from server (NotFound): endpoints "external-api-service" not found
+
+$ kubectl describe svc external-api-service -n s11
+Name:              external-api-service
+Namespace:         s11
+Labels:            <none>
+Annotations:       <none>
+Selector:          <none>
+Type:              ExternalName
+IP Families:       <none>
+IP:                
+IPs:               <none>
+External Name:     example.com
+Session Affinity:  None
+Events:            <none>
+
+$ kubectl -n s11 exec dnsutils -- nslookup -type=CNAME external-api-service.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+external-api-service.s11.svc.cluster.local	canonical name = example.com
+
+
+$ kubectl -n s11 exec dnsutils -- nslookup external-api-service.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+external-api-service.s11.svc.cluster.local	canonical name = example.com
+
+external-api-service.s11.svc.cluster.local	canonical name = example.com
+Name:	example.com
+Address: 104.20.23.154
+Name:	example.com
+Address: 172.66.147.243
+
+
+$ kubectl -n s11 exec dnsutils -- nslookup external-api-service
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+** server can't find external-api-service.cluster.local: NXDOMAIN
+
+external-api-service.s11.svc.cluster.local	canonical name = example.com
+Name:	example.com
+Address: 172.66.147.243
+Name:	example.com
+Address: 104.20.23.154
+
+external-api-service.s11.svc.cluster.local	canonical name = example.com
+
+** server can't find external-api-service.cluster.local: NXDOMAIN
+
+** server can't find external-api-service.svc.cluster.local: NXDOMAIN
+
+** server can't find external-api-service.svc.cluster.local: NXDOMAIN
+
+command terminated with exit code 1
+
+$ kubectl -n s11 exec dnsutils -- curl -s -m 10 -o /dev/null -w '%{http_code}' -H 'Host: example.com' http://external-api-service; echo
+200
+

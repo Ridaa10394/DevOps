@@ -1,0 +1,169 @@
+$ kubectl get deploy,rs -n s11 -o wide
+NAME                                   READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES              SELECTOR
+deployment.apps/web-app-clusterip      3/3     3            3           36m   nginx        nginx:1.25-alpine   app=web-clusterip
+deployment.apps/web-app-loadbalancer   3/3     3            3           36m   nginx        nginx:1.25-alpine   app=web-loadbalancer
+deployment.apps/web-app-nodeport       2/2     2            2           36m   nginx        nginx:1.25-alpine   app=web-nodeport
+
+NAME                                              DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES              SELECTOR
+replicaset.apps/web-app-clusterip-57649bc58       3         3         3       36m   nginx        nginx:1.25-alpine   app=web-clusterip,pod-template-hash=57649bc58
+replicaset.apps/web-app-loadbalancer-64799cfbf5   3         3         3       36m   nginx        nginx:1.25-alpine   app=web-loadbalancer,pod-template-hash=64799cfbf5
+replicaset.apps/web-app-nodeport-7cd74f97fb       2         2         2       36m   nginx        nginx:1.25-alpine   app=web-nodeport,pod-template-hash=7cd74f97fb
+
+$ kubectl get rs -n s11 -o custom-columns='RS:.metadata.name,OWNER-KIND:.metadata.ownerReferences[0].kind,OWNER:.metadata.ownerReferences[0].name,CONTROLLER:.metadata.ownerReferences[0].controller'
+RS                                OWNER-KIND   OWNER                  CONTROLLER
+web-app-clusterip-57649bc58       Deployment   web-app-clusterip      true
+web-app-loadbalancer-64799cfbf5   Deployment   web-app-loadbalancer   true
+web-app-nodeport-7cd74f97fb       Deployment   web-app-nodeport       true
+
+$ kubectl get pods -n s11 -l app=web-clusterip -o custom-columns='POD:.metadata.name,OWNER-KIND:.metadata.ownerReferences[0].kind,OWNER:.metadata.ownerReferences[0].name'
+POD                                 OWNER-KIND   OWNER
+web-app-clusterip-57649bc58-4bb4r   ReplicaSet   web-app-clusterip-57649bc58
+web-app-clusterip-57649bc58-5frlc   ReplicaSet   web-app-clusterip-57649bc58
+web-app-clusterip-57649bc58-fxls9   ReplicaSet   web-app-clusterip-57649bc58
+
+$ kubectl get pods -n s11 -l app=web-headless -o custom-columns='POD:.metadata.name,OWNER-KIND:.metadata.ownerReferences[0].kind,OWNER:.metadata.ownerReferences[0].name'
+POD     OWNER-KIND    OWNER
+web-0   StatefulSet   web
+web-1   StatefulSet   web
+web-2   StatefulSet   web
+
+$ kubectl get rs -n s11 -l app=web-clusterip -o yaml | grep -A6 ownerReferences
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: web-app-clusterip
+      uid: f22a8e38-f872-4091-84ef-76b81a5ca57c
+
+# scale the deployment: the RS does the actual pod work
+$ kubectl scale deploy web-app-clusterip -n s11 --replicas=5
+deployment.apps/web-app-clusterip scaled
+
+$ kubectl rollout status deploy/web-app-clusterip -n s11 --timeout=120s
+Waiting for deployment "web-app-clusterip" rollout to finish: 3 of 5 updated replicas are available...
+Waiting for deployment "web-app-clusterip" rollout to finish: 4 of 5 updated replicas are available...
+deployment "web-app-clusterip" successfully rolled out
+
+$ kubectl get rs -n s11 -l app=web-clusterip
+NAME                          DESIRED   CURRENT   READY   AGE
+web-app-clusterip-57649bc58   5         5         5       36m
+
+$ kubectl get endpoints web-service-clusterip -n s11
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                    ENDPOINTS                                                     AGE
+web-service-clusterip   10.244.0.137:80,10.244.0.138:80,10.244.0.140:80 + 2 more...   36m
+
+# rolling update: change image -> deployment creates a NEW RS, scales old one to 0
+$ kubectl set image deploy/web-app-clusterip nginx=nginx:1.27-alpine -n s11
+deployment.apps/web-app-clusterip image updated
+
+$ kubectl rollout status deploy/web-app-clusterip -n s11 --timeout=180s
+Waiting for deployment "web-app-clusterip" rollout to finish: 0 out of 5 new replicas have been updated...
+Waiting for deployment "web-app-clusterip" rollout to finish: 2 out of 5 new replicas have been updated...
+Waiting for deployment "web-app-clusterip" rollout to finish: 3 out of 5 new replicas have been updated...
+Waiting for deployment "web-app-clusterip" rollout to finish: 3 out of 5 new replicas have been updated...
+Waiting for deployment "web-app-clusterip" rollout to finish: 3 out of 5 new replicas have been updated...
+Waiting for deployment "web-app-clusterip" rollout to finish: 3 out of 5 new replicas have been updated...
+Waiting for deployment "web-app-clusterip" rollout to finish: 4 out of 5 new replicas have been updated...
+Waiting for deployment "web-app-clusterip" rollout to finish: 4 out of 5 new replicas have been updated...
+Waiting for deployment "web-app-clusterip" rollout to finish: 4 out of 5 new replicas have been updated...
+Waiting for deployment "web-app-clusterip" rollout to finish: 2 old replicas are pending termination...
+Waiting for deployment "web-app-clusterip" rollout to finish: 2 old replicas are pending termination...
+Waiting for deployment "web-app-clusterip" rollout to finish: 2 old replicas are pending termination...
+Waiting for deployment "web-app-clusterip" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "web-app-clusterip" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "web-app-clusterip" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "web-app-clusterip" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "web-app-clusterip" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "web-app-clusterip" rollout to finish: 4 of 5 updated replicas are available...
+deployment "web-app-clusterip" successfully rolled out
+
+$ kubectl get rs -n s11 -l app=web-clusterip -o wide
+NAME                          DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES              SELECTOR
+web-app-clusterip-57649bc58   0         0         0       36m   nginx        nginx:1.25-alpine   app=web-clusterip,pod-template-hash=57649bc58
+web-app-clusterip-9c4c97f9b   5         5         5       2s    nginx        nginx:1.27-alpine   app=web-clusterip,pod-template-hash=9c4c97f9b
+
+$ kubectl rollout history deploy/web-app-clusterip -n s11
+deployment.apps/web-app-clusterip 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+
+
+$ kubectl get endpoints web-service-clusterip -n s11
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                    ENDPOINTS                                                     AGE
+web-service-clusterip   10.244.0.249:80,10.244.0.250:80,10.244.0.251:80 + 2 more...   36m
+
+# scale back to 3
+$ kubectl scale deploy web-app-clusterip -n s11 --replicas=3
+deployment.apps/web-app-clusterip scaled
+
+$ kubectl rollout status deploy/web-app-clusterip -n s11 --timeout=120s
+deployment "web-app-clusterip" successfully rolled out
+
+# Service -> EndpointSlice -> kube-proxy iptables rules on the node
+$ kubectl get endpointslices -n s11 -l kubernetes.io/service-name=web-service-clusterip -o wide
+NAME                          ADDRESSTYPE   PORTS   ENDPOINTS                                            AGE
+web-service-clusterip-7wsc4   IPv4          80      10.244.0.140,10.244.0.246,10.244.0.251 + 4 more...   36m
+
+$ kubectl -n kube-system get pods -l k8s-app=kube-proxy -o wide
+NAME               READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+kube-proxy-pq7f8   1/1     Running   0          40m   192.168.49.2   minikube   <none>           <none>
+
+$ kubectl -n kube-system get cm kube-proxy -o jsonpath='{.data.config\.conf}' | grep -E '^mode'
+mode: iptables
+
+$ minikube ssh -- sudo iptables -t nat -S KUBE-SERVICES | grep s11/web-service-clusterip
+-A KUBE-SERVICES -d 10.102.27.133/32 -p tcp -m comment --comment "s11/web-service-clusterip:http cluster IP" -m tcp --dport 8080 -j KUBE-SVC-ZBGGFHO2TKOFULLW
+
+# (re-run after the scale-down finished terminating)
+$ kubectl get pods -n s11 -l app=web-clusterip -o wide
+NAME                                READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+web-app-clusterip-9c4c97f9b-8g9q8   1/1     Running   0          10s   10.244.0.250   minikube   <none>           <none>
+web-app-clusterip-9c4c97f9b-hthgh   1/1     Running   0          10s   10.244.0.251   minikube   <none>           <none>
+web-app-clusterip-9c4c97f9b-rhggt   1/1     Running   0          10s   10.244.0.249   minikube   <none>           <none>
+
+$ kubectl get endpointslices -n s11 -l kubernetes.io/service-name=web-service-clusterip -o wide
+NAME                          ADDRESSTYPE   PORTS   ENDPOINTS                                AGE
+web-service-clusterip-7wsc4   IPv4          80      10.244.0.251,10.244.0.250,10.244.0.249   37m
+
+$ minikube ssh -- sudo iptables -t nat -S KUBE-SVC-ZBGGFHO2TKOFULLW
+-N KUBE-SVC-ZBGGFHO2TKOFULLW
+-A KUBE-SVC-ZBGGFHO2TKOFULLW ! -s 10.244.0.0/16 -d 10.102.27.133/32 -p tcp -m comment --comment "s11/web-service-clusterip:http cluster IP" -m tcp --dport 8080 -j KUBE-MARK-MASQ
+-A KUBE-SVC-ZBGGFHO2TKOFULLW -m comment --comment "s11/web-service-clusterip:http -> 10.244.0.249:80" -m statistic --mode random --probability 0.33333333349 -j KUBE-SEP-JVQIVVJUBINFQIHB
+-A KUBE-SVC-ZBGGFHO2TKOFULLW -m comment --comment "s11/web-service-clusterip:http -> 10.244.0.250:80" -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-UQBIJO26NUESDDDI
+-A KUBE-SVC-ZBGGFHO2TKOFULLW -m comment --comment "s11/web-service-clusterip:http -> 10.244.0.251:80" -j KUBE-SEP-IJJXWQF6QMTVWVLC
+
+$ minikube ssh -- sudo iptables -t nat -S | grep -E 'KUBE-SEP.*s11/web-service-clusterip.*DNAT'
+-A KUBE-SEP-IJJXWQF6QMTVWVLC -p tcp -m comment --comment "s11/web-service-clusterip:http" -m tcp -j DNAT --to-destination 10.244.0.251:80
+-A KUBE-SEP-JVQIVVJUBINFQIHB -p tcp -m comment --comment "s11/web-service-clusterip:http" -m tcp -j DNAT --to-destination 10.244.0.249:80
+-A KUBE-SEP-UQBIJO26NUESDDDI -p tcp -m comment --comment "s11/web-service-clusterip:http" -m tcp -j DNAT --to-destination 10.244.0.250:80
+
+# real-world examples of each controller already running in the cluster
+$ kubectl get daemonsets -n kube-system -o wide
+NAME         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE   CONTAINERS    IMAGES                                          SELECTOR
+kindnet      1         1         1       1            1           <none>                   40m   kindnet-cni   docker.io/kindest/kindnetd:v20260820-69b56db7   app=kindnet
+kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   40m   kube-proxy    registry.k8s.io/kube-proxy:v1.37.0              k8s-app=kube-proxy
+
+$ kubectl get deploy -n kube-system
+NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+coredns          1/1     1            1           40m
+metrics-server   1/1     1            1           18m
+
+$ kubectl get statefulset -n s11
+NAME   READY   AGE
+web    3/3     37m
+
+
+# ClusterIP is not a real interface - ping gets nothing back, curl works
+$ kubectl -n s11 exec dnsutils -- ping -c 2 -W 2 10.102.27.133
+PING 10.102.27.133 (10.102.27.133): 56 data bytes
+
+--- 10.102.27.133 ping statistics ---
+2 packets transmitted, 0 packets received, 100% packet loss
+command terminated with exit code 1
+
+$ kubectl -n s11 exec dnsutils -- curl -s -o /dev/null -w '%{http_code}' http://10.102.27.133:8080
+200

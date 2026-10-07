@@ -1,0 +1,47 @@
+$ kubectl get svc,endpoints -n s11 web-service-nodeport -o wide
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                           TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE   SELECTOR
+service/web-service-nodeport   NodePort   10.100.143.134   <none>        80:30180/TCP   36m   app=web-nodeport
+
+NAME                             ENDPOINTS                         AGE
+endpoints/web-service-nodeport   10.244.0.142:80,10.244.0.144:80   36m
+
+$ kubectl describe svc web-service-nodeport -n s11
+Name:                     web-service-nodeport
+Namespace:                s11
+Labels:                   app=web-nodeport
+Annotations:              <none>
+Selector:                 app=web-nodeport
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.143.134
+IPs:                      10.100.143.134
+Port:                     http  80/TCP
+TargetPort:               80/TCP
+NodePort:                 http  30180/TCP
+Endpoints:                10.244.0.142:80,10.244.0.144:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+$ minikube ip
+192.168.49.2
+
+$ minikube ssh -- curl -s -o /dev/null -w '%{http_code}' http://192.168.49.2:30180; echo
+200
+
+$ minikube ssh -- curl -s http://192.168.49.2:30180 | grep -i title
+<title>Welcome to nginx!</title>
+
+$ kubectl -n s11 exec dnsutils -- curl -s -o /dev/null -w '%{http_code}' http://192.168.49.2:30180; echo
+200
+
+$ kubectl -n s11 exec dnsutils -- curl -s -o /dev/null -w '%{http_code}' http://web-service-nodeport.s11.svc.cluster.local:80; echo
+200
+
+# from the mac host directly (docker driver - node IP lives inside docker's VM network)
+$ curl -s -m 5 http://192.168.49.2:30180 || echo 'curl failed (exit '$?')'
+curl failed (exit 28)
+

@@ -1,0 +1,119 @@
+$ kubectl get statefulset web -n s11 -o wide
+NAME   READY   AGE   CONTAINERS   IMAGES
+web    3/3     36m   nginx        nginx:1.25-alpine
+
+$ kubectl get pods -n s11 -l app=web-headless -o wide
+NAME    READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+web-0   1/1     Running   0          11m   10.244.0.177   minikube   <none>           <none>
+web-1   1/1     Running   0          11m   10.244.0.179   minikube   <none>           <none>
+web-2   1/1     Running   0          11m   10.244.0.180   minikube   <none>           <none>
+
+$ kubectl get svc,endpoints -n s11 web-service-headless -o wide
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                           TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+service/web-service-headless   ClusterIP   None         <none>        80/TCP    36m   app=web-headless
+
+NAME                             ENDPOINTS                                         AGE
+endpoints/web-service-headless   10.244.0.177:80,10.244.0.179:80,10.244.0.180:80   36m
+
+$ kubectl describe svc web-service-headless -n s11
+Name:                     web-service-headless
+Namespace:                s11
+Labels:                   app=web-headless
+Annotations:              <none>
+Selector:                 app=web-headless
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       None
+IPs:                      None
+Port:                     web  80/TCP
+TargetPort:               80/TCP
+Endpoints:                10.244.0.177:80,10.244.0.179:80,10.244.0.180:80
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+# headless: the service name resolves straight to all pod IPs (no ClusterIP)
+$ kubectl -n s11 exec dnsutils -- nslookup web-service-headless.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	web-service-headless.s11.svc.cluster.local
+Address: 10.244.0.179
+Name:	web-service-headless.s11.svc.cluster.local
+Address: 10.244.0.177
+Name:	web-service-headless.s11.svc.cluster.local
+Address: 10.244.0.180
+
+
+# compare: a normal ClusterIP service resolves to ONE virtual IP
+$ kubectl -n s11 exec dnsutils -- nslookup web-service-clusterip.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	web-service-clusterip.s11.svc.cluster.local
+Address: 10.102.27.133
+
+
+# per-pod stable DNS names: <pod>.<svc>.<ns>.svc.cluster.local
+$ kubectl -n s11 exec dnsutils -- nslookup web-0.web-service-headless.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	web-0.web-service-headless.s11.svc.cluster.local
+Address: 10.244.0.177
+
+
+$ kubectl -n s11 exec dnsutils -- nslookup web-1.web-service-headless.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	web-1.web-service-headless.s11.svc.cluster.local
+Address: 10.244.0.179
+
+
+$ kubectl -n s11 exec dnsutils -- nslookup web-2.web-service-headless.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	web-2.web-service-headless.s11.svc.cluster.local
+Address: 10.244.0.180
+
+
+$ kubectl -n s11 exec dnsutils -- curl -s -o /dev/null -w '%{http_code}' http://web-1.web-service-headless.s11.svc.cluster.local; echo
+200
+
+$ kubectl exec -n s11 web-0 -- hostname
+web-0
+
+$ kubectl exec -n s11 web-0 -- hostname -f
+web-0.web-service-headless.s11.svc.cluster.local
+
+# delete web-1: it comes back with the SAME name/DNS, possibly a new IP
+$ kubectl delete pod web-1 -n s11
+pod "web-1" deleted from s11 namespace
+
+$ kubectl wait --for=condition=Ready pod/web-1 -n s11 --timeout=180s
+pod/web-1 condition met
+
+$ kubectl get pods -n s11 -l app=web-headless -o wide
+NAME    READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+web-0   1/1     Running   0          11m   10.244.0.177   minikube   <none>           <none>
+web-1   1/1     Running   0          1s    10.244.0.242   minikube   <none>           <none>
+web-2   1/1     Running   0          11m   10.244.0.180   minikube   <none>           <none>
+
+$ kubectl -n s11 exec dnsutils -- nslookup web-1.web-service-headless.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Name:	web-1.web-service-headless.s11.svc.cluster.local
+Address: 10.244.0.242
+
+
+

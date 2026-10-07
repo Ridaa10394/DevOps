@@ -1,0 +1,164 @@
+$ kubectl -n s11 exec dnsutils -- cat /etc/resolv.conf
+search s11.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+
+$ kubectl get svc -n s11-other -o wide
+NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+api-service   ClusterIP   10.98.251.133   <none>        80/TCP    37m   app=api
+
+$ kubectl get pods -n s11-other -o wide
+NAME                   READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+api-68c5f8dbf9-62c64   1/1     Running   0          17m   10.244.0.145   minikube   <none>           <none>
+
+# same namespace - short name works
+$ kubectl -n s11 exec dnsutils -- nslookup web-service-clusterip
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+** server can't find web-service-clusterip.cluster.local: NXDOMAIN
+
+** server can't find web-service-clusterip.cluster.local: NXDOMAIN
+
+Name:	web-service-clusterip.s11.svc.cluster.local
+Address: 10.102.27.133
+
+
+** server can't find web-service-clusterip.svc.cluster.local: NXDOMAIN
+
+** server can't find web-service-clusterip.svc.cluster.local: NXDOMAIN
+
+command terminated with exit code 1
+
+# other namespace - short name FAILS (search path only appends s11.svc.cluster.local)
+$ kubectl -n s11 exec dnsutils -- nslookup api-service
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+** server can't find api-service.s11.svc.cluster.local: NXDOMAIN
+
+** server can't find api-service.cluster.local: NXDOMAIN
+
+** server can't find api-service.s11.svc.cluster.local: NXDOMAIN
+
+** server can't find api-service.cluster.local: NXDOMAIN
+
+** server can't find api-service.svc.cluster.local: NXDOMAIN
+
+** server can't find api-service.svc.cluster.local: NXDOMAIN
+
+command terminated with exit code 1
+
+# other namespace - <svc>.<ns> works
+$ kubectl -n s11 exec dnsutils -- nslookup api-service.s11-other
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Non-authoritative answer:
+
+** server can't find api-service.s11-other: NXDOMAIN
+
+command terminated with exit code 1
+
+# other namespace - full FQDN (trailing dot = absolute, skips search list)
+$ kubectl -n s11 exec dnsutils -- nslookup api-service.s11-other.svc.cluster.local.
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	api-service.s11-other.svc.cluster.local
+Address: 10.98.251.133
+
+
+$ kubectl -n s11 exec dnsutils -- curl -s -m 5 -o /dev/null -w '%{http_code}' http://api-service; echo
+000command terminated with exit code 6
+
+
+$ kubectl -n s11 exec dnsutils -- curl -s -m 5 -o /dev/null -w '%{http_code}' http://api-service.s11-other; echo
+200
+
+$ kubectl -n s11 exec dnsutils -- curl -s -m 5 -o /dev/null -w '%{http_code}' http://api-service.s11-other.svc.cluster.local; echo
+200
+
+# reverse direction: from the pod in s11-other, reach a service in s11
+$ kubectl -n s11-other exec deploy/api -- cat /etc/resolv.conf
+search s11-other.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+
+$ kubectl -n s11-other exec deploy/api -- nslookup web-service-clusterip.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Name:	web-service-clusterip.s11.svc.cluster.local
+Address: 10.102.27.133
+
+
+
+$ kubectl -n s11-other exec deploy/api -- curl -s -o /dev/null -w '%{http_code}' http://web-service-clusterip.s11:8080; echo
+200
+
+# pod DNS: A record from pod IP (dashes), and stateful pod hostname via headless svc
+$ kubectl -n s11 exec dnsutils -- nslookup 10-244-0-206.s11.pod.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Name:	10-244-0-206.s11.pod.cluster.local
+Address: 10.244.0.206
+
+
+
+$ kubectl -n s11 exec dnsutils -- nslookup web-0.web-service-headless.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Name:	web-0.web-service-headless.s11.svc.cluster.local
+Address: 10.244.0.177
+
+
+
+# kubernetes API service, from any namespace
+$ kubectl -n s11 exec dnsutils -- nslookup kubernetes.default.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Name:	kubernetes.default.svc.cluster.local
+Address: 10.96.0.1
+
+
+
+# SRV record for a named port: _<port-name>._<proto>.<svc>.<ns>.svc.cluster.local
+$ kubectl -n s11 exec dnsutils -- nslookup -type=SRV _http._tcp.web-service-clusterip.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+_http._tcp.web-service-clusterip.s11.svc.cluster.local	service = 0 100 8080 web-service-clusterip.s11.svc.cluster.local
+
+
+# getent uses the real libc resolver (the same path curl/apps use), so it honours resolv.conf search + ndots
+# exactly like an application would. busybox nslookup has its own quirky search-list handling.
+$ kubectl -n s11 exec dnsutils -- getent hosts web-service-clusterip
+10.102.27.133     web-service-clusterip.s11.svc.cluster.local  web-service-clusterip.s11.svc.cluster.local web-service-clusterip
+
+$ kubectl -n s11 exec dnsutils -- getent hosts api-service
+command terminated with exit code 2
+
+$ kubectl -n s11 exec dnsutils -- getent hosts api-service || echo 'not found (exit '$?')'
+command terminated with exit code 2
+not found (exit 2)
+
+$ kubectl -n s11 exec dnsutils -- getent hosts api-service.s11-other
+10.98.251.133     api-service.s11-other.svc.cluster.local  api-service.s11-other.svc.cluster.local api-service.s11-other
+
+$ kubectl -n s11 exec dnsutils -- getent hosts api-service.s11-other.svc
+10.98.251.133     api-service.s11-other.svc.cluster.local  api-service.s11-other.svc.cluster.local api-service.s11-other.svc
+
+$ kubectl -n s11 exec dnsutils -- getent hosts api-service.s11-other.svc.cluster.local
+10.98.251.133     api-service.s11-other.svc.cluster.local  api-service.s11-other.svc.cluster.local
+
+$ kubectl -n s11 exec dnsutils -- getent hosts web-0.web-service-headless
+10.244.0.177      web-0.web-service-headless.s11.svc.cluster.local  web-0.web-service-headless.s11.svc.cluster.local web-0.web-service-headless
+
+$ kubectl -n s11 exec dnsutils -- getent hosts kubernetes.default
+10.96.0.1         kubernetes.default.svc.cluster.local  kubernetes.default.svc.cluster.local kubernetes.default
+

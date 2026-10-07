@@ -1,0 +1,27 @@
+$ kubectl get pods -n s11 -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE     IP             NODE       NOMINATED NODE   READINESS GATES
+dnsutils                                1/1     Running   0          5m29s   10.244.0.206   minikube   <none>           <none>
+web-0                                   1/1     Running   0          10m     10.244.0.177   minikube   <none>           <none>
+web-1                                   1/1     Running   0          10m     10.244.0.179   minikube   <none>           <none>
+web-2                                   1/1     Running   0          10m     10.244.0.180   minikube   <none>           <none>
+web-app-clusterip-57649bc58-4bb4r       1/1     Running   0          16m     10.244.0.140   minikube   <none>           <none>
+web-app-clusterip-57649bc58-5frlc       1/1     Running   0          16m     10.244.0.137   minikube   <none>           <none>
+web-app-clusterip-57649bc58-fxls9       1/1     Running   0          16m     10.244.0.138   minikube   <none>           <none>
+web-app-loadbalancer-64799cfbf5-524lm   1/1     Running   0          16m     10.244.0.139   minikube   <none>           <none>
+web-app-loadbalancer-64799cfbf5-qbg6b   1/1     Running   0          16m     10.244.0.143   minikube   <none>           <none>
+web-app-loadbalancer-64799cfbf5-r2r57   1/1     Running   0          16m     10.244.0.141   minikube   <none>           <none>
+web-app-nodeport-7cd74f97fb-h8qfs       1/1     Running   0          16m     10.244.0.142   minikube   <none>           <none>
+web-app-nodeport-7cd74f97fb-kpg59       1/1     Running   0          16m     10.244.0.144   minikube   <none>           <none>
+
+$ kubectl get pods -n s11-other -o wide
+NAME                   READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+api-68c5f8dbf9-62c64   1/1     Running   0          16m   10.244.0.145   minikube   <none>           <none>
+
+$ kubectl get svc -n s11 -o wide
+NAME                       TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE   SELECTOR
+external-api-service       ExternalName   <none>           example.com   <none>         35m   <none>
+web-service-clusterip      ClusterIP      10.102.27.133    <none>        8080/TCP       35m   app=web-clusterip
+web-service-headless       ClusterIP      None             <none>        80/TCP         35m   app=web-headless
+web-service-loadbalancer   LoadBalancer   10.106.211.24    <pending>     80:30981/TCP   35m   app=web-loadbalancer
+web-service-nodeport       NodePort       10.100.143.134   <none>        80:30180/TCP   35m   app=web-nodeport
+

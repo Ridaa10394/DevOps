@@ -1,0 +1,251 @@
+## Step 1 - CoreDNS pods + deployment
+$ kubectl -n kube-system get deploy coredns -o wide
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                    SELECTOR
+coredns   1/1     1            1           41m   coredns      registry.k8s.io/coredns/coredns:v1.14.6   k8s-app=kube-dns
+
+$ kubectl -n kube-system get pods -l k8s-app=kube-dns -o wide
+NAME                       READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+coredns-559f6c778d-hkp62   1/1     Running   0          41m   10.244.0.2   minikube   <none>           <none>
+
+## Step 2 - the kube-dns Service (this IP is the nameserver in every pod's resolv.conf)
+$ kubectl -n kube-system get svc kube-dns -o wide
+NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE   SELECTOR
+kube-dns   ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   41m   k8s-app=kube-dns
+
+$ kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=kube-dns
+NAME             ADDRESSTYPE   PORTS        ENDPOINTS    AGE
+kube-dns-4n9jm   IPv4          53,53,9153   10.244.0.2   41m
+
+## Step 3 - CoreDNS config (Corefile)
+$ kubectl -n kube-system get configmap coredns -o yaml
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 {
+        log
+        errors
+        health {
+           lameduck 5s
+        }
+        ready
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+           pods insecure
+           fallthrough in-addr.arpa ip6.arpa
+           ttl 30
+        }
+        prometheus :9153
+        hosts {
+           192.168.65.254 host.minikube.internal
+           fallthrough
+        }
+        forward . /etc/resolv.conf {
+           max_concurrent 1000
+        }
+        cache 30 {
+           disable success cluster.local
+           disable denial cluster.local
+        }
+        loop
+        reload
+        loadbalance
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2026-10-07T10:47:55Z"
+  name: coredns
+  namespace: kube-system
+  resourceVersion: "330"
+  uid: b2e62182-20c9-4a48-9701-cf501aa64b0c
+
+## Step 4 - CoreDNS logs
+$ kubectl -n kube-system logs -l k8s-app=kube-dns --tail=20
+[INFO] 10.244.0.4:43642 - 12970 "A IN yatri-backend-service.s13.svc.cluster.local. udp 61 false 512" NOERROR qr,aa,rd 120 0.00003775s
+[INFO] 10.244.0.4:43642 - 19883 "AAAA IN yatri-backend-service.s13.svc.cluster.local. udp 61 false 512" NOERROR qr,aa,rd 154 0.000117458s
+[INFO] 10.244.0.4:35626 - 17742 "AAAA IN yatri-backend-service.s13.svc.cluster.local. udp 61 false 512" NOERROR qr,aa,rd 154 0.000089875s
+[INFO] 10.244.0.4:35626 - 16449 "A IN yatri-backend-service.s13.svc.cluster.local. udp 61 false 512" NOERROR qr,aa,rd 120 0.000160292s
+[INFO] 10.244.0.4:47033 - 47466 "AAAA IN yatri-backend-service.s13.svc.cluster.local.s13.svc.cluster.local. udp 83 false 512" NXDOMAIN qr,aa,rd 176 0.000076417s
+[INFO] 10.244.0.4:47033 - 14187 "A IN yatri-backend-service.s13.svc.cluster.local.s13.svc.cluster.local. udp 83 false 512" NXDOMAIN qr,aa,rd 176 0.000068209s
+[INFO] 10.244.0.4:51067 - 63804 "AAAA IN yatri-backend-service.s13.svc.cluster.local.svc.cluster.local. udp 79 false 512" NXDOMAIN qr,aa,rd 172 0.000042084s
+[INFO] 10.244.0.4:51067 - 36670 "A IN yatri-backend-service.s13.svc.cluster.local.svc.cluster.local. udp 79 false 512" NXDOMAIN qr,aa,rd 172 0.000033291s
+[INFO] 10.244.0.4:35205 - 19151 "AAAA IN yatri-backend-service.s13.svc.cluster.local.cluster.local. udp 75 false 512" NXDOMAIN qr,aa,rd 168 0.000141625s
+[INFO] 10.244.0.4:35205 - 1486 "A IN yatri-backend-service.s13.svc.cluster.local.cluster.local. udp 75 false 512" NXDOMAIN qr,aa,rd 168 0.000145292s
+[INFO] 10.244.0.4:34807 - 9603 "AAAA IN yatri-backend-service.s13.svc.cluster.local. udp 61 false 512" NOERROR qr,aa,rd 154 0.000119542s
+[INFO] 10.244.0.4:34807 - 54656 "A IN yatri-backend-service.s13.svc.cluster.local. udp 61 false 512" NOERROR qr,aa,rd 120 0.000055167s
+[INFO] 10.244.0.4:41986 - 3503 "AAAA IN yatri-backend-service.s13.svc.cluster.local.s13.svc.cluster.local. udp 83 false 512" NXDOMAIN qr,aa,rd 176 0.000130708s
+[INFO] 10.244.0.4:41986 - 18593 "A IN yatri-backend-service.s13.svc.cluster.local.s13.svc.cluster.local. udp 83 false 512" NXDOMAIN qr,aa,rd 176 0.000130084s
+[INFO] 10.244.0.4:41826 - 38991 "AAAA IN yatri-backend-service.s13.svc.cluster.local.svc.cluster.local. udp 79 false 512" NXDOMAIN qr,aa,rd 172 0.000173s
+[INFO] 10.244.0.4:41826 - 16207 "A IN yatri-backend-service.s13.svc.cluster.local.svc.cluster.local. udp 79 false 512" NXDOMAIN qr,aa,rd 172 0.000073667s
+[INFO] 10.244.0.4:46041 - 13660 "AAAA IN yatri-backend-service.s13.svc.cluster.local.cluster.local. udp 75 false 512" NXDOMAIN qr,aa,rd 168 0.000054333s
+[INFO] 10.244.0.4:46041 - 16194 "A IN yatri-backend-service.s13.svc.cluster.local.cluster.local. udp 75 false 512" NXDOMAIN qr,aa,rd 168 0.000064834s
+[INFO] 10.244.0.4:46243 - 57655 "AAAA IN yatri-backend-service.s13.svc.cluster.local. udp 61 false 512" NOERROR qr,aa,rd 154 0.000253208s
+[INFO] 10.244.0.4:46243 - 18231 "A IN yatri-backend-service.s13.svc.cluster.local. udp 61 false 512" NOERROR qr,aa,rd 120 0.000290084s
+
+## Step 5 - client pod resolv.conf
+$ kubectl -n s11 exec dnsutils -- cat /etc/resolv.conf
+search s11.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+
+## Step 6 - basic test: kubernetes.default
+$ kubectl -n s11 exec dnsutils -- nslookup kubernetes.default
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Non-authoritative answer:
+
+** server can't find kubernetes.default: NXDOMAIN
+
+command terminated with exit code 1
+
+$ kubectl -n s11 exec dnsutils -- getent hosts kubernetes.default
+10.96.0.1         kubernetes.default.svc.cluster.local  kubernetes.default.svc.cluster.local kubernetes.default
+
+## Step 7 - query the CoreDNS pod directly (bypass the kube-dns Service)
+$ kubectl -n s11 exec dnsutils -- nslookup kubernetes.default.svc.cluster.local 10.244.0.2
+Server:		10.244.0.2
+Address:	10.244.0.2:53
+
+
+Name:	kubernetes.default.svc.cluster.local
+Address: 10.96.0.1
+
+
+## Step 8 - external name through the forward plugin (upstream = node /etc/resolv.conf)
+$ kubectl -n s11 exec dnsutils -- nslookup example.com
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Non-authoritative answer:
+
+Non-authoritative answer:
+Name:	example.com
+Address: 104.20.23.154
+Name:	example.com
+Address: 172.66.147.243
+
+
+$ minikube ssh -- cat /etc/resolv.conf
+# Generated by Docker Engine.
+# This file can be edited; Docker Engine will not make further changes once it
+# has been modified.
+
+nameserver 192.168.65.254
+options ndots:0
+
+# Based on host file: '/etc/resolv.conf' (internal resolver)
+# ExtServers: [host(192.168.65.7)]
+# Overrides: []
+# Option ndots from: internal
+
+## Step 9 - a name that does not exist -> NXDOMAIN from the kubernetes plugin
+$ kubectl -n s11 exec dnsutils -- nslookup does-not-exist.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+** server can't find does-not-exist.s11.svc.cluster.local: NXDOMAIN
+
+** server can't find does-not-exist.s11.svc.cluster.local: NXDOMAIN
+
+command terminated with exit code 1
+
+## Step 10 - ndots:5 in action: 'example.com' has 1 dot (<5) so the search list is tried first
+$ kubectl -n s11 exec dnsutils -- nslookup example.com
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	example.com
+Address: 172.66.147.243
+Name:	example.com
+Address: 104.20.23.154
+
+
+## Step 11 - with a trailing dot the name is absolute: one query, no search-list expansion
+$ kubectl -n s11 exec dnsutils -- nslookup example.com.
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	example.com
+Address: 104.20.23.154
+Name:	example.com
+Address: 172.66.147.243
+
+
+## Step 12 - metrics endpoint exposed by the prometheus plugin
+$ kubectl -n s11 exec dnsutils -- curl -s http://10.244.0.2:9153/metrics | grep -E '^coredns_dns_requests_total' | head -5
+coredns_dns_requests_total{family="1",proto="udp",server="dns://:53",type="A",view="",zone="."} 28398
+coredns_dns_requests_total{family="1",proto="udp",server="dns://:53",type="AAAA",view="",zone="."} 28378
+coredns_dns_requests_total{family="1",proto="udp",server="dns://:53",type="CNAME",view="",zone="."} 1
+coredns_dns_requests_total{family="1",proto="udp",server="dns://:53",type="SRV",view="",zone="."} 1
+coredns_dns_requests_total{family="1",proto="udp",server="dns://:53",type="other",view="",zone="."} 1
+
+## Step 13 - health / ready plugins
+$ kubectl -n s11 exec dnsutils -- curl -s -w ' (HTTP %{http_code})
+' http://10.244.0.2:8080/health
+OK (HTTP 200)
+
+$ kubectl -n s11 exec dnsutils -- curl -s -w ' (HTTP %{http_code})
+' http://10.244.0.2:8181/ready
+OK (HTTP 200)
+
+## Step 14 - watch ndots:5 in the CoreDNS query log (the 'log' plugin is on). dnsutils pod IP = 10.244.0.206
+$ kubectl -n s11 exec dnsutils -- getent hosts example.com
+104.20.23.154     example.com  example.com
+
+$ kubectl -n kube-system logs -l k8s-app=kube-dns --tail=400 | grep '10.244.0.206:' | grep 'example.com' | grep -v 'external-api' | tail -8
+[INFO] 10.244.0.206:52529 - 16681 "AAAA IN example.com.s11.svc.cluster.local. udp 51 false 512" NXDOMAIN qr,aa,rd 144 0.000154292s
+[INFO] 10.244.0.206:36267 - 9936 "AAAA IN example.com.svc.cluster.local. udp 47 false 512" NXDOMAIN qr,aa,rd 140 0.000098708s
+[INFO] 10.244.0.206:57391 - 28206 "AAAA IN example.com.cluster.local. udp 43 false 512" NXDOMAIN qr,aa,rd 136 0.000062917s
+[INFO] 10.244.0.206:49800 - 54345 "AAAA IN example.com. udp 29 false 512" NOERROR qr,rd,ra 29 0.002250417s
+[INFO] 10.244.0.206:55879 - 58126 "A IN example.com.s11.svc.cluster.local. udp 51 false 512" NXDOMAIN qr,aa,rd 144 0.000112584s
+[INFO] 10.244.0.206:41159 - 43695 "A IN example.com.svc.cluster.local. udp 47 false 512" NXDOMAIN qr,aa,rd 140 0.000151167s
+[INFO] 10.244.0.206:44697 - 40721 "A IN example.com.cluster.local. udp 43 false 512" NXDOMAIN qr,aa,rd 136 0.000043167s
+[INFO] 10.244.0.206:39740 - 47235 "A IN example.com. udp 29 false 512" NOERROR qr,aa,rd,ra 83 0.000087917s
+
+## Step 15 - same lookup with a trailing dot: only the absolute name is queried
+$ kubectl -n s11 exec dnsutils -- getent hosts example.org.
+104.20.26.136     example.org  example.org example.org.
+
+$ kubectl -n kube-system logs -l k8s-app=kube-dns --tail=400 | grep '10.244.0.206:' | grep 'example.org' | tail -4
+[INFO] 10.244.0.206:59211 - 4877 "AAAA IN example.org. udp 29 false 512" NOERROR qr,rd,ra 29 0.00143025s
+[INFO] 10.244.0.206:56734 - 44051 "A IN example.org. udp 29 false 512" NOERROR qr,rd,ra 83 0.162497375s
+
+## Step 16 - in-cluster name, short form: first search domain hits immediately
+$ kubectl -n s11 exec dnsutils -- getent hosts web-service-headless
+10.244.0.177      web-service-headless.s11.svc.cluster.local  web-service-headless.s11.svc.cluster.local web-service-headless
+
+$ kubectl -n kube-system logs -l k8s-app=kube-dns --tail=400 | grep '10.244.0.206:' | grep 'web-service-headless' | tail -4
+[INFO] 10.244.0.206:48928 - 33603 "AAAA IN web-service-headless.s11.svc.cluster.local. udp 60 false 512" NOERROR qr,aa,rd 153 0.000119708s
+[INFO] 10.244.0.206:55035 - 11678 "A IN web-service-headless.s11.svc.cluster.local. udp 60 false 512" NOERROR qr,aa,rd 234 0.0001975s
+[INFO] 10.244.0.206:33674 - 35023 "A IN web-service-headless.s11.svc.cluster.local. udp 60 false 512" NOERROR qr,aa,rd 234 0.000198584s
+
+## Step 17 - 'is it DNS?' - a service with a typo'd selector
+$ kubectl apply -f ../coredns/broken-selector-svc.yaml
+service/broken-svc created
+
+$ kubectl get svc,endpointslices -n s11 -l kubernetes.io/service-name=broken-svc
+NAME                                              ADDRESSTYPE   PORTS     ENDPOINTS   AGE
+endpointslice.discovery.k8s.io/broken-svc-qd25z   IPv4          <unset>   <unset>     0s
+
+$ kubectl get endpoints broken-svc -n s11
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS   AGE
+broken-svc   <none>      0s
+
+$ kubectl -n s11 exec dnsutils -- getent hosts broken-svc
+10.108.154.5      broken-svc.s11.svc.cluster.local  broken-svc.s11.svc.cluster.local broken-svc
+
+$ kubectl -n s11 exec dnsutils -- curl -s -m 5 http://broken-svc || echo 'curl failed (exit '$?')'
+command terminated with exit code 7
+curl failed (exit 7)
+
+$ kubectl get svc broken-svc -n s11 -o jsonpath='{.spec.selector}'; echo
+{"app":"web-clusterlp"}
+
+$ kubectl get pods -n s11 -l app=web-clusterlp
+No resources found in s11 namespace.
+
+$ kubectl delete -f ../coredns/broken-selector-svc.yaml
+service "broken-svc" deleted from s11 namespace
+

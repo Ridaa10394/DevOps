@@ -1,0 +1,67 @@
+$ kubectl get svc,endpoints -n s11 web-service-clusterip -o wide
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE   SELECTOR
+service/web-service-clusterip   ClusterIP   10.102.27.133   <none>        8080/TCP   35m   app=web-clusterip
+
+NAME                              ENDPOINTS                                         AGE
+endpoints/web-service-clusterip   10.244.0.137:80,10.244.0.138:80,10.244.0.140:80   35m
+
+$ kubectl get endpointslices -n s11 -l kubernetes.io/service-name=web-service-clusterip
+NAME                          ADDRESSTYPE   PORTS   ENDPOINTS                                AGE
+web-service-clusterip-7wsc4   IPv4          80      10.244.0.137,10.244.0.138,10.244.0.140   35m
+
+$ kubectl describe svc web-service-clusterip -n s11
+Name:                     web-service-clusterip
+Namespace:                s11
+Labels:                   app=web-clusterip
+Annotations:              <none>
+Selector:                 app=web-clusterip
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.102.27.133
+IPs:                      10.102.27.133
+Port:                     http  8080/TCP
+TargetPort:               80/TCP
+Endpoints:                10.244.0.137:80,10.244.0.138:80,10.244.0.140:80
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+$ kubectl get pods -n s11 -l app=web-clusterip -o wide
+NAME                                READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+web-app-clusterip-57649bc58-4bb4r   1/1     Running   0          16m   10.244.0.140   minikube   <none>           <none>
+web-app-clusterip-57649bc58-5frlc   1/1     Running   0          16m   10.244.0.137   minikube   <none>           <none>
+web-app-clusterip-57649bc58-fxls9   1/1     Running   0          16m   10.244.0.138   minikube   <none>           <none>
+
+$ kubectl -n s11 exec dnsutils -- curl -s -o /dev/null -w 'HTTP %{http_code}
+' http://web-service-clusterip:8080
+HTTP 200
+
+$ kubectl -n s11 exec dnsutils -- curl -s http://web-service-clusterip.s11.svc.cluster.local:8080 | grep -i title
+<title>Welcome to nginx!</title>
+
+$ kubectl -n s11 exec dnsutils -- nslookup web-service-clusterip.s11.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Name:	web-service-clusterip.s11.svc.cluster.local
+Address: 10.102.27.133
+
+
+
+$ minikube ssh -- curl -s -m 5 -o /dev/null -w '%{http_code}' $(kubectl -n s11 get svc web-service-clusterip -o jsonpath='{.spec.clusterIP}'):8080; echo
+200
+
+# load-balancing check: 12 requests through the ClusterIP, then count nginx access-log lines per pod
+$ for i in $(seq 1 12); do kubectl -n s11 exec dnsutils -- curl -s -o /dev/null http://web-service-clusterip:8080; done
+
+$ for p in $(kubectl -n s11 get pods -l app=web-clusterip -o name); do echo "$p $(kubectl -n s11 logs $p | grep -c 'GET / ')"; done
+pod/web-app-clusterip-57649bc58-4bb4r 5
+pod/web-app-clusterip-57649bc58-5frlc 3
+pod/web-app-clusterip-57649bc58-fxls9 7
+
+# from the mac host the ClusterIP is not routable
+$ curl -s -m 5 http://10.102.27.133:8080 || echo 'curl failed (exit '$?')'
+curl failed (exit 28)
+

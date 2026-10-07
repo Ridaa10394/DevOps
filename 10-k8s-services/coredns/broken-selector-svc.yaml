@@ -1,0 +1,12 @@
+# troubleshooting demo: DNS works fine, but the selector matches nothing -> no endpoints
+apiVersion: v1
+kind: Service
+metadata:
+  name: broken-svc
+  namespace: s11
+spec:
+  selector:
+    app: web-clusterlp     # typo on purpose (lp instead of ip)
+  ports:
+    - port: 80
+      targetPort: 80

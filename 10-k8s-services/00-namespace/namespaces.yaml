@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: s11
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: s11-other

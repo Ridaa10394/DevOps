@@ -1,0 +1,42 @@
+$ kubectl get svc,endpoints -n s11 web-service-loadbalancer -o wide
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                               TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE   SELECTOR
+service/web-service-loadbalancer   LoadBalancer   10.106.211.24   <pending>     80:30981/TCP   36m   app=web-loadbalancer
+
+NAME                                 ENDPOINTS                                         AGE
+endpoints/web-service-loadbalancer   10.244.0.139:80,10.244.0.141:80,10.244.0.143:80   36m
+
+$ kubectl describe svc web-service-loadbalancer -n s11
+Name:                     web-service-loadbalancer
+Namespace:                s11
+Labels:                   app=web-loadbalancer
+Annotations:              <none>
+Selector:                 app=web-loadbalancer
+Type:                     LoadBalancer
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.106.211.24
+IPs:                      10.106.211.24
+Port:                     http  80/TCP
+TargetPort:               80/TCP
+NodePort:                 http  30981/TCP
+Endpoints:                10.244.0.139:80,10.244.0.141:80,10.244.0.143:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+# EXTERNAL-IP stays <pending>: minikube has no cloud controller, and 'minikube tunnel' (needs sudo on mac) was not run
+$ kubectl get svc web-service-loadbalancer -n s11 -o jsonpath='{.status}'; echo
+{"loadBalancer":{}}
+
+# a LoadBalancer service is also a NodePort + ClusterIP service, so both of those paths work
+$ minikube ssh -- curl -s -o /dev/null -w '%{http_code}' http://192.168.49.2:30981; echo
+200
+
+$ kubectl -n s11 exec dnsutils -- curl -s -o /dev/null -w '%{http_code}' http://10.106.211.24:80; echo
+200
+
+$ kubectl -n s11 exec dnsutils -- curl -s http://web-service-loadbalancer | grep -i title
+<title>Welcome to nginx!</title>
+
