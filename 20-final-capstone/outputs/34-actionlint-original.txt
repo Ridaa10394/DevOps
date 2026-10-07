@@ -1,0 +1,3 @@
+$ actionlint -no-color .github/workflows/ci-cd.yml; echo "actionlint exit code: $?"
+actionlint exit code: 0
+

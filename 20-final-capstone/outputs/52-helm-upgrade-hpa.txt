@@ -1,0 +1,52 @@
+$ helm upgrade --install taskboard ./helm/taskboard -n taskboard --set ingress.enabled=true --set backend.image=taskboard-backend --set backend.tag=local --set frontend.image=taskboard-frontend --set frontend.tag=local --set monitoring.serviceMonitor.enabled=false
+Release "taskboard" has been upgraded. Happy Helming!
+NAME: taskboard
+LAST DEPLOYED: Wed Oct  7 20:21:26 2026
+NAMESPACE: taskboard
+STATUS: deployed
+REVISION: 4
+DESCRIPTION: Upgrade complete
+TEST SUITE: None
+
+$ kubectl -n taskboard get deploy,hpa
+NAME                                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/taskboard-frontend            2/2     2            2           6m14s
+deployment.apps/taskboard-postgres            1/1     1            1           6m14s
+deployment.apps/taskboard-taskboard-backend   2/2     2            2           6m14s
+
+NAME                                                    REFERENCE                                TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 3%/60%   2         6         2          45s
+
+$ kubectl -n taskboard describe hpa taskboard-backend | sed -n "1,25p"
+Name:                                                  taskboard-backend
+Namespace:                                             taskboard
+Labels:                                                app.kubernetes.io/managed-by=Helm
+Annotations:                                           meta.helm.sh/release-name: taskboard
+                                                       meta.helm.sh/release-namespace: taskboard
+CreationTimestamp:                                     Wed, 07 Oct 2026 20:21:27 +0530
+Reference:                                             Deployment/taskboard-taskboard-backend
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  3% (3m) / 60%
+Min replicas:                                          2
+Max replicas:                                          6
+Deployment pods:                                       2 current / 2 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+$ kubectl top pods -n taskboard
+NAME                                           CPU(cores)   MEMORY(bytes)   
+taskboard-frontend-6b55b56d9-7hhl9             4m           11Mi            
+taskboard-frontend-6b55b56d9-wbmh9             1m           11Mi            
+taskboard-postgres-755b4497b-vg9dw             3m           89Mi            
+taskboard-taskboard-backend-7d8fb7697c-7rkz2   100m         62Mi            
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   3m           62Mi            
+
+$ kubectl -n kube-system get deploy metrics-server
+NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+metrics-server   1/1     1            1           3h41m
+

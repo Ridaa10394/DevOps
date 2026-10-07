@@ -1,0 +1,54 @@
+$ helm uninstall taskboard -n taskboard --wait
+release "taskboard" uninstalled
+
+$ kubectl delete namespace taskboard --wait=true
+namespace "taskboard" deleted
+
+$ minikube image rm docker.io/library/taskboard-backend:local docker.io/library/taskboard-frontend:local; minikube image ls | grep -c taskboard
+0
+
+$ docker compose -f docker-compose.yml -f docker-compose.alt-ports.yml down -v
+ Container 20-final-capstone-frontend-1 Stopping 
+ Container 20-final-capstone-frontend-1 Stopped 
+ Container 20-final-capstone-frontend-1 Removing 
+ Container 20-final-capstone-frontend-1 Removed 
+ Container 20-final-capstone-backend-1 Stopping 
+ Container 20-final-capstone-backend-1 Stopped 
+ Container 20-final-capstone-backend-1 Removing 
+ Container 20-final-capstone-backend-1 Removed 
+ Container 20-final-capstone-postgres-1 Stopping 
+ Container 20-final-capstone-postgres-1 Stopped 
+ Container 20-final-capstone-postgres-1 Removing 
+ Container 20-final-capstone-postgres-1 Removed 
+ Volume 20-final-capstone_postgres-data Removing 
+ Network 20-final-capstone_default Removing 
+ Volume 20-final-capstone_postgres-data Removed 
+ Network 20-final-capstone_default Removed 
+
+$ docker rmi taskboard-backend:local taskboard-frontend:local 20-final-capstone-backend:latest 20-final-capstone-frontend:latest | grep -c Untagged
+4
+
+$ rm -rf backend/.venv backend/.pytest_cache backend/test.db backend/.coverage terraform/.terraform terraform/.terraform.lock.hcl && echo "local venv / terraform cache removed"
+local venv / terraform cache removed
+
+$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   4h20m
+ingress-nginx     Active   4h20m
+kube-node-lease   Active   4h20m
+kube-public       Active   4h20m
+kube-system       Active   4h20m
+s09               Active   4h17m
+s17               Active   4h
+
+$ helm list -A
+NAME	NAMESPACE	REVISION	UPDATED	STATUS	CHART	APP VERSION
+
+$ kubectl get crd | grep -c monitoring.coreos.com
+No resources found
+0
+
+$ docker ps -a --filter name=20-final-capstone --format "{{.Names}}" | wc -l; docker volume ls --filter name=20-final-capstone -q | wc -l
+       0
+       0
+

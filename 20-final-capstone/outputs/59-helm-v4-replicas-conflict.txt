@@ -1,0 +1,14 @@
+$ helm upgrade --install taskboard ./helm/taskboard -n taskboard --set ingress.enabled=true --set backend.image=taskboard-backend --set backend.tag=local --set frontend.image=taskboard-frontend --set frontend.tag=local
+level=WARN msg="upgrade failed" name=taskboard error="conflict occurred while applying object taskboard/taskboard-taskboard-backend apps/v1, Kind=Deployment: Apply failed with 1 conflict: conflict with \"kube-controller-manager\" with subresource \"scale\" using apps/v1: .spec.replicas"
+Error: UPGRADE FAILED: conflict occurred while applying object taskboard/taskboard-taskboard-backend apps/v1, Kind=Deployment: Apply failed with 1 conflict: conflict with "kube-controller-manager" with subresource "scale" using apps/v1: .spec.replicas
+
+$ helm history taskboard -n taskboard | tail -3
+3       	Wed Oct  7 20:19:45 2026	superseded	taskboard-1.0.0	1.0.0      	Upgrade complete                                                                                                                                                                                                                                                
+4       	Wed Oct  7 20:21:26 2026	deployed  	taskboard-1.0.0	1.0.0      	Upgrade complete                                                                                                                                                                                                                                                
+5       	Wed Oct  7 20:25:00 2026	failed    	taskboard-1.0.0	1.0.0      	Upgrade "taskboard" failed: conflict occurred while applying object taskboard/taskboard-taskboard-backend apps/v1, Kind=Deployment: Apply failed with 1 conflict: conflict with "kube-controller-manager" with subresource "scale" using apps/v1: .spec.replicas
+
+$ kubectl -n taskboard get deploy taskboard-taskboard-backend --show-managed-fields -o json | python3 -c "import json,sys; [print(m[\"manager\"].ljust(26), m.get(\"subresource\",\"-\").ljust(6), \"f:replicas\" in json.dumps(m[\"fieldsV1\"].get(\"f:spec\",{}))) for m in json.load(sys.stdin)[\"metadata\"][\"managedFields\"]]"
+helm                       -      False
+kube-controller-manager    scale  True
+kube-controller-manager    status False
+

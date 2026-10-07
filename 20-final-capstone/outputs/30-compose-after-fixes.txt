@@ -1,0 +1,20 @@
+$ docker compose -f docker-compose.yml -f docker-compose.alt-ports.yml up -d --build 2>&1 | grep -E "Built|Recreated|Started|Running"
+ Image 20-final-capstone-frontend Built 
+ Image 20-final-capstone-backend Built 
+ Container 20-final-capstone-postgres-1 Running 
+ Container 20-final-capstone-backend-1 Recreated 
+ Container 20-final-capstone-frontend-1 Recreated 
+ Container 20-final-capstone-backend-1 Started 
+ Container 20-final-capstone-frontend-1 Started 
+
+$ docker compose -f docker-compose.yml -f docker-compose.alt-ports.yml ps --format "table {{.Service}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+SERVICE    IMAGE                        STATUS         PORTS
+backend    20-final-capstone-backend    Up 6 seconds   0.0.0.0:18000->8000/tcp, [::]:18000->8000/tcp
+frontend   20-final-capstone-frontend   Up 6 seconds   0.0.0.0:13000->80/tcp, [::]:13000->80/tcp
+postgres   postgres:16-alpine           Up 7 minutes   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+
+$ curl -s http://localhost:18000/ready; echo; curl -s http://localhost:13000/api/tasks/stats; echo; curl -s -o /dev/null -w "frontend / -> HTTP %{http_code}\n" http://localhost:13000/
+{"status":"READY"}
+{"total":4,"todo":2,"inProgress":1,"done":1}
+frontend / -> HTTP 200
+

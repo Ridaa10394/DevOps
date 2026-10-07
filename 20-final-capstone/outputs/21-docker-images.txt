@@ -1,0 +1,26 @@
+$ docker images taskboard-backend; docker images taskboard-frontend
+IMAGE                     ID             DISK USAGE   CONTENT SIZE   EXTRA
+taskboard-backend:local   7d47dcdfec83        325MB         70.5MB        
+IMAGE                      ID             DISK USAGE   CONTENT SIZE   EXTRA
+taskboard-frontend:local   988f3b500ee7       76.3MB         21.9MB        
+
+$ docker image inspect taskboard-backend:local --format "backend : size={{.Size}} bytes  user={{.Config.User}}  cmd={{json .Config.Cmd}}"
+backend : size=70504630 bytes  user=10001  cmd=["sh","-c","alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+
+$ docker image inspect taskboard-frontend:local --format "frontend: size={{.Size}} bytes  user={{if .Config.User}}{{.Config.User}}{{else}}(root - not set){{end}}  expose={{json .Config.ExposedPorts}}"
+frontend: size=21896333 bytes  user=(root - not set)  expose={"80/tcp":{}}
+
+$ docker history taskboard-frontend:local --format "{{.Size}}\t{{.CreatedBy}}" | head -8 | cut -c1-120
+0B	EXPOSE [80/tcp]
+20.5kB	COPY nginx.conf /etc/nginx/conf.d/default.co…
+266kB	COPY /app/dist /usr/share/nginx/html # build…
+39.7MB	RUN /bin/sh -c set -x     && apkArch="$(cat …
+0B	ENV NJS_RELEASE=1
+0B	ENV NJS_VERSION=0.8.10
+0B	CMD ["nginx" "-g" "daemon off;"]
+0B	STOPSIGNAL SIGQUIT
+
+$ docker run --rm --entrypoint id taskboard-backend:local; docker run --rm --entrypoint id taskboard-frontend:local
+uid=10001(appuser) gid=10001(appuser) groups=10001(appuser)
+uid=0(root) gid=0(root) groups=0(root),0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy),20(dialout),26(tape),27(video)
+

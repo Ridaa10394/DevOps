@@ -1,0 +1,11 @@
+# Only needed on my laptop: ports 3000 and 8000 were already taken by another
+# project's containers, so this override remaps the HOST side of the ports.
+# Container ports and everything else in docker-compose.yml stay the same.
+#   docker compose -f docker-compose.yml -f docker-compose.alt-ports.yml up -d --build
+services:
+  backend:
+    ports: !override
+      - "18000:8000"
+  frontend:
+    ports: !override
+      - "13000:80"

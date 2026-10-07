@@ -1,0 +1,24 @@
+$ curl -s http://localhost:18000/; echo
+{"service":"TaskBoard API","version":"1.0.0","docs":"/docs"}
+
+$ curl -s http://localhost:18000/health; echo
+{"status":"UP"}
+
+$ curl -s http://localhost:18000/ready; echo
+{"status":"READY"}
+
+$ curl -s -o /dev/null -w "GET /docs -> HTTP %{http_code}\n" http://localhost:18000/docs
+GET /docs -> HTTP 200
+
+$ curl -s http://localhost:18000/openapi.json | python3 -c "import json,sys; d=json.load(sys.stdin); [print(m.upper().ljust(7), p) for p,v in d[\"paths\"].items() for m in v]"
+GET     /metrics
+GET     /
+GET     /health
+GET     /ready
+GET     /api/tasks
+POST    /api/tasks
+GET     /api/tasks/stats
+GET     /api/tasks/{task_id}
+PUT     /api/tasks/{task_id}
+DELETE  /api/tasks/{task_id}
+

@@ -1,0 +1,27 @@
+$ helm upgrade --install taskboard ./helm/taskboard --namespace taskboard --set backend.image=taskboard-backend --set backend.tag=local --set frontend.image=taskboard-frontend --set frontend.tag=local --set monitoring.serviceMonitor.enabled=false
+Release "taskboard" has been upgraded. Happy Helming!
+NAME: taskboard
+LAST DEPLOYED: Wed Oct  7 20:17:48 2026
+NAMESPACE: taskboard
+STATUS: deployed
+REVISION: 2
+DESCRIPTION: Upgrade complete
+TEST SUITE: None
+
+$ kubectl -n taskboard rollout restart deployment/taskboard-frontend
+deployment.apps/taskboard-frontend restarted
+
+$ kubectl -n taskboard rollout status deployment/taskboard-frontend --timeout=120s
+Waiting for deployment "taskboard-frontend" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "taskboard-frontend" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "taskboard-frontend" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "taskboard-frontend" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "taskboard-frontend" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "taskboard-frontend" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "taskboard-frontend" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "taskboard-frontend" rollout to finish: 1 old replicas are pending termination...
+deployment "taskboard-frontend" successfully rolled out
+
+$ kubectl -n taskboard rollout status deployment/taskboard-taskboard-backend --timeout=120s
+deployment "taskboard-taskboard-backend" successfully rolled out
+

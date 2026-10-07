@@ -1,0 +1,6 @@
+$ trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress --quiet taskboard-backend:local > /dev/null; echo "backend  gate exit code: $?"
+backend  gate exit code: 1
+
+$ trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress --quiet taskboard-frontend:local > /dev/null; echo "frontend gate exit code: $?"
+frontend gate exit code: 1
+

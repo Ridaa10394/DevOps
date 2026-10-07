@@ -1,0 +1,21 @@
+$ helm list -n taskboard
+NAME     	NAMESPACE	REVISION	UPDATED                             	STATUS  	CHART          	APP VERSION
+taskboard	taskboard	2       	2026-10-07 20:17:48.625098 +0530 IST	deployed	taskboard-1.0.0	1.0.0      
+
+$ helm history taskboard -n taskboard
+REVISION	UPDATED                 	STATUS    	CHART          	APP VERSION	DESCRIPTION     
+1       	Wed Oct  7 20:15:58 2026	superseded	taskboard-1.0.0	1.0.0      	Install complete
+2       	Wed Oct  7 20:17:48 2026	deployed  	taskboard-1.0.0	1.0.0      	Upgrade complete
+
+$ helm get values taskboard -n taskboard
+USER-SUPPLIED VALUES:
+backend:
+  image: taskboard-backend
+  tag: local
+frontend:
+  image: taskboard-frontend
+  tag: local
+monitoring:
+  serviceMonitor:
+    enabled: false
+

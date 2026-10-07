@@ -1,0 +1,39 @@
+$ kubectl apply -f troubleshooting/broken-image.yaml
+deployment.apps/taskboard-broken-image created
+
+$ kubectl -n taskboard get pods -l app=broken-image
+NAME                                      READY   STATUS             RESTARTS   AGE
+taskboard-broken-image-6669966b5b-7cvmw   0/1     ImagePullBackOff   0          15s
+
+$ kubectl -n taskboard describe pod taskboard-broken-image-6669966b5b-7cvmw | sed -n '/Containers:/,/Ready:/p'
+Containers:
+  backend:
+    Container ID:   
+    Image:          ghcr.io/example/taskboard-backend:does-not-exist
+    Image ID:       
+    Port:           <none>
+    Host Port:      <none>
+    State:          Waiting
+      Reason:       ImagePullBackOff
+    Ready:          False
+
+$ kubectl -n taskboard describe pod taskboard-broken-image-6669966b5b-7cvmw | sed -n '/Events:/,$p'
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  15s               default-scheduler  Successfully assigned taskboard/taskboard-broken-image-6669966b5b-7cvmw to minikube
+  Normal   BackOff    14s               kubelet            spec.containers{backend}: Back-off pulling image "ghcr.io/example/taskboard-backend:does-not-exist"
+  Warning  Failed     14s               kubelet            spec.containers{backend}: Error: ImagePullBackOff
+  Normal   Pulling    2s (x2 over 15s)  kubelet            spec.containers{backend}: Pulling image "ghcr.io/example/taskboard-backend:does-not-exist"
+  Warning  Failed     1s (x2 over 14s)  kubelet            spec.containers{backend}: Failed to pull image "ghcr.io/example/taskboard-backend:does-not-exist": failed to pull and unpack image "ghcr.io/example/taskboard-backend:does-not-exist": failed to resolve reference "ghcr.io/example/taskboard-backend:does-not-exist": failed to authorize: failed to fetch anonymous token: unexpected status from GET request to https://ghcr.io/token?scope=repository%3Aexample%2Ftaskboard-backend%3Apull&service=ghcr.io: 403 Forbidden
+  Warning  Failed     1s (x2 over 14s)  kubelet            spec.containers{backend}: Error: ErrImagePull
+
+$ kubectl -n taskboard get events --sort-by=.lastTimestamp --field-selector involvedObject.name=taskboard-broken-image-6669966b5b-7cvmw
+LAST SEEN   TYPE      REASON      OBJECT                                        MESSAGE
+15s         Normal    Scheduled   pod/taskboard-broken-image-6669966b5b-7cvmw   Successfully assigned taskboard/taskboard-broken-image-6669966b5b-7cvmw to minikube
+14s         Normal    BackOff     pod/taskboard-broken-image-6669966b5b-7cvmw   Back-off pulling image "ghcr.io/example/taskboard-backend:does-not-exist"
+14s         Warning   Failed      pod/taskboard-broken-image-6669966b5b-7cvmw   Error: ImagePullBackOff
+2s          Normal    Pulling     pod/taskboard-broken-image-6669966b5b-7cvmw   Pulling image "ghcr.io/example/taskboard-backend:does-not-exist"
+1s          Warning   Failed      pod/taskboard-broken-image-6669966b5b-7cvmw   Failed to pull image "ghcr.io/example/taskboard-backend:does-not-exist": failed to pull and unpack image "ghcr.io/example/taskboard-backend:does-not-exist": failed to resolve reference "ghcr.io/example/taskboard-backend:does-not-exist": failed to authorize: failed to fetch anonymous token: unexpected status from GET request to https://ghcr.io/token?scope=repository%3Aexample%2Ftaskboard-backend%3Apull&service=ghcr.io: 403 Forbidden
+1s          Warning   Failed      pod/taskboard-broken-image-6669966b5b-7cvmw   Error: ErrImagePull
+

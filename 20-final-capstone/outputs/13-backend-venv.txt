@@ -1,0 +1,26 @@
+$ python3.12 --version 2>/dev/null || ~/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12 --version
+Python 3.12.13
+
+$ ~/.local/share/uv/python/cpython-3.12-macos-aarch64-none/bin/python3.12 -m venv .venv && source .venv/bin/activate && python --version
+Python 3.12.13
+
+$ source .venv/bin/activate && pip install -q -r requirements.txt && pip list 2>/dev/null | grep -iE "^(fastapi|uvicorn|sqlalchemy|psycopg|alembic|pytest|httpx|pydantic) "
+
+[notice] A new release of pip is available: 25.0.1 -> 26.2.1
+[notice] To update, run: pip install --upgrade pip
+alembic                           1.14.0
+fastapi                           0.115.6
+httpx                             0.28.1
+psycopg                           3.2.3
+pydantic                          2.13.5
+pytest                            8.3.4
+SQLAlchemy                        2.0.36
+uvicorn                           0.34.0
+
+$ source .venv/bin/activate && export DATABASE_URL='postgresql+psycopg://taskboard:taskboard@localhost:5432/taskboard' && alembic upgrade head && alembic current
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+0001_create_tasks (head)
+

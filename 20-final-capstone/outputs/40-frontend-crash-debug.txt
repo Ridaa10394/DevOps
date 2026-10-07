@@ -1,0 +1,32 @@
+$ kubectl -n taskboard logs pod/taskboard-frontend-bbb7b895f-m7795 --previous | tail -4
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+/docker-entrypoint.sh: Configuration complete; ready for start up
+2026/10/07 14:47:18 [emerg] 1#1: host not found in upstream "backend" in /etc/nginx/conf.d/default.conf:13
+nginx: [emerg] host not found in upstream "backend" in /etc/nginx/conf.d/default.conf:13
+
+$ kubectl -n taskboard describe pod/taskboard-frontend-bbb7b895f-m7795 | sed -n '/State:/,/Restart Count/p'
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Wed, 07 Oct 2026 20:17:18 +0530
+      Finished:     Wed, 07 Oct 2026 20:17:18 +0530
+    Ready:          False
+    Restart Count:  4
+
+$ kubectl -n taskboard get svc
+NAME                          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+taskboard-frontend            ClusterIP   10.102.59.252   <none>        80/TCP     85s
+taskboard-postgres            ClusterIP   10.109.124.92   <none>        5432/TCP   85s
+taskboard-taskboard-backend   ClusterIP   10.109.16.158   <none>        8000/TCP   85s
+
+$ grep -n "proxy_pass" frontend/nginx.conf
+13:    proxy_pass http://backend:8000;
+21:    proxy_pass http://backend:8000/health;
+
+$ grep -n -A6 'backend: {service' helm/taskboard/templates/ingress.yaml | head -3
+11:      - {path: /api, pathType: Prefix, backend: {service: {name: taskboard-backend, port: {number: 8080}}}}
+12:      - {path: /, pathType: Prefix, backend: {service: {name: taskboard-frontend, port: {number: 80}}}}
+13-{{- end }}
+

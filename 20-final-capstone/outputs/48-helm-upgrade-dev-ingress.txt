@@ -1,0 +1,27 @@
+$ cat helm/taskboard/values-dev.yaml
+replicaCount: 1
+ingress:
+  enabled: true
+  host: taskboard.local
+hpa:
+  enabled: false
+
+$ helm upgrade --install taskboard ./helm/taskboard -n taskboard -f helm/taskboard/values-dev.yaml --set backend.image=taskboard-backend --set backend.tag=local --set frontend.image=taskboard-frontend --set frontend.tag=local --set monitoring.serviceMonitor.enabled=false
+Release "taskboard" has been upgraded. Happy Helming!
+NAME: taskboard
+LAST DEPLOYED: Wed Oct  7 20:19:45 2026
+NAMESPACE: taskboard
+STATUS: deployed
+REVISION: 3
+DESCRIPTION: Upgrade complete
+TEST SUITE: None
+
+$ kubectl -n taskboard get deploy,hpa,ingress
+NAME                                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/taskboard-frontend            1/1     1            1           4m17s
+deployment.apps/taskboard-postgres            1/1     1            1           4m17s
+deployment.apps/taskboard-taskboard-backend   1/1     1            1           4m17s
+
+NAME                                  CLASS   HOSTS             ADDRESS   PORTS   AGE
+ingress.networking.k8s.io/taskboard   nginx   taskboard.local             80      30s
+

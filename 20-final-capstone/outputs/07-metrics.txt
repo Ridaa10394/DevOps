@@ -1,0 +1,56 @@
+$ curl -s http://localhost:18000/metrics | head -12
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 384.0
+python_gc_objects_collected_total{generation="1"} 46.0
+python_gc_objects_collected_total{generation="2"} 0.0
+# HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+
+$ curl -s http://localhost:18000/metrics | grep -E "^http_requests_total"
+http_requests_total{handler="/",method="GET",status="2xx"} 1.0
+http_requests_total{handler="/health",method="GET",status="2xx"} 1.0
+http_requests_total{handler="/ready",method="GET",status="2xx"} 1.0
+http_requests_total{handler="/docs",method="GET",status="2xx"} 1.0
+http_requests_total{handler="/openapi.json",method="GET",status="2xx"} 1.0
+http_requests_total{handler="/metrics",method="GET",status="2xx"} 2.0
+http_requests_total{handler="/api/tasks",method="GET",status="2xx"} 2.0
+http_requests_total{handler="/api/tasks",method="POST",status="2xx"} 3.0
+http_requests_total{handler="/api/tasks/{task_id}",method="GET",status="2xx"} 1.0
+http_requests_total{handler="/api/tasks/{task_id}",method="PUT",status="2xx"} 2.0
+http_requests_total{handler="/api/tasks/{task_id}",method="DELETE",status="2xx"} 1.0
+http_requests_total{handler="/api/tasks/{task_id}",method="GET",status="4xx"} 1.0
+http_requests_total{handler="/api/tasks/stats",method="GET",status="2xx"} 1.0
+http_requests_total{handler="/api/tasks",method="POST",status="4xx"} 1.0
+
+$ curl -s http://localhost:18000/metrics | grep -E "^http_request_duration_seconds_(count|sum)"
+http_request_duration_seconds_count{handler="/",method="GET"} 1.0
+http_request_duration_seconds_sum{handler="/",method="GET"} 0.018786749998980667
+http_request_duration_seconds_count{handler="/health",method="GET"} 1.0
+http_request_duration_seconds_sum{handler="/health",method="GET"} 0.0004068750004080357
+http_request_duration_seconds_count{handler="/ready",method="GET"} 1.0
+http_request_duration_seconds_sum{handler="/ready",method="GET"} 0.010866874999919673
+http_request_duration_seconds_count{handler="/docs",method="GET"} 1.0
+http_request_duration_seconds_sum{handler="/docs",method="GET"} 0.0002569999996921979
+http_request_duration_seconds_count{handler="/openapi.json",method="GET"} 1.0
+http_request_duration_seconds_sum{handler="/openapi.json",method="GET"} 0.006175708998853224
+http_request_duration_seconds_count{handler="/metrics",method="GET"} 3.0
+http_request_duration_seconds_sum{handler="/metrics",method="GET"} 0.003764249999221647
+http_request_duration_seconds_count{handler="/api/tasks",method="GET"} 2.0
+http_request_duration_seconds_sum{handler="/api/tasks",method="GET"} 0.005246250000709551
+http_request_duration_seconds_count{handler="/api/tasks",method="POST"} 4.0
+http_request_duration_seconds_sum{handler="/api/tasks",method="POST"} 0.01615137500084529
+http_request_duration_seconds_count{handler="/api/tasks/{task_id}",method="GET"} 2.0
+http_request_duration_seconds_sum{handler="/api/tasks/{task_id}",method="GET"} 0.005123833001562161
+http_request_duration_seconds_count{handler="/api/tasks/{task_id}",method="PUT"} 2.0
+http_request_duration_seconds_sum{handler="/api/tasks/{task_id}",method="PUT"} 0.0076420429977588356
+http_request_duration_seconds_count{handler="/api/tasks/{task_id}",method="DELETE"} 1.0
+http_request_duration_seconds_sum{handler="/api/tasks/{task_id}",method="DELETE"} 0.0028422499999578577
+http_request_duration_seconds_count{handler="/api/tasks/stats",method="GET"} 1.0
+http_request_duration_seconds_sum{handler="/api/tasks/stats",method="GET"} 0.0040897500002756715
+

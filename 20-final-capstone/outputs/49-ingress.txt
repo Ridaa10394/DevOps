@@ -1,0 +1,27 @@
+$ kubectl get ingressclass
+NAME              CONTROLLER             PARAMETERS   AGE
+nginx (default)   k8s.io/ingress-nginx   <none>       4h2m
+
+$ kubectl -n ingress-nginx get pods,svc
+NAME                                           READY   STATUS      RESTARTS        AGE
+pod/ingress-nginx-admission-create-2dc8d       0/1     Completed   0               4h2m
+pod/ingress-nginx-admission-patch-rnkf9        0/1     Completed   2 (3h58m ago)   4h2m
+pod/ingress-nginx-controller-d7cd8c989-svgrl   1/1     Running     0               4h2m
+
+NAME                                         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+service/ingress-nginx-controller             NodePort    10.105.75.128   <none>        80:31818/TCP,443:30332/TCP   4h2m
+service/ingress-nginx-controller-admission   ClusterIP   10.109.10.22    <none>        443/TCP                      4h2m
+
+$ kubectl -n taskboard get ingress taskboard -o wide
+NAME        CLASS   HOSTS             ADDRESS   PORTS   AGE
+taskboard   nginx   taskboard.local             80      30s
+
+$ kubectl -n taskboard describe ingress taskboard | sed -n "/Rules:/,/Annotations/p"
+Rules:
+  Host             Path  Backends
+  ----             ----  --------
+  taskboard.local  
+                   /api   backend:8000 (10.244.0.167:8000)
+                   /      taskboard-frontend:80 (10.244.0.173:80)
+Annotations:       meta.helm.sh/release-name: taskboard
+

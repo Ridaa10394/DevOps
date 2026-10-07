@@ -1,0 +1,15 @@
+$ docker compose -f docker-compose.yml -f docker-compose.alt-ports.yml ps
+NAME                           IMAGE                        COMMAND                  SERVICE    CREATED          STATUS          PORTS
+20-final-capstone-backend-1    20-final-capstone-backend    "sh -c 'alembic upgr…"   backend    23 seconds ago   Up 22 seconds   0.0.0.0:18000->8000/tcp, [::]:18000->8000/tcp
+20-final-capstone-frontend-1   20-final-capstone-frontend   "/docker-entrypoint.…"   frontend   23 seconds ago   Up 22 seconds   0.0.0.0:13000->80/tcp, [::]:13000->80/tcp
+20-final-capstone-postgres-1   postgres:16-alpine           "docker-entrypoint.s…"   postgres   23 seconds ago   Up 22 seconds   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+
+$ docker compose logs backend
+backend-1  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+backend-1  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+backend-1  | INFO  [alembic.runtime.migration] Running upgrade  -> 0001_create_tasks
+backend-1  | INFO:     Started server process [8]
+backend-1  | INFO:     Waiting for application startup.
+backend-1  | INFO:     Application startup complete.
+backend-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+

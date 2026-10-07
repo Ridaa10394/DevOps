@@ -1,0 +1,11 @@
+$ helm lint ./helm/taskboard
+==> Linting ./helm/taskboard
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+
+$ helm upgrade --install taskboard ./helm/taskboard --namespace taskboard --create-namespace --set backend.image=taskboard-backend --set backend.tag=local --set frontend.image=taskboard-frontend --set frontend.tag=local
+Release "taskboard" does not exist. Installing it now.
+Error: unable to build kubernetes objects from release manifest: resource mapping not found for name: "taskboard-taskboard-backend" namespace: "" from "": no matches for kind "ServiceMonitor" in version "monitoring.coreos.com/v1"
+ensure CRDs are installed first
+

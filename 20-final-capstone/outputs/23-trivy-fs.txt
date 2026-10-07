@@ -1,0 +1,306 @@
+$ trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --skip-dirs backend/.venv --no-progress .
+2026-10-07T20:09:53+05:30	INFO	[vuln] Vulnerability scanning is enabled
+2026-10-07T20:09:53+05:30	INFO	[misconfig] Misconfiguration scanning is enabled
+2026-10-07T20:09:53+05:30	INFO	[checks-client] Using existing checks from cache	path="/Users/ridaamahroozmirza/Library/Caches/trivy/policy/content"
+2026-10-07T20:09:54+05:30	INFO	[secret] Secret scanning is enabled
+2026-10-07T20:09:54+05:30	INFO	[secret] If your scanning is slow, please try '--scanners vuln,misconfig' to disable secret scanning
+2026-10-07T20:09:54+05:30	INFO	[secret] Please see https://trivy.dev/docs/v0.75/guide/scanner/secret#recommendation for faster secret detection
+2026-10-07T20:09:54+05:30	ERROR	[terraform parser] Error parsing file	module="root" file_path="terraform/main.tf" cause="module \"vpc\" { source = \"terraform-aws-modules/vpc/aws\" version = \"5.8.1\" name = \"taskboard-vpc\" cidr = \"10.20.0.0/16\" azs = [\"ap-south-1a\",\"ap-south-1b\"] private_subnets = [\"10.20.1.0/24\",\"10.20.2.0/24\"] public_subnets = [\"10.20.101.0/24\",\"10.20.102.0/24\"] enable_nat_gateway = true single_nat_gateway = true }" err="terraform/main.tf:1,57-64: Invalid single-argument block definition; A single-line block definition must end with a closing brace immediately after its single argument definition."
+2026-10-07T20:09:54+05:30	ERROR	[terraform parser] Error parsing file	module="root" file_path="terraform/versions.tf" cause="terraform { required_version = \">= 1.7.0\" required_providers { aws = { source = \"hashicorp/aws\" version = \"~> 5.0\" } } }" err="terraform/versions.tf:1,43-61: Invalid single-argument block definition; A single-line block definition must end with a closing brace immediately after its single argument definition."
+2026-10-07T20:09:54+05:30	INFO	[terraform scanner] Scanning root module	file_path="terraform"
+2026-10-07T20:09:54+05:30	ERROR	[terraform parser] Error parsing file	module="root" file_path="terraform/main.tf" cause="module \"vpc\" { source = \"terraform-aws-modules/vpc/aws\" version = \"5.8.1\" name = \"taskboard-vpc\" cidr = \"10.20.0.0/16\" azs = [\"ap-south-1a\",\"ap-south-1b\"] private_subnets = [\"10.20.1.0/24\",\"10.20.2.0/24\"] public_subnets = [\"10.20.101.0/24\",\"10.20.102.0/24\"] enable_nat_gateway = true single_nat_gateway = true }" err="terraform/main.tf:1,57-64: Invalid single-argument block definition; A single-line block definition must end with a closing brace immediately after its single argument definition."
+2026-10-07T20:09:54+05:30	ERROR	[terraform parser] Error parsing file	module="root" file_path="terraform/versions.tf" cause="terraform { required_version = \">= 1.7.0\" required_providers { aws = { source = \"hashicorp/aws\" version = \"~> 5.0\" } } }" err="terraform/versions.tf:1,43-61: Invalid single-argument block definition; A single-line block definition must end with a closing brace immediately after its single argument definition."
+2026-10-07T20:09:54+05:30	INFO	Number of language-specific files	num=1
+2026-10-07T20:09:54+05:30	INFO	[pip] Detecting vulnerabilities...
+2026-10-07T20:09:54+05:30	INFO	Detected config files	num=13
+
+Report Summary
+
+┌───────────────────────────────────────────────────┬────────────┬─────────────────┬─────────┬───────────────────┐
+│                      Target                       │    Type    │ Vulnerabilities │ Secrets │ Misconfigurations │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ backend/requirements.txt                          │    pip     │        0        │    -    │         -         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ backend/Dockerfile                                │ dockerfile │        -        │    -    │         0         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ frontend/Dockerfile                               │ dockerfile │        -        │    -    │         1         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ helm/taskboard/templates/backend-deployment.yaml  │    helm    │        -        │    -    │         3         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ helm/taskboard/templates/backend-service.yaml     │    helm    │        -        │    -    │         0         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ helm/taskboard/templates/frontend-deployment.yaml │    helm    │        -        │    -    │         3         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ helm/taskboard/templates/frontend-service.yaml    │ kubernetes │        -        │    -    │         0         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ helm/taskboard/templates/hpa.yaml                 │    helm    │        -        │    -    │         0         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ helm/taskboard/templates/postgres.yaml            │    helm    │        -        │    -    │         3         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ helm/taskboard/templates/servicemonitor.yaml      │    helm    │        -        │    -    │         0         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ k8s/namespace.yaml                                │ kubernetes │        -        │    -    │         0         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ terraform                                         │ terraform  │        -        │    -    │         0         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ troubleshooting/broken-image.yaml                 │ kubernetes │        -        │    -    │         3         │
+├───────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ troubleshooting/broken-service.yaml               │ kubernetes │        -        │    -    │         0         │
+└───────────────────────────────────────────────────┴────────────┴─────────────────┴─────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+frontend/Dockerfile (dockerfile)
+================================
+Tests: 20 (SUCCESSES: 19, FAILURES: 1)
+Failures: 1 (HIGH: 1, CRITICAL: 0)
+
+DS-0002 (HIGH): Specify at least 1 USER command in Dockerfile with non-root user as argument
+════════════════════════════════════════
+Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.
+
+See https://avd.aquasec.com/misconfig/ds-0002
+────────────────────────────────────────
+
+
+
+helm/taskboard/templates/backend-deployment.yaml (helm)
+=======================================================
+Tests: 23 (SUCCESSES: 20, FAILURES: 3)
+Failures: 3 (HIGH: 3, CRITICAL: 0)
+
+KSV-0014 (HIGH): Container 'backend' of Deployment 'taskboard-taskboard-backend' should set 'securityContext.readOnlyRootFilesystem' to true
+════════════════════════════════════════
+An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+
+See https://avd.aquasec.com/misconfig/ksv-0014
+────────────────────────────────────────
+ helm/taskboard/templates/backend-deployment.yaml:15-35
+────────────────────────────────────────
+  15 ┌         - name: backend
+  16 │           image: "ghcr.io/YOUR_ORG/taskboard-backend:latest"
+  17 │           ports: [{containerPort: 8000}]
+  18 │           env:
+  19 │             - name: DATABASE_URL
+  20 │               value: "postgresql+psycopg://taskboard:taskboard@taskboard-postgres:5432/taskboard"
+  21 │           readinessProbe:
+  22 │             httpGet: {path: /ready, port: 8000}
+  23 └             initialDelaySeconds: 10
+  ..   
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): container taskboard-taskboard-backend in default namespace is using the default security context
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ helm/taskboard/templates/backend-deployment.yaml:15-35
+────────────────────────────────────────
+  15 ┌         - name: backend
+  16 │           image: "ghcr.io/YOUR_ORG/taskboard-backend:latest"
+  17 │           ports: [{containerPort: 8000}]
+  18 │           env:
+  19 │             - name: DATABASE_URL
+  20 │               value: "postgresql+psycopg://taskboard:taskboard@taskboard-postgres:5432/taskboard"
+  21 │           readinessProbe:
+  22 │             httpGet: {path: /ready, port: 8000}
+  23 └             initialDelaySeconds: 10
+  ..   
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): deployment taskboard-taskboard-backend in default namespace is using the default security context, which allows root privileges
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ helm/taskboard/templates/backend-deployment.yaml:13-35
+────────────────────────────────────────
+  13 ┌     spec:
+  14 │       containers:
+  15 │         - name: backend
+  16 │           image: "ghcr.io/YOUR_ORG/taskboard-backend:latest"
+  17 │           ports: [{containerPort: 8000}]
+  18 │           env:
+  19 │             - name: DATABASE_URL
+  20 │               value: "postgresql+psycopg://taskboard:taskboard@taskboard-postgres:5432/taskboard"
+  21 └           readinessProbe:
+  ..   
+────────────────────────────────────────
+
+
+
+helm/taskboard/templates/frontend-deployment.yaml (helm)
+========================================================
+Tests: 23 (SUCCESSES: 20, FAILURES: 3)
+Failures: 3 (HIGH: 3, CRITICAL: 0)
+
+KSV-0014 (HIGH): Container 'frontend' of Deployment 'taskboard-frontend' should set 'securityContext.readOnlyRootFilesystem' to true
+════════════════════════════════════════
+An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+
+See https://avd.aquasec.com/misconfig/ksv-0014
+────────────────────────────────────────
+ helm/taskboard/templates/frontend-deployment.yaml:12-17
+────────────────────────────────────────
+  12 ┌       - name: frontend
+  13 │         image: "ghcr.io/YOUR_ORG/taskboard-frontend:latest"
+  14 │         ports: [{containerPort: 80}]
+  15 │         readinessProbe: {httpGet: {path: /, port: 80}, initialDelaySeconds: 5}
+  16 │         livenessProbe: {httpGet: {path: /, port: 80}, initialDelaySeconds: 10}
+  17 └         resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 200m, memory: 128Mi}}
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): container taskboard-frontend in default namespace is using the default security context
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ helm/taskboard/templates/frontend-deployment.yaml:12-17
+────────────────────────────────────────
+  12 ┌       - name: frontend
+  13 │         image: "ghcr.io/YOUR_ORG/taskboard-frontend:latest"
+  14 │         ports: [{containerPort: 80}]
+  15 │         readinessProbe: {httpGet: {path: /, port: 80}, initialDelaySeconds: 5}
+  16 │         livenessProbe: {httpGet: {path: /, port: 80}, initialDelaySeconds: 10}
+  17 └         resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 200m, memory: 128Mi}}
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): deployment taskboard-frontend in default namespace is using the default security context, which allows root privileges
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ helm/taskboard/templates/frontend-deployment.yaml:10-17
+────────────────────────────────────────
+  10 ┌     spec:
+  11 │       containers:
+  12 │       - name: frontend
+  13 │         image: "ghcr.io/YOUR_ORG/taskboard-frontend:latest"
+  14 │         ports: [{containerPort: 80}]
+  15 │         readinessProbe: {httpGet: {path: /, port: 80}, initialDelaySeconds: 5}
+  16 │         livenessProbe: {httpGet: {path: /, port: 80}, initialDelaySeconds: 10}
+  17 └         resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 200m, memory: 128Mi}}
+────────────────────────────────────────
+
+
+
+helm/taskboard/templates/postgres.yaml (helm)
+=============================================
+Tests: 24 (SUCCESSES: 21, FAILURES: 3)
+Failures: 3 (HIGH: 3, CRITICAL: 0)
+
+KSV-0014 (HIGH): Container 'postgres' of Deployment 'taskboard-postgres' should set 'securityContext.readOnlyRootFilesystem' to true
+════════════════════════════════════════
+An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+
+See https://avd.aquasec.com/misconfig/ksv-0014
+────────────────────────────────────────
+ helm/taskboard/templates/postgres.yaml:12-20
+────────────────────────────────────────
+  12 ┌       - name: postgres
+  13 │         image: postgres:16-alpine
+  14 │         ports: [{containerPort: 5432}]
+  15 │         env:
+  16 │         - {name: POSTGRES_DB, value: "taskboard"}
+  17 │         - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: taskboard-postgres, key: username}}}
+  18 │         - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: taskboard-postgres, key: password}}}
+  19 │         readinessProbe: {exec: {command: ["sh","-c","pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]}, initialDelaySeconds: 5, periodSeconds: 10}
+  20 └         volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): container taskboard-postgres in default namespace is using the default security context
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ helm/taskboard/templates/postgres.yaml:12-20
+────────────────────────────────────────
+  12 ┌       - name: postgres
+  13 │         image: postgres:16-alpine
+  14 │         ports: [{containerPort: 5432}]
+  15 │         env:
+  16 │         - {name: POSTGRES_DB, value: "taskboard"}
+  17 │         - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: taskboard-postgres, key: username}}}
+  18 │         - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: taskboard-postgres, key: password}}}
+  19 │         readinessProbe: {exec: {command: ["sh","-c","pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]}, initialDelaySeconds: 5, periodSeconds: 10}
+  20 └         volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): deployment taskboard-postgres in default namespace is using the default security context, which allows root privileges
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ helm/taskboard/templates/postgres.yaml:10-21
+────────────────────────────────────────
+  10 ┌     spec:
+  11 │       containers:
+  12 │       - name: postgres
+  13 │         image: postgres:16-alpine
+  14 │         ports: [{containerPort: 5432}]
+  15 │         env:
+  16 │         - {name: POSTGRES_DB, value: "taskboard"}
+  17 │         - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: taskboard-postgres, key: username}}}
+  18 └         - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: taskboard-postgres, key: password}}}
+  ..   
+────────────────────────────────────────
+
+
+
+troubleshooting/broken-image.yaml (kubernetes)
+==============================================
+Tests: 24 (SUCCESSES: 21, FAILURES: 3)
+Failures: 3 (HIGH: 3, CRITICAL: 0)
+
+KSV-0014 (HIGH): Container 'backend' of Deployment 'taskboard-broken-image' should set 'securityContext.readOnlyRootFilesystem' to true
+════════════════════════════════════════
+An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+
+See https://avd.aquasec.com/misconfig/ksv-0014
+────────────────────────────────────────
+ troubleshooting/broken-image.yaml:10
+────────────────────────────────────────
+  10 [       containers: [{name: backend, image: ghcr.io/example/taskboard-backend:does-not-exist}]
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): container taskboard-broken-image in taskboard namespace is using the default security context
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ troubleshooting/broken-image.yaml:10
+────────────────────────────────────────
+  10 [       containers: [{name: backend, image: ghcr.io/example/taskboard-backend:does-not-exist}]
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): deployment taskboard-broken-image in taskboard namespace is using the default security context, which allows root privileges
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ troubleshooting/broken-image.yaml:9-10
+────────────────────────────────────────
+   9 ┌     spec:
+  10 └       containers: [{name: backend, image: ghcr.io/example/taskboard-backend:does-not-exist}]
+────────────────────────────────────────
+
+
+

@@ -1,0 +1,6 @@
+$ kubectl -n taskboard delete deployment load-generator
+deployment.apps "load-generator" deleted from taskboard namespace
+
+$ kubectl -n taskboard delete configmap load-test-script
+configmap "load-test-script" deleted from taskboard namespace
+

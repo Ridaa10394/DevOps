@@ -1,0 +1,58 @@
+$ terraform init -input=false -no-color
+Initializing the backend...
+
+Initializing modules...
+Downloading registry.terraform.io/terraform-aws-modules/eks/aws 21.26.0 for eks...
+- eks in .terraform/modules/eks
+Downloading registry.terraform.io/terraform-aws-modules/vpc/aws 6.7.3 for vpc...
+- vpc in .terraform/modules/vpc
+- eks.fargate_profile in .terraform/modules/eks/modules/fargate-profile
+- eks.self_managed_node_group in .terraform/modules/eks/modules/self-managed-node-group
+- eks.eks_managed_node_group in .terraform/modules/eks/modules/eks-managed-node-group
+Downloading registry.terraform.io/terraform-aws-modules/kms/aws 4.0.0 for eks.kms...
+- eks.kms in .terraform/modules/eks.kms
+- eks.self_managed_node_group.user_data in .terraform/modules/eks/modules/_user_data
+- eks.eks_managed_node_group.user_data in .terraform/modules/eks/modules/_user_data
+
+
+Error: Terraform encountered problems during initialisation, including problems
+with the configuration, described below.
+
+The Terraform configuration must be valid before initialization so that
+Terraform can determine which modules and providers need to be installed.
+
+
+Error: Invalid single-argument block definition
+
+  on main.tf line 1, in module "vpc":
+   1: module "vpc" { source = "terraform-aws-modules/vpc/aws" version = "5.8.1" name = "taskboard-vpc" cidr = "10.20.0.0/16" azs = ["ap-south-1a","ap-south-1b"] private_subnets = ["10.20.1.0/24","10.20.2.0/24"] public_subnets = ["10.20.101.0/24","10.20.102.0/24"] enable_nat_gateway = true single_nat_gateway = true }
+
+A single-line block definition must end with a closing brace immediately
+after its single argument definition.
+
+Error: Invalid single-argument block definition
+
+  on versions.tf line 1, in terraform:
+   1: terraform { required_version = ">= 1.7.0" required_providers { aws = { source = "hashicorp/aws" version = "~> 5.0" } } }
+
+A single-line block definition must end with a closing brace immediately
+after its single argument definition.
+
+$ terraform validate -no-color
+
+Error: Invalid single-argument block definition
+
+  on main.tf line 1, in module "vpc":
+   1: module "vpc" { source = "terraform-aws-modules/vpc/aws" version = "5.8.1" name = "taskboard-vpc" cidr = "10.20.0.0/16" azs = ["ap-south-1a","ap-south-1b"] private_subnets = ["10.20.1.0/24","10.20.2.0/24"] public_subnets = ["10.20.101.0/24","10.20.102.0/24"] enable_nat_gateway = true single_nat_gateway = true }
+
+A single-line block definition must end with a closing brace immediately
+after its single argument definition.
+
+Error: Invalid single-argument block definition
+
+  on versions.tf line 1, in terraform:
+   1: terraform { required_version = ">= 1.7.0" required_providers { aws = { source = "hashicorp/aws" version = "~> 5.0" } } }
+
+A single-line block definition must end with a closing brace immediately
+after its single argument definition.
+

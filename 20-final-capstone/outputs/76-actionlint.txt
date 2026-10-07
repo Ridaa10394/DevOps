@@ -1,0 +1,27 @@
+$ actionlint -version | head -1
+1.7.12
+
+$ actionlint -no-color .github/workflows/s21-capstone.yml; echo "actionlint exit code: $?"
+actionlint exit code: 0
+
+$ actionlint -no-color 20-final-capstone/.github/workflows/ci-cd.yml; echo "actionlint (instructor original) exit code: $?"
+actionlint (instructor original) exit code: 0
+
+$ grep -nE "^  [a-z-]+:$|needs:|  if: " .github/workflows/s21-capstone.yml | grep -v "^2[0-9]:\|^3[0-9]:"
+46:  test:
+64:  build-scan-push:
+65:    needs: test
+102:        if: github.event_name != 'pull_request'
+111:  deploy:
+112:    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+113:    needs: build-scan-push
+120:        if: env.HAS_KUBECONFIG != 'true'
+124:        if: env.HAS_KUBECONFIG == 'true'
+126:        if: env.HAS_KUBECONFIG == 'true'
+128:        if: env.HAS_KUBECONFIG == 'true'
+134:        if: env.HAS_KUBECONFIG == 'true'
+145:  deploy-kind:
+146:    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+147:    needs: build-scan-push
+193:        if: failure()
+

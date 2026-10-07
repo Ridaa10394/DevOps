@@ -1,0 +1,25 @@
+$ kubectl -n taskboard get pvc,secret
+NAME                                            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/taskboard-postgres-data   Bound    pvc-6b18d5ad-9aa3-4d68-a8e7-7b33d837ac08   5Gi        RWO            standard       <unset>                 3m38s
+
+NAME                                     TYPE                 DATA   AGE
+secret/sh.helm.release.v1.taskboard.v1   helm.sh/release.v1   1      3m38s
+secret/sh.helm.release.v1.taskboard.v2   helm.sh/release.v1   1      108s
+secret/taskboard-postgres                Opaque               2      3m38s
+
+$ kubectl -n taskboard exec deploy/taskboard-postgres -- psql -U taskboard -d taskboard -c "\dt"
+              List of relations
+ Schema |      Name       | Type  |   Owner   
+--------+-----------------+-------+-----------
+ public | alembic_version | table | taskboard
+ public | tasks           | table | taskboard
+(2 rows)
+
+
+$ kubectl -n taskboard exec deploy/taskboard-postgres -- psql -U taskboard -d taskboard -c "SELECT version_num FROM alembic_version;"
+    version_num    
+-------------------
+ 0001_create_tasks
+(1 row)
+
+

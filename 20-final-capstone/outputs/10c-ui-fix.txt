@@ -1,0 +1,12 @@
+$ grep -o "const create=async(e)=>{e.preventDefault();const form=e.currentTarget;const f=new FormData(form);" frontend/src/main.jsx; grep -o "form.reset();setShowForm(false);load()" frontend/src/main.jsx
+const create=async(e)=>{e.preventDefault();const form=e.currentTarget;const f=new FormData(form);
+form.reset();setShowForm(false);load()
+
+$ docker compose -f docker-compose.yml -f docker-compose.alt-ports.yml up -d --build frontend 2>&1 | tail -6
+ Container 20-final-capstone-backend-1 Running 
+ Container 20-final-capstone-postgres-1 Running 
+ Container 20-final-capstone-frontend-1 Recreate 
+ Container 20-final-capstone-frontend-1 Recreated 
+ Container 20-final-capstone-frontend-1 Starting 
+ Container 20-final-capstone-frontend-1 Started 
+

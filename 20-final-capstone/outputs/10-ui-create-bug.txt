@@ -1,0 +1,14 @@
+# Browser console after clicking "Create task" (copied from the Playwright console log)
+[exception] [Unhandled Rejection In Promise] Cannot read properties of null (reading 'reset')
+TypeError: Cannot read properties of null (reading 'reset')
+    at onSubmit (http://localhost:13000/assets/index-BhFpkPY_.js:9:56643)
+
+$ docker compose logs backend | grep "POST /api/tasks" | tail -1
+backend-1  | INFO:     172.19.0.4:52632 - "POST /api/tasks HTTP/1.1" 201 Created
+
+$ curl -s http://localhost:18000/api/tasks/stats; echo
+{"total":3,"todo":1,"inProgress":1,"done":1}
+
+$ grep -o "const create=async(e)=>{[^}]*}" frontend/src/main.jsx
+const create=async(e)=>{e.preventDefault();const f=new FormData(e.currentTarget);await fetch(`${API}
+

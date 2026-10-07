@@ -1,0 +1,29 @@
+$ kubectl get pods -n taskboard
+NAME                                           READY   STATUS    RESTARTS      AGE
+taskboard-frontend-6b55b56d9-7hhl9             1/1     Running   0             14m
+taskboard-frontend-6b55b56d9-wbmh9             1/1     Running   0             18m
+taskboard-postgres-755b4497b-vg9dw             1/1     Running   0             20m
+taskboard-taskboard-backend-7d8fb7697c-7rkz2   1/1     Running   0             14m
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   1/1     Running   3 (19m ago)   20m
+
+$ kubectl get svc -n taskboard
+NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+backend              ClusterIP   10.107.59.141   <none>        8000/TCP   18m
+taskboard-frontend   ClusterIP   10.102.59.252   <none>        80/TCP     20m
+taskboard-postgres   ClusterIP   10.109.124.92   <none>        5432/TCP   20m
+
+$ helm list -n taskboard
+NAME     	NAMESPACE	REVISION	UPDATED                             	STATUS  	CHART          	APP VERSION
+taskboard	taskboard	7       	2026-10-07 20:30:11.395217 +0530 IST	deployed	taskboard-1.0.0	1.0.0      
+
+$ kubectl get hpa -n taskboard
+NAME                REFERENCE                                TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 3%/60%   2         6         2          14m
+
+$ kubectl get ingress -n taskboard
+NAME        CLASS   HOSTS             ADDRESS        PORTS   AGE
+taskboard   nginx   taskboard.local   192.168.49.2   80      16m
+
+$ curl -s -H "Host: taskboard.local" http://localhost:18321/api/tasks/stats; echo
+{"total":3,"todo":3,"inProgress":0,"done":0}
+

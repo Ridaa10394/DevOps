@@ -1,0 +1,18 @@
+$ kubectl get hpa -n taskboard
+NAME                REFERENCE                                TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 3%/60%   2         6         2          14m
+
+$ kubectl -n taskboard describe hpa taskboard-backend | sed -n "/Events:/,\$p"
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  12m    horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  12m    horizontal-pod-autoscaler  New size: 6; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  5m37s  horizontal-pod-autoscaler  New size: 3; reason: All metrics below target
+  Normal  SuccessfulRescale  36s    horizontal-pod-autoscaler  New size: 2; reason: All metrics below target
+
+$ kubectl -n taskboard get pods -l app=taskboard-backend
+NAME                                           READY   STATUS    RESTARTS      AGE
+taskboard-taskboard-backend-7d8fb7697c-7rkz2   1/1     Running   0             14m
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   1/1     Running   3 (19m ago)   20m
+

@@ -1,0 +1,4 @@
+$ kubectl delete -f troubleshooting/broken-image.yaml -f troubleshooting/broken-service.yaml
+deployment.apps "taskboard-broken-image" deleted from taskboard namespace
+service "broken-service" deleted from taskboard namespace
+

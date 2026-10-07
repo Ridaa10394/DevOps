@@ -1,0 +1,22 @@
+$ echo '(terminal 1) uvicorn app.main:app --reload --port 18010   # 8000 was busy on my machine'; cat /private/tmp/claude-501/-Users-ridaamahroozmirza-Desktop-AI-Labs/57dde1d4-70ab-40d8-b829-6f468f44cb3b/scratchpad/uv18010.log
+(terminal 1) uvicorn app.main:app --reload --port 18010   # 8000 was busy on my machine
+INFO:     Will watch for changes in these directories: ['/Users/ridaamahroozmirza/Desktop/AI-Labs/DevOps/20-final-capstone/backend']
+INFO:     Uvicorn running on http://127.0.0.1:18010 (Press CTRL+C to quit)
+INFO:     Started reloader process [61143] using WatchFiles
+INFO:     Started server process [61148]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:53860 - "GET /health HTTP/1.1" 200 OK
+
+$ curl -s http://localhost:18010/health; echo
+{"status":"UP"}
+
+$ curl -s http://localhost:18010/api/tasks | python3 -c "import json,sys; [print(t[\"id\"], t[\"status\"].ljust(12), t[\"title\"]) for t in json.load(sys.stdin)]"
+5 TODO         Run Trivy on both images
+4 TODO         Configure production ingress
+2 DONE         Write Helm chart
+1 IN_PROGRESS  Set up CI pipeline
+
+$ curl -s -o /dev/null -w "GET /docs -> HTTP %{http_code}\n" http://localhost:18010/docs
+GET /docs -> HTTP 200
+

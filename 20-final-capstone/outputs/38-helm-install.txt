@@ -1,0 +1,10 @@
+$ helm upgrade --install taskboard ./helm/taskboard --namespace taskboard --create-namespace --set backend.image=taskboard-backend --set backend.tag=local --set frontend.image=taskboard-frontend --set frontend.tag=local --set monitoring.serviceMonitor.enabled=false
+Release "taskboard" does not exist. Installing it now.
+NAME: taskboard
+LAST DEPLOYED: Wed Oct  7 20:15:58 2026
+NAMESPACE: taskboard
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+

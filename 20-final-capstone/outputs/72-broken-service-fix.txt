@@ -1,0 +1,37 @@
+$ kubectl -n taskboard patch svc broken-service -p '{"spec":{"selector":{"app":"taskboard-backend"}}}'
+service/broken-service patched
+
+$ kubectl -n taskboard get endpointslices -l kubernetes.io/service-name=broken-service
+NAME                   ADDRESSTYPE   PORTS   ENDPOINTS                                AGE
+broken-service-x855f   IPv4          8080    10.244.0.177,10.244.0.167,10.244.0.182   14s
+
+$ kubectl -n taskboard run svc-test --restart=Never --image=curlimages/curl:8.11.1 -- sh -c "curl -s -m 5 http://broken-service:8080/health; echo \" curl exit: \$?\""
+pod/svc-test created
+
+$ kubectl -n taskboard logs svc-test; kubectl -n taskboard delete pod svc-test
+ curl exit: 7
+pod "svc-test" deleted from taskboard namespace
+
+$ kubectl -n taskboard get pod -l app=taskboard-backend -o jsonpath='{.items[0].spec.containers[0].ports}'; echo
+[{"containerPort":8000,"protocol":"TCP"}]
+
+$ kubectl -n taskboard patch svc broken-service --type=json -p '[{"op":"replace","path":"/spec/ports/0/targetPort","value":8000}]'
+service/broken-service patched
+
+$ kubectl -n taskboard get endpointslices -l kubernetes.io/service-name=broken-service
+NAME                   ADDRESSTYPE   PORTS   ENDPOINTS                                AGE
+broken-service-x855f   IPv4          8000    10.244.0.182,10.244.0.177,10.244.0.167   16s
+
+$ kubectl -n taskboard run svc-test --restart=Never --image=curlimages/curl:8.11.1 -- sh -c "curl -s -m 5 http://broken-service:8080/health; echo \" curl exit: \$?\""
+pod/svc-test created
+
+$ kubectl -n taskboard logs svc-test; kubectl -n taskboard delete pod svc-test
+{"status":"UP"} curl exit: 0
+pod "svc-test" deleted from taskboard namespace
+
+$ kubectl -n taskboard describe svc broken-service | grep -E "^(Selector|Port|TargetPort|Endpoints)"
+Selector:                 app=taskboard-backend
+Port:                     <unset>  8080/TCP
+TargetPort:               8000/TCP
+Endpoints:                10.244.0.182:8000,10.244.0.177:8000,10.244.0.167:8000
+

@@ -1,0 +1,31 @@
+$ curl -s -i http://localhost:13000/ | head -20
+HTTP/1.1 200 OK
+Server: nginx/1.27.5
+Date: Wed, 07 Oct 2026 14:35:52 GMT
+Content-Type: text/html
+Content-Length: 343
+Last-Modified: Wed, 07 Oct 2026 14:35:11 GMT
+Connection: keep-alive
+ETag: "6ac6589f-157"
+Accept-Ranges: bytes
+
+<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>TaskBoard</title>  <script type="module" crossorigin src="/assets/index-BhFpkPY_.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DkMuKOF6.css">
+</head><body><div id="root"></div></body></html>
+
+$ curl -s http://localhost:13000/api/tasks/stats; echo
+{"total":2,"todo":0,"inProgress":1,"done":1}
+
+$ curl -s http://localhost:13000/health; echo
+{"status":"UP"}
+
+$ docker compose logs frontend | tail -8
+frontend-1  | 2026/10/07 14:35:23 [notice] 1#1: start worker process 39
+frontend-1  | 2026/10/07 14:35:23 [notice] 1#1: start worker process 40
+frontend-1  | 2026/10/07 14:35:23 [notice] 1#1: start worker process 41
+frontend-1  | 2026/10/07 14:35:23 [notice] 1#1: start worker process 42
+frontend-1  | 2026/10/07 14:35:23 [notice] 1#1: start worker process 43
+frontend-1  | 192.168.65.1 - - [07/Oct/2026:14:35:52 +0000] "GET / HTTP/1.1" 200 343 "-" "curl/8.7.1" "-"
+frontend-1  | 192.168.65.1 - - [07/Oct/2026:14:35:52 +0000] "GET /api/tasks/stats HTTP/1.1" 200 44 "-" "curl/8.7.1" "-"
+frontend-1  | 192.168.65.1 - - [07/Oct/2026:14:35:52 +0000] "GET /health HTTP/1.1" 200 15 "-" "curl/8.7.1" "-"
+

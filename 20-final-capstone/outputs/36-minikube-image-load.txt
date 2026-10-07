@@ -1,0 +1,7 @@
+$ minikube image load taskboard-backend:local && minikube image load taskboard-frontend:local && echo loaded
+loaded
+
+$ minikube image ls | grep taskboard
+docker.io/library/taskboard-frontend:local
+docker.io/library/taskboard-backend:local
+

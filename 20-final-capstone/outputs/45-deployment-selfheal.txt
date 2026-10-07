@@ -1,0 +1,26 @@
+$ kubectl -n taskboard get deploy
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE
+taskboard-frontend            2/2     2            2           2m42s
+taskboard-postgres            1/1     1            1           2m42s
+taskboard-taskboard-backend   2/2     2            2           2m42s
+
+$ kubectl -n taskboard get pods -l app=taskboard-backend
+NAME                                           READY   STATUS    RESTARTS        AGE
+taskboard-taskboard-backend-7d8fb7697c-2jqw6   1/1     Running   2 (2m38s ago)   2m42s
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   1/1     Running   3 (2m25s ago)   2m42s
+
+$ kubectl -n taskboard delete pod taskboard-taskboard-backend-7d8fb7697c-2jqw6 --wait=false
+pod "taskboard-taskboard-backend-7d8fb7697c-2jqw6" deleted from taskboard namespace
+
+$ kubectl -n taskboard get pods -l app=taskboard-backend
+NAME                                           READY   STATUS        RESTARTS        AGE
+taskboard-taskboard-backend-7d8fb7697c-2jqw6   1/1     Terminating   2 (2m41s ago)   2m45s
+taskboard-taskboard-backend-7d8fb7697c-5lcth   0/1     Running       0               3s
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   1/1     Running       3 (2m28s ago)   2m45s
+
+$ kubectl -n taskboard get pods -l app=taskboard-backend
+NAME                                           READY   STATUS        RESTARTS        AGE
+taskboard-taskboard-backend-7d8fb7697c-2jqw6   1/1     Terminating   2 (3m6s ago)    3m10s
+taskboard-taskboard-backend-7d8fb7697c-5lcth   1/1     Running       0               28s
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   1/1     Running       3 (2m53s ago)   3m10s
+

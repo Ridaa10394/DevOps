@@ -1,0 +1,28 @@
+# from the instructor's .gitignore
+.idea/
+.vscode/
+node_modules/
+dist/
+target/
+*.log
+.env
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# added for my copy
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+test.db
+.terraform.lock.hcl
+*.tfplan
+.DS_Store

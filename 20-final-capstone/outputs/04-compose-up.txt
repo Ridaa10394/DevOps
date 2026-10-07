@@ -1,0 +1,138 @@
+$ docker compose -f docker-compose.yml -f docker-compose.alt-ports.yml up -d --build
+ Image 20-final-capstone-frontend Building 
+ Image 20-final-capstone-backend Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.16kB done
+#1 DONE 0.0s
+
+#2 [backend internal] load build definition from Dockerfile
+#2 transferring dockerfile: 416B done
+#2 DONE 0.0s
+
+#3 [frontend internal] load build definition from Dockerfile
+#3 transferring dockerfile: 276B done
+#3 DONE 0.0s
+
+#4 [frontend internal] load metadata for docker.io/library/node:22-alpine
+#4 DONE 0.0s
+
+#5 [backend internal] load metadata for docker.io/library/python:3.12-slim
+#5 DONE 0.0s
+
+#6 [backend internal] load .dockerignore
+#6 transferring context: 95B done
+#6 DONE 0.0s
+
+#7 [backend internal] load build context
+#7 transferring context: 480B done
+#7 DONE 0.0s
+
+#8 [backend 1/7] FROM docker.io/library/python:3.12-slim@sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f
+#8 resolve docker.io/library/python:3.12-slim@sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f 0.0s done
+#8 DONE 0.0s
+
+#9 [backend 6/7] COPY alembic ./alembic
+#9 CACHED
+
+#10 [backend 4/7] RUN pip install --no-cache-dir -r requirements.txt && useradd --create-home --uid 10001 appuser
+#10 CACHED
+
+#11 [backend 2/7] WORKDIR /app
+#11 CACHED
+
+#12 [backend 5/7] COPY alembic.ini ./
+#12 CACHED
+
+#13 [backend 3/7] COPY requirements.txt .
+#13 CACHED
+
+#14 [backend 7/7] COPY app ./app
+#14 CACHED
+
+#15 [backend] exporting to image
+#15 exporting layers done
+#15 exporting manifest sha256:12362f58dbe2c31feb0b4f966f3b659bfc2b10c528563f23a6b6fd539e95dc00 done
+#15 exporting config sha256:22816070bf1f0a1e1c9989be3b41bd1d29ee0f9956d7f04ed330bed60e26674b done
+#15 exporting attestation manifest sha256:2c5fb18b9584abde01f284d9cd29d497b1689b5d8ee5fcdfba4e45b1d47ed246 done
+#15 exporting manifest list sha256:04812e52134dc75990d16e12f8449869cb8a5242de252f4f0120676edf4256b3 done
+#15 naming to docker.io/library/20-final-capstone-backend:latest done
+#15 unpacking to docker.io/library/20-final-capstone-backend:latest done
+#15 DONE 0.1s
+
+#16 [frontend internal] load metadata for docker.io/library/nginx:1.27-alpine
+#16 ...
+
+#17 [backend] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#16 [frontend internal] load metadata for docker.io/library/nginx:1.27-alpine
+#16 DONE 0.4s
+
+#18 [frontend internal] load .dockerignore
+#18 transferring context: 63B done
+#18 DONE 0.0s
+
+#19 [frontend internal] load build context
+#19 transferring context: 279B done
+#19 DONE 0.0s
+
+#20 [frontend build 1/6] FROM docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
+#20 resolve docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 0.0s done
+#20 DONE 0.0s
+
+#21 [frontend stage-1 1/3] FROM docker.io/library/nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+#21 resolve docker.io/library/nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 0.0s done
+#21 DONE 0.0s
+
+#22 [frontend build 5/6] COPY . .
+#22 CACHED
+
+#23 [frontend build 3/6] COPY package*.json ./
+#23 CACHED
+
+#24 [frontend build 2/6] WORKDIR /app
+#24 CACHED
+
+#25 [frontend build 4/6] RUN npm install
+#25 CACHED
+
+#26 [frontend build 6/6] RUN npm run build
+#26 CACHED
+
+#27 [frontend stage-1 2/3] COPY --from=build /app/dist /usr/share/nginx/html
+#27 CACHED
+
+#28 [frontend stage-1 3/3] COPY nginx.conf /etc/nginx/conf.d/default.conf
+#28 CACHED
+
+#29 [frontend] exporting to image
+#29 exporting layers done
+#29 exporting manifest sha256:3c908d8e4f11d1ffaffdbc71220f7806d1e0797b82cf76445598b38178ab0a7d done
+#29 exporting config sha256:2ce3ac49ee507339014dbde431c166b5eb91fb9ea95f61a76cdaeef02365bc8f done
+#29 exporting attestation manifest sha256:f4d1d69bd15221fd8b199a2143bc0c7f9e23aef92686b8f23b793c82799a438c done
+#29 exporting manifest list sha256:bc995b825f33a0bce24a949f305e4be2c0f94f0b1ae6b85f8bf18e337e6f1a5a done
+#29 naming to docker.io/library/20-final-capstone-frontend:latest done
+#29 unpacking to docker.io/library/20-final-capstone-frontend:latest done
+#29 DONE 0.0s
+
+#30 [frontend] resolving provenance for metadata file
+#30 DONE 0.0s
+ Image 20-final-capstone-backend Built 
+ Image 20-final-capstone-frontend Built 
+ Network 20-final-capstone_default Creating 
+ Network 20-final-capstone_default Creating 
+ Network 20-final-capstone_default Created 
+ Network 20-final-capstone_default Created 
+ Container 20-final-capstone-postgres-1 Creating 
+ Container 20-final-capstone-postgres-1 Created 
+ Container 20-final-capstone-backend-1 Creating 
+ Container 20-final-capstone-backend-1 Created 
+ Container 20-final-capstone-frontend-1 Creating 
+ Container 20-final-capstone-frontend-1 Created 
+ Container 20-final-capstone-postgres-1 Starting 
+ Container 20-final-capstone-postgres-1 Started 
+ Container 20-final-capstone-backend-1 Starting 
+ Container 20-final-capstone-backend-1 Started 
+ Container 20-final-capstone-frontend-1 Starting 
+ Container 20-final-capstone-frontend-1 Started 
+

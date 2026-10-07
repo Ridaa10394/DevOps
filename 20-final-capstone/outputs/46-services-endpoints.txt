@@ -1,0 +1,35 @@
+$ kubectl -n taskboard get svc
+NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+backend              ClusterIP   10.107.59.141   <none>        8000/TCP   80s
+taskboard-frontend   ClusterIP   10.102.59.252   <none>        80/TCP     3m10s
+taskboard-postgres   ClusterIP   10.109.124.92   <none>        5432/TCP   3m10s
+
+$ kubectl -n taskboard get endpointslices -o wide
+NAME                       ADDRESSTYPE   PORTS   ENDPOINTS                                AGE
+backend-9ffqn              IPv4          8000    10.244.0.167,10.244.0.170,10.244.0.174   80s
+taskboard-frontend-497wz   IPv4          80      10.244.0.172,10.244.0.173                3m10s
+taskboard-postgres-82b5p   IPv4          5432    10.244.0.169                             3m10s
+
+$ kubectl -n taskboard describe svc backend | grep -E "^(Name|Selector|Type|IP:|Port|TargetPort|Endpoints)"
+Name:                     backend
+Namespace:                taskboard
+Selector:                 app=taskboard-backend
+Type:                     ClusterIP
+IP:                       10.107.59.141
+Port:                     http  8000/TCP
+TargetPort:               8000/TCP
+Endpoints:                10.244.0.167:8000,10.244.0.174:8000
+
+$ kubectl -n taskboard run curl-test --restart=Never --image=curlimages/curl:8.11.1 -- sh -c "curl -s http://backend:8000/health; echo; curl -s http://backend.taskboard.svc.cluster.local:8000/api/tasks/stats; echo; curl -s -o /dev/null -w \"frontend: HTTP %{http_code}\n\" http://taskboard-frontend/; curl -s http://taskboard-frontend/api/tasks/stats; echo"
+pod/curl-test created
+
+$ kubectl -n taskboard wait --for=jsonpath="{.status.phase}"=Succeeded pod/curl-test --timeout=90s && kubectl -n taskboard logs curl-test
+pod/curl-test condition met
+{"status":"UP"}
+{"total":0,"todo":0,"inProgress":0,"done":0}
+frontend: HTTP 200
+{"total":0,"todo":0,"inProgress":0,"done":0}
+
+$ kubectl -n taskboard delete pod curl-test
+pod "curl-test" deleted from taskboard namespace
+

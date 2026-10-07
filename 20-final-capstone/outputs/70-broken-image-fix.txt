@@ -1,0 +1,42 @@
+$ kubectl -n taskboard set image deployment/taskboard-broken-image backend=taskboard-backend:local
+deployment.apps/taskboard-broken-image image updated
+
+$ kubectl -n taskboard rollout status deployment/taskboard-broken-image --timeout=40s
+Waiting for deployment "taskboard-broken-image" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "taskboard-broken-image" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "taskboard-broken-image" rollout to finish: 1 old replicas are pending termination...
+deployment "taskboard-broken-image" successfully rolled out
+
+$ kubectl -n taskboard get pods -l app=broken-image
+NAME                                      READY   STATUS        RESTARTS   AGE
+taskboard-broken-image-558975d64-fd7zs    1/1     Running       0          1s
+taskboard-broken-image-6669966b5b-7cvmw   0/1     Terminating   0          27s
+
+$ kubectl -n taskboard logs deploy/taskboard-broken-image --tail=3
+Found 2 pods, using pod/taskboard-broken-image-558975d64-fd7zs
+
+$ kubectl -n taskboard get pods -l app=broken-image
+NAME                                     READY   STATUS   RESTARTS     AGE
+taskboard-broken-image-558975d64-fd7zs   0/1     Error    1 (8s ago)   10s
+
+$ kubectl -n taskboard logs deploy/taskboard-broken-image --previous 2>&1 | tail -3
+unable to retrieve container logs for containerd://a160bb03a470de229443d01787b41b8a7a641b91f8e578775a3b9971fe13e960
+$ kubectl -n taskboard set env deployment/taskboard-broken-image DATABASE_URL=postgresql+psycopg://taskboard:taskboard@taskboard-postgres:5432/taskboard
+deployment.apps/taskboard-broken-image env updated
+
+$ kubectl -n taskboard rollout status deployment/taskboard-broken-image --timeout=60s
+Waiting for deployment "taskboard-broken-image" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "taskboard-broken-image" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "taskboard-broken-image" rollout to finish: 1 old replicas are pending termination...
+deployment "taskboard-broken-image" successfully rolled out
+
+$ kubectl -n taskboard get pods -l app=broken-image
+NAME                                      READY   STATUS    RESTARTS   AGE
+taskboard-broken-image-66c4789f88-95gpf   1/1     Running   0          19s
+
+$ kubectl -n taskboard logs deploy/taskboard-broken-image --tail=4
+INFO:     Started server process [8]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+

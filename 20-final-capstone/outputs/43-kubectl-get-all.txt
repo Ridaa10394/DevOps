@@ -1,0 +1,35 @@
+$ kubectl get all -n taskboard
+NAME                                               READY   STATUS    RESTARTS        AGE
+pod/taskboard-frontend-6b55b56d9-m5sdg             1/1     Running   0               42s
+pod/taskboard-frontend-6b55b56d9-wbmh9             1/1     Running   0               31s
+pod/taskboard-postgres-755b4497b-vg9dw             1/1     Running   0               2m32s
+pod/taskboard-taskboard-backend-7d8fb7697c-2jqw6   1/1     Running   2 (2m28s ago)   2m32s
+pod/taskboard-taskboard-backend-7d8fb7697c-xwzp8   1/1     Running   3 (2m15s ago)   2m32s
+
+NAME                         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/backend              ClusterIP   10.107.59.141   <none>        8000/TCP   42s
+service/taskboard-frontend   ClusterIP   10.102.59.252   <none>        80/TCP     2m32s
+service/taskboard-postgres   ClusterIP   10.109.124.92   <none>        5432/TCP   2m32s
+
+NAME                                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/taskboard-frontend            2/2     2            2           2m32s
+deployment.apps/taskboard-postgres            1/1     1            1           2m32s
+deployment.apps/taskboard-taskboard-backend   2/2     2            2           2m32s
+
+NAME                                                     DESIRED   CURRENT   READY   AGE
+replicaset.apps/taskboard-frontend-6b55b56d9             2         2         2       42s
+replicaset.apps/taskboard-frontend-bbb7b895f             0         0         0       2m32s
+replicaset.apps/taskboard-postgres-755b4497b             1         1         1       2m32s
+replicaset.apps/taskboard-taskboard-backend-7d8fb7697c   2         2         2       2m32s
+
+NAME                                                    REFERENCE                                TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 2%/60%   2         6         2          2m32s
+
+$ kubectl get pods -n taskboard -o wide
+NAME                                           READY   STATUS    RESTARTS        AGE     IP             NODE       NOMINATED NODE   READINESS GATES
+taskboard-frontend-6b55b56d9-m5sdg             1/1     Running   0               42s     10.244.0.172   minikube   <none>           <none>
+taskboard-frontend-6b55b56d9-wbmh9             1/1     Running   0               31s     10.244.0.173   minikube   <none>           <none>
+taskboard-postgres-755b4497b-vg9dw             1/1     Running   0               2m32s   10.244.0.169   minikube   <none>           <none>
+taskboard-taskboard-backend-7d8fb7697c-2jqw6   1/1     Running   2 (2m28s ago)   2m32s   10.244.0.170   minikube   <none>           <none>
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   1/1     Running   3 (2m15s ago)   2m32s   10.244.0.167   minikube   <none>           <none>
+

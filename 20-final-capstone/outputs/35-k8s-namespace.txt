@@ -1,0 +1,10 @@
+$ kubectl config current-context
+minikube
+
+$ kubectl apply -f k8s/namespace.yaml
+namespace/taskboard created
+
+$ kubectl get ns taskboard
+NAME        STATUS   AGE
+taskboard   Active   0s
+

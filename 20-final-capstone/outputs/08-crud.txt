@@ -1,0 +1,57 @@
+$ curl -s http://localhost:18000/api/tasks; echo
+[]
+
+$ curl -s -X POST http://localhost:18000/api/tasks -H "Content-Type: application/json" -d "{\"title\":\"Set up CI pipeline\",\"description\":\"pytest + docker build + trivy\",\"priority\":\"HIGH\",\"assignee\":\"Ridaa\"}"; echo
+{"title":"Set up CI pipeline","description":"pytest + docker build + trivy","priority":"HIGH","status":"TODO","assignee":"Ridaa","id":1,"created_at":"2026-10-07T14:35:45.345809Z"}
+
+$ curl -s -X POST http://localhost:18000/api/tasks -H "Content-Type: application/json" -d "{\"title\":\"Write Helm chart\",\"priority\":\"MEDIUM\",\"assignee\":\"Ridaa\"}"; echo
+{"title":"Write Helm chart","description":"","priority":"MEDIUM","status":"TODO","assignee":"Ridaa","id":2,"created_at":"2026-10-07T14:35:45.365483Z"}
+
+$ curl -s -X POST http://localhost:18000/api/tasks -H "Content-Type: application/json" -d "{\"title\":\"Delete me\",\"priority\":\"LOW\"}"; echo
+{"title":"Delete me","description":"","priority":"LOW","status":"TODO","assignee":"Unassigned","id":3,"created_at":"2026-10-07T14:35:45.383025Z"}
+
+$ curl -s http://localhost:18000/api/tasks/1; echo
+{"title":"Set up CI pipeline","description":"pytest + docker build + trivy","priority":"HIGH","status":"TODO","assignee":"Ridaa","id":1,"created_at":"2026-10-07T14:35:45.345809Z"}
+
+$ curl -s -X PUT http://localhost:18000/api/tasks/1 -H "Content-Type: application/json" -d "{\"status\":\"IN_PROGRESS\"}"; echo
+{"title":"Set up CI pipeline","description":"pytest + docker build + trivy","priority":"HIGH","status":"IN_PROGRESS","assignee":"Ridaa","id":1,"created_at":"2026-10-07T14:35:45.345809Z"}
+
+$ curl -s -X PUT http://localhost:18000/api/tasks/2 -H "Content-Type: application/json" -d "{\"status\":\"DONE\"}"; echo
+{"title":"Write Helm chart","description":"","priority":"MEDIUM","status":"DONE","assignee":"Ridaa","id":2,"created_at":"2026-10-07T14:35:45.365483Z"}
+
+$ curl -s -o /dev/null -w "DELETE /api/tasks/3 -> HTTP %{http_code}\n" -X DELETE http://localhost:18000/api/tasks/3
+DELETE /api/tasks/3 -> HTTP 204
+
+$ curl -s -w "\nHTTP %{http_code}\n" http://localhost:18000/api/tasks/3
+{"detail":"Task not found"}
+HTTP 404
+
+$ curl -s http://localhost:18000/api/tasks | python3 -m json.tool
+[
+    {
+        "title": "Write Helm chart",
+        "description": "",
+        "priority": "MEDIUM",
+        "status": "DONE",
+        "assignee": "Ridaa",
+        "id": 2,
+        "created_at": "2026-10-07T14:35:45.365483Z"
+    },
+    {
+        "title": "Set up CI pipeline",
+        "description": "pytest + docker build + trivy",
+        "priority": "HIGH",
+        "status": "IN_PROGRESS",
+        "assignee": "Ridaa",
+        "id": 1,
+        "created_at": "2026-10-07T14:35:45.345809Z"
+    }
+]
+
+$ curl -s http://localhost:18000/api/tasks/stats; echo
+{"total":2,"todo":0,"inProgress":1,"done":1}
+
+$ curl -s -w "\nHTTP %{http_code}\n" -X POST http://localhost:18000/api/tasks -H "Content-Type: application/json" -d "{\"title\":\"bad\",\"priority\":\"URGENT\"}"
+{"detail":[{"type":"literal_error","loc":["body","priority"],"msg":"Input should be 'LOW', 'MEDIUM' or 'HIGH'","input":"URGENT","ctx":{"expected":"'LOW', 'MEDIUM' or 'HIGH'"}}]}
+HTTP 422
+

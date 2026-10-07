@@ -1,0 +1,20 @@
+$ source .venv/bin/activate && pip install -q -r requirements.txt 2>&1 | grep -v notice; pip show fastapi starlette | grep -E "^(Name|Version)"; rm -f test.db; pytest -v -p no:warnings
+
+Name: fastapi
+Version: 0.142.2
+Name: starlette
+Version: 1.7.0
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-8.3.4, pluggy-1.6.0 -- /Users/ridaamahroozmirza/Desktop/AI-Labs/DevOps/20-final-capstone/backend/.venv/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /Users/ridaamahroozmirza/Desktop/AI-Labs/DevOps/20-final-capstone/backend
+configfile: pytest.ini
+plugins: cov-7.1.0, anyio-4.15.1
+collecting ... collected 3 items
+
+tests/test_api.py::test_health PASSED                                    [ 33%]
+tests/test_api.py::test_root PASSED                                      [ 66%]
+tests/test_api.py::test_create_task_validation PASSED                    [100%]
+
+============================== 3 passed in 0.21s ===============================
+

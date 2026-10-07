@@ -1,0 +1,35 @@
+$ git remote -v
+origin	git@github.com:Ridaa10394/DevOps.git (fetch)
+origin	git@github.com:Ridaa10394/DevOps.git (push)
+
+$ git branch --show-current
+main
+
+$ git log --oneline -15
+426e69f Session 20 - Monitoring, observability & GitOps
+901adad Session 19 - Cloud & Terraform project
+52054a9 Session 18 - Terraform & AWS services
+8e4abb2 Session 17 - DevSecOps pipeline
+039a741 Session 16 - CI/CD with GitHub Actions
+552cd57 Session 15 - Helm
+93622a9 Session 14 - Kubernetes troubleshooting
+3c88e2b Session 13 - Storage, HPA & probes
+15c0f07 git add 11-k8s-ingress-configmap-secret && git commit -m "
+cc726e7 Session 11 - Kubernetes services, FQDN & CoreDNS
+0da5db7 Session 10 - Deployment strategies & pod lifecycle
+2b70735 Add terminal screenshots to sessions 1-8 and add session 9 - Kubernetes fundamentals
+a355945 Update README with Docker installation details
+90dafef Add docker run logs, clean up comments, rewrite READMEs
+16345ad Add DevOps homework submission for sessions 1-8
+
+$ git rev-list --count HEAD
+15
+
+$ git status --short -- 20-final-capstone .github/workflows/s21-capstone.yml | head -20
+?? 20-final-capstone/
+
+$ git check-ignore -v 20-final-capstone/backend/.venv 20-final-capstone/backend/.pytest_cache 20-final-capstone/frontend/node_modules 20-final-capstone/.env
+20-final-capstone/.gitignore:19:.venv/	20-final-capstone/backend/.venv
+20-final-capstone/.gitignore:18:.pytest_cache/	20-final-capstone/backend/.pytest_cache
+20-final-capstone/.gitignore:8:.env	20-final-capstone/.env
+

@@ -1,0 +1,17 @@
+$ kubectl get hpa -n taskboard -w   (with a timestamp on each line)
+20:22:24  NAME                REFERENCE                                TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+20:22:24  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 3%/60%   2         6         2          57s
+20:23:42  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 179%/60%   2         6         2          2m15s
+20:23:57  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 179%/60%   2         6         4          2m30s
+20:24:12  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 179%/60%   2         6         6          2m45s
+20:24:42  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 117%/60%   2         6         6          3m15s
+20:25:42  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 15%/60%    2         6         6          4m15s
+20:26:42  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 2%/60%     2         6         6          5m15s
+20:27:42  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 12%/60%    2         6         6          6m15s
+20:28:42  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 23%/60%    2         6         6          7m15s
+20:29:42  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 24%/60%    2         6         6          8m15s
+20:30:28  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 24%/60%    2         6         6          9m1s
+20:30:43  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 4%/60%     2         6         3          9m16s
+20:31:43  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 3%/60%     2         6         3          10m
+20:35:28  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 3%/60%     2         6         3          14m
+20:35:43  taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 3%/60%     2         6         2          14m

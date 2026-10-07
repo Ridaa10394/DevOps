@@ -1,0 +1,46 @@
+$ docker compose exec -T postgres psql -U taskboard -d taskboard -c "\dt"
+              List of relations
+ Schema |      Name       | Type  |   Owner   
+--------+-----------------+-------+-----------
+ public | alembic_version | table | taskboard
+ public | tasks           | table | taskboard
+(2 rows)
+
+
+$ docker compose exec -T postgres psql -U taskboard -d taskboard -c "\d tasks"
+                                       Table "public.tasks"
+   Column    |           Type           | Collation | Nullable |              Default              
+-------------+--------------------------+-----------+----------+-----------------------------------
+ id          | integer                  |           | not null | nextval('tasks_id_seq'::regclass)
+ title       | character varying(200)   |           | not null | 
+ description | text                     |           | not null | ''::text
+ priority    | character varying(20)    |           | not null | 'MEDIUM'::character varying
+ status      | character varying(30)    |           | not null | 'TODO'::character varying
+ assignee    | character varying(120)   |           | not null | 'Unassigned'::character varying
+ created_at  | timestamp with time zone |           | not null | 
+Indexes:
+    "tasks_pkey" PRIMARY KEY, btree (id)
+
+
+$ docker compose exec -T postgres psql -U taskboard -d taskboard -c "SELECT version_num FROM alembic_version;"
+    version_num    
+-------------------
+ 0001_create_tasks
+(1 row)
+
+
+$ docker compose exec -T postgres psql -U taskboard -d taskboard -c "SELECT id, title, priority, status, assignee FROM tasks ORDER BY id;"
+ id |            title             | priority |   status    |  assignee   
+----+------------------------------+----------+-------------+-------------
+  1 | Set up CI pipeline           | HIGH     | IN_PROGRESS | Ridaa
+  2 | Write Helm chart             | MEDIUM   | DONE        | Ridaa
+  4 | Configure production ingress | HIGH     | TODO        | Ridaa Mirza
+  5 | Run Trivy on both images     | MEDIUM   | TODO        | Ridaa Mirza
+(4 rows)
+
+
+$ docker compose exec -T backend alembic current
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+0001_create_tasks (head)
+

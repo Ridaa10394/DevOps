@@ -1,0 +1,42 @@
+$ cat scripts/load-test.sh
+#!/usr/bin/env bash
+set -euo pipefail
+URL="${URL:-http://taskboard.local/api/health}"
+for i in $(seq 1 500); do curl -s "$URL" >/dev/null || true; done
+echo "Load test completed"
+
+$ kubectl -n taskboard create configmap load-test-script --from-file=scripts/load-test.sh
+configmap/load-test-script created
+
+$ cat <<'EOF' | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: load-generator, namespace: taskboard}
+spec:
+  replicas: 3
+  selector: {matchLabels: {app: load-generator}}
+  template:
+    metadata: {labels: {app: load-generator}}
+    spec:
+      containers:
+      - name: load
+        image: curlimages/curl:8.11.1
+        env: [{name: URL, value: "http://backend:8000/api/tasks"}]
+        command: ["sh", "-c", "while true; do sh /scripts/load-test.sh; done"]
+        resources: {requests: {cpu: 20m, memory: 16Mi}, limits: {cpu: 200m, memory: 32Mi}}
+        volumeMounts: [{name: script, mountPath: /scripts}]
+      volumes: [{name: script, configMap: {name: load-test-script}}]
+EOF
+deployment.apps/load-generator created
+
+$ kubectl -n taskboard get pods -l app=load-generator
+NAME                              READY   STATUS    RESTARTS   AGE
+load-generator-7f788dfd84-n6dr5   1/1     Running   0          15s
+load-generator-7f788dfd84-z78bw   1/1     Running   0          15s
+load-generator-7f788dfd84-zx6hl   1/1     Running   0          15s
+
+$ kubectl -n taskboard logs deploy/load-generator --tail=3
+Found 3 pods, using pod/load-generator-7f788dfd84-n6dr5
+Load test completed
+Load test completed
+

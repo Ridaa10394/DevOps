@@ -1,0 +1,198 @@
+# Session 21 - Final DevOps Capstone (TaskBoard) - Ridaa Mirza (24BCS10394)
+#
+# Root copy of the instructor's 20-final-capstone/.github/workflows/ci-cd.yml.
+# GitHub only runs workflows from the repo root, so this file is the one that runs.
+# Changes from the original (all explained in 20-final-capstone/README.md, Part F):
+#   - paths filter + working-directory point into 20-final-capstone/
+#   - GHCR owner is lowercased (Ridaa10394 -> ridaa10394, GHCR rejects uppercase)
+#   - Trivy runs from a pinned, sha256-verified binary (same as my S17 pipeline)
+#     instead of a mutable third-party action tag; same flags: HIGH,CRITICAL,
+#     --ignore-unfixed, exit code 1
+#   - images are only pushed on push events (not on pull requests)
+#   - "deploy" (real cluster) only runs when the KUBE_CONFIG_DATA secret exists,
+#     otherwise it prints a notice and stays green
+#   - "deploy-kind" deploys the pushed SHA images with the Helm chart into a
+#     throwaway kind cluster on the runner and smoke-tests the API
+
+name: S21 Capstone - TaskBoard CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "20-final-capstone/**"
+      - ".github/workflows/s21-capstone.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "20-final-capstone/**"
+      - ".github/workflows/s21-capstone.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: s21-capstone-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: 20-final-capstone
+
+env:
+  REGISTRY: ghcr.io
+  TRIVY_VERSION: "0.75.0"
+  TRIVY_SHA256: "c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install backend dependencies
+        run: pip install -r requirements.txt
+        working-directory: 20-final-capstone/backend
+      - name: Run backend tests
+        run: pytest -v
+        working-directory: 20-final-capstone/backend
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build frontend
+        run: npm install && npm run build
+        working-directory: 20-final-capstone/frontend
+
+  build-scan-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions: {contents: read, packages: write}
+    outputs:
+      backend: ${{ steps.meta.outputs.backend }}
+      frontend: ${{ steps.meta.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image names (GHCR needs a lowercase owner)
+        id: meta
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "backend=${REGISTRY}/${owner}/taskboard-backend:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "frontend=${REGISTRY}/${owner}/taskboard-frontend:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build images
+        run: |
+          docker build --label org.opencontainers.image.source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            -t "${{ steps.meta.outputs.backend }}" ./backend
+          docker build --label org.opencontainers.image.source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            -t "${{ steps.meta.outputs.frontend }}" ./frontend
+      - name: Install trivy (pinned + sha256 verified)
+        working-directory: ${{ runner.temp }}
+        run: |
+          f=trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+          curl -sSfLO "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${f}"
+          echo "${TRIVY_SHA256}  ${f}" | sha256sum --check
+          tar -xzf "${f}" trivy && sudo mv trivy /usr/local/bin/ && trivy --version
+      - name: Scan backend
+        run: trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress "${{ steps.meta.outputs.backend }}"
+      - name: Scan frontend
+        run: trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress "${{ steps.meta.outputs.frontend }}"
+      - name: Push images
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push "${{ steps.meta.outputs.backend }}"
+          docker push "${{ steps.meta.outputs.frontend }}"
+          echo "Pushed ${{ steps.meta.outputs.backend }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Pushed ${{ steps.meta.outputs.frontend }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # The instructor's deploy job, unchanged except for the guard: it needs a real
+  # cluster (e.g. the EKS cluster from terraform/) in the KUBE_CONFIG_DATA secret.
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build-scan-push
+    runs-on: ubuntu-latest
+    permissions: {contents: read, packages: read}
+    env:
+      HAS_KUBECONFIG: ${{ secrets.KUBE_CONFIG_DATA != '' }}
+    steps:
+      - name: No cluster configured
+        if: env.HAS_KUBECONFIG != 'true'
+        working-directory: .
+        run: echo "::notice::KUBE_CONFIG_DATA secret not set - skipping the real-cluster deploy (see deploy-kind for the CI deploy)."
+      - uses: actions/checkout@v4
+        if: env.HAS_KUBECONFIG == 'true'
+      - uses: azure/setup-helm@v4
+        if: env.HAS_KUBECONFIG == 'true'
+      - name: Configure kubectl
+        if: env.HAS_KUBECONFIG == 'true'
+        env: {KUBE_CONFIG_DATA: '${{ secrets.KUBE_CONFIG_DATA }}'}
+        run: |
+          mkdir -p ~/.kube
+          echo "$KUBE_CONFIG_DATA" | base64 -d > ~/.kube/config
+      - name: Deploy with Helm
+        if: env.HAS_KUBECONFIG == 'true'
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          helm upgrade --install taskboard ./helm/taskboard -n taskboard --create-namespace \
+            --set backend.tag=${{ github.sha }} \
+            --set frontend.tag=${{ github.sha }} \
+            --set backend.image="ghcr.io/${owner}/taskboard-backend" \
+            --set frontend.image="ghcr.io/${owner}/taskboard-frontend"
+
+  # Proof that the pushed images + Helm chart actually work, without needing a
+  # real cluster: a throwaway kind cluster on the runner.
+  deploy-kind:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build-scan-push
+    runs-on: ubuntu-latest
+    permissions: {contents: read, packages: read}
+    env:
+      BACKEND: ${{ needs.build-scan-push.outputs.backend }}
+      FRONTEND: ${{ needs.build-scan-push.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.15.1
+        with:
+          cluster_name: s21-kind
+      - uses: azure/setup-helm@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull the pushed SHA images from GHCR and load them into kind
+        run: |
+          docker pull "$BACKEND" && docker pull "$FRONTEND"
+          kind load docker-image "$BACKEND" "$FRONTEND" --name s21-kind
+      - name: helm upgrade --install
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          helm upgrade --install taskboard ./helm/taskboard -n taskboard \
+            --set backend.image="${BACKEND%:*}" --set backend.tag="${GITHUB_SHA}" \
+            --set frontend.image="${FRONTEND%:*}" --set frontend.tag="${GITHUB_SHA}" \
+            --set monitoring.serviceMonitor.enabled=false
+      - name: Rollout status
+        run: |
+          kubectl -n taskboard rollout status deployment/taskboard-postgres --timeout=180s
+          kubectl -n taskboard rollout status deployment/taskboard-taskboard-backend --timeout=300s
+          kubectl -n taskboard rollout status deployment/taskboard-frontend --timeout=180s
+          kubectl -n taskboard get deploy,pods,svc,hpa -o wide
+          helm list -n taskboard
+      - name: Smoke test through the frontend Service
+        run: |
+          kubectl -n taskboard port-forward svc/taskboard-frontend 8080:80 &
+          sleep 5
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/)" = "200"
+          curl -sf http://localhost:8080/health; echo
+          curl -sf -X POST http://localhost:8080/api/tasks -H 'Content-Type: application/json' \
+            -d "{\"title\":\"CI smoke test ${GITHUB_SHA::7}\",\"priority\":\"LOW\"}"; echo
+          curl -sf http://localhost:8080/api/tasks/stats; echo
+      - name: Debug info on failure
+        if: failure()
+        run: |
+          kubectl -n taskboard get events --sort-by=.lastTimestamp || true
+          kubectl -n taskboard describe pods || true
+          kubectl -n taskboard logs -l app=taskboard-backend --tail=50 || true
+          kubectl -n taskboard logs -l app=taskboard-frontend --tail=50 || true

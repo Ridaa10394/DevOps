@@ -1,0 +1,31 @@
+# terminal 2 (left running in the background):
+$ kubectl -n ingress-nginx port-forward svc/ingress-nginx-controller 18321:80
+Forwarding from 127.0.0.1:18321 -> 80
+Forwarding from [::1]:18321 -> 80
+
+$ curl -s -i -H "Host: taskboard.local" http://localhost:18321/ | head -12
+HTTP/1.1 200 OK
+Date: Wed, 07 Oct 2026 14:50:43 GMT
+Content-Type: text/html
+Content-Length: 343
+Connection: keep-alive
+Last-Modified: Wed, 07 Oct 2026 14:41:28 GMT
+ETag: "6ac65a18-157"
+Accept-Ranges: bytes
+
+<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>TaskBoard</title>  <script type="module" crossorigin src="/assets/index-BmfppIyD.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DkMuKOF6.css">
+</head><body><div id="root"></div></body></html>
+
+$ curl -s -H "Host: taskboard.local" -X POST http://localhost:18321/api/tasks -H "Content-Type: application/json" -d "{\"title\":\"Write the capstone README\",\"priority\":\"MEDIUM\",\"assignee\":\"Ridaa\"}"; echo
+{"title":"Write the capstone README","description":"","priority":"MEDIUM","status":"TODO","assignee":"Ridaa","id":2,"created_at":"2026-10-07T14:50:43.428210Z"}
+
+$ curl -s -H "Host: taskboard.local" http://localhost:18321/api/tasks | python3 -m json.tool --compact
+[{"title":"Write the capstone README","description":"","priority":"MEDIUM","status":"TODO","assignee":"Ridaa","id":2,"created_at":"2026-10-07T14:50:43.428210Z"},{"title":"Created through the Ingress","description":"","priority":"HIGH","status":"TODO","assignee":"Ridaa","id":1,"created_at":"2026-10-07T14:50:32.237615Z"}]
+
+$ curl -s -H "Host: taskboard.local" http://localhost:18321/api/tasks/stats; echo
+{"total":2,"todo":2,"inProgress":0,"done":0}
+
+$ curl -s -o /dev/null -w "no Host header -> HTTP %{http_code}  (no rule matches, nginx default backend)\n" http://localhost:18321/
+no Host header -> HTTP 404  (no rule matches, nginx default backend)
+

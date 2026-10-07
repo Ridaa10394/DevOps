@@ -1,0 +1,34 @@
+$ kubectl get hpa -n taskboard
+NAME                REFERENCE                                TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 179%/60%   2         6         4          2m32s
+
+$ kubectl top pods -n taskboard -l app=taskboard-backend
+NAME                                           CPU(cores)   MEMORY(bytes)   
+taskboard-taskboard-backend-7d8fb7697c-7rkz2   177m         64Mi            
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   182m         64Mi            
+
+$ kubectl -n taskboard get pods -l app=taskboard-backend
+NAME                                           READY   STATUS    RESTARTS        AGE
+taskboard-taskboard-backend-7d8fb7697c-4wdg6   0/1     Running   0               2s
+taskboard-taskboard-backend-7d8fb7697c-7rkz2   1/1     Running   0               2m32s
+taskboard-taskboard-backend-7d8fb7697c-8r7s5   0/1     Running   0               2s
+taskboard-taskboard-backend-7d8fb7697c-n85dn   1/1     Running   0               17s
+taskboard-taskboard-backend-7d8fb7697c-nfgft   1/1     Running   0               17s
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   1/1     Running   3 (7m44s ago)   8m1s
+
+$ kubectl get hpa -n taskboard
+NAME                REFERENCE                                TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: 179%/60%   2         6         6          2m45s
+
+$ kubectl -n taskboard describe hpa taskboard-backend | sed -n "/Events:/,\$p"
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  30s   horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  15s   horizontal-pod-autoscaler  New size: 6; reason: cpu resource utilization (percentage of request) above target
+
+$ kubectl top pods -n taskboard -l app=taskboard-backend
+NAME                                           CPU(cores)   MEMORY(bytes)   
+taskboard-taskboard-backend-7d8fb7697c-7rkz2   177m         64Mi            
+taskboard-taskboard-backend-7d8fb7697c-xwzp8   182m         64Mi            
+

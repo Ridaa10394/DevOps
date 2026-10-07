@@ -1,0 +1,20 @@
+$ docker build -q -t taskboard-backend:local ./backend
+sha256:78fffff94caf6369a3054531dfd8bfe86c7d35ffad6716640073474df50ea676
+
+$ docker build -q -t taskboard-frontend:local ./frontend
+sha256:c880582bbe94c0ca2b189e693b4634238a52368d753e0444bfb1d21410242452
+
+$ docker run --rm --entrypoint pip taskboard-backend:local show fastapi starlette prometheus-fastapi-instrumentator | grep -E "^(Name|Version)"
+Name: fastapi
+Version: 0.142.2
+Name: starlette
+Version: 1.7.0
+Name: prometheus-fastapi-instrumentator
+Version: 8.1.0
+
+$ docker images taskboard-backend; docker images taskboard-frontend
+IMAGE                     ID             DISK USAGE   CONTENT SIZE   EXTRA
+taskboard-backend:local   78fffff94caf        326MB         70.8MB        
+IMAGE                      ID             DISK USAGE   CONTENT SIZE   EXTRA
+taskboard-frontend:local   c880582bbe94       96.4MB         27.7MB        
+

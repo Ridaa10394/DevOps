@@ -1,0 +1,18 @@
+$ docker run -d --name s21-backend-standalone -p 18001:8000 -e DATABASE_URL='postgresql+psycopg://taskboard:taskboard@host.docker.internal:5432/taskboard' taskboard-backend:local
+c3885893537da470266a82e5971fcf46c53807be62209e07ad8aed4a02fef6c8
+
+$ docker logs s21-backend-standalone
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO:     Started server process [7]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+
+$ curl -s http://localhost:18001/ready; echo; curl -s http://localhost:18001/api/tasks/stats; echo
+{"status":"READY"}
+{"total":4,"todo":2,"inProgress":1,"done":1}
+
+$ docker rm -f s21-backend-standalone
+s21-backend-standalone
+

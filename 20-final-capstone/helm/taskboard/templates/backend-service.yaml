@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # fix: frontend/nginx.conf proxies /api to http://backend:8000 (same name as in
+  # docker-compose), so the Service must be called "backend" or nginx crash-loops.
+  name: backend
+  labels: {app: taskboard-backend}
+spec:
+  selector: {app: taskboard-backend}
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http

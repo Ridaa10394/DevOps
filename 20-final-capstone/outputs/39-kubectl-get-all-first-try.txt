@@ -1,0 +1,26 @@
+$ kubectl get all -n taskboard
+NAME                                               READY   STATUS             RESTARTS      AGE
+pod/taskboard-frontend-bbb7b895f-m7795             0/1     CrashLoopBackOff   3 (38s ago)   75s
+pod/taskboard-frontend-bbb7b895f-zf962             0/1     CrashLoopBackOff   3 (35s ago)   75s
+pod/taskboard-postgres-755b4497b-vg9dw             1/1     Running            0             75s
+pod/taskboard-taskboard-backend-7d8fb7697c-2jqw6   1/1     Running            2 (71s ago)   75s
+pod/taskboard-taskboard-backend-7d8fb7697c-xwzp8   1/1     Running            3 (58s ago)   75s
+
+NAME                                  TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/taskboard-frontend            ClusterIP   10.102.59.252   <none>        80/TCP     75s
+service/taskboard-postgres            ClusterIP   10.109.124.92   <none>        5432/TCP   75s
+service/taskboard-taskboard-backend   ClusterIP   10.109.16.158   <none>        8000/TCP   75s
+
+NAME                                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/taskboard-frontend            0/2     2            0           75s
+deployment.apps/taskboard-postgres            1/1     1            1           75s
+deployment.apps/taskboard-taskboard-backend   2/2     2            2           75s
+
+NAME                                                     DESIRED   CURRENT   READY   AGE
+replicaset.apps/taskboard-frontend-bbb7b895f             2         2         0       75s
+replicaset.apps/taskboard-postgres-755b4497b             1         1         1       75s
+replicaset.apps/taskboard-taskboard-backend-7d8fb7697c   2         2         2       75s
+
+NAME                                                    REFERENCE                                TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/taskboard-backend   Deployment/taskboard-taskboard-backend   cpu: <unknown>/60%   2         6         2          75s
+

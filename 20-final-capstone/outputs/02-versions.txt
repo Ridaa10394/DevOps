@@ -1,0 +1,13 @@
+$ docker --version; docker compose version; python3 --version; node --version; npm --version; kubectl version --client | head -1; helm version --short; minikube version --short; terraform version | head -1; trivy --version | head -1; actionlint --version | head -1
+Docker version 29.7.2, build a7dcaa6
+Docker Compose version v5.4.0
+Python 3.14.6
+v26.3.0
+11.16.0
+Client Version: v1.37.1
+v4.3.0+gbec5b06
+v1.39.0
+Terraform v1.16.4
+Version: 0.75.0
+1.7.12
+
