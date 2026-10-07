@@ -1,0 +1,19 @@
+$ minikube ssh -- sudo crictl inspecti gcr.io/google-samples/kubernetes-bootcamp:v1 | grep -i -m1 architecture
+      "architecture": "amd64",
+
+$ kubectl get node minikube -o jsonpath={.status.nodeInfo.architecture}; echo
+arm64
+
+$ kubectl run archtest -n s09 --image=gcr.io/google-samples/kubernetes-bootcamp:v1 --image-pull-policy=IfNotPresent --restart=Never
+pod/archtest created
+
+$ kubectl wait --for=condition=Ready pod/archtest -n s09 --timeout=120s
+pod/archtest condition met
+
+$ kubectl logs archtest -n s09
+Kubernetes Bootcamp App Started At: 2026-10-07T11:36:50.146Z | Running On:  archtest 
+
+
+$ kubectl delete pod archtest -n s09
+pod "archtest" deleted from s09 namespace
+

@@ -1,0 +1,16 @@
+### cleanup
+$ kubectl delete service kubernetes-bootcamp -n s09
+service "kubernetes-bootcamp" deleted from s09 namespace
+
+$ kubectl delete deployment kubernetes-bootcamp -n s09
+deployment.apps "kubernetes-bootcamp" deleted from s09 namespace
+
+$ kubectl get all -n s09
+NAME                                       READY   STATUS        RESTARTS   AGE
+pod/kubernetes-bootcamp-55587bb4dd-rc59v   1/1     Terminating   0          48s
+pod/kubernetes-bootcamp-55587bb4dd-sqvqk   1/1     Terminating   0          48s
+pod/kubernetes-bootcamp-7f55cc94d7-8hsh4   1/1     Terminating   0          1s
+pod/kubernetes-bootcamp-7f55cc94d7-d95nd   1/1     Terminating   0          1s
+pod/kubernetes-bootcamp-9ccdddfbc-zqvsj    0/1     Terminating   0          47s
+pod/tmp-curl                               0/1     Terminating   0          5m9s
+

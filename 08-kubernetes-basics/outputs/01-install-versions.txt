@@ -1,0 +1,53 @@
+$ minikube version
+minikube version: v1.39.0
+commit: 7a9f6a841470a207de8cf4bafcccee0969d8ba10
+
+$ minikube status
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+
+$ kubectl version
+Client Version: v1.37.1
+Kustomize Version: v5.8.1
+Server Version: v1.37.0
+
+$ minikube addons list | grep enabled
+│ default-storageclass        │ minikube │ enabled ✅ │ Kubernetes                             │
+│ storage-provisioner         │ minikube │ enabled ✅ │ minikube                               │
+
+$ kubectl config current-context
+minikube
+
+$ uname -sm
+Darwin arm64
+
+$ brew info --json=v2 minikube | python3 -c "import json,sys;d=json.load(sys.stdin);print(d[\"formulae\"][0][\"name\"],d[\"formulae\"][0][\"installed\"][0][\"version\"])"
+minikube 1.39.0
+
+$ brew list --versions kubernetes-cli minikube
+kubernetes-cli 1.37.1
+minikube 1.39.0
+
+$ which minikube kubectl
+/opt/homebrew/bin/minikube
+/opt/homebrew/bin/kubectl
+
+$ docker version --format "{{.Server.Version}} {{.Server.Os}}/{{.Server.Arch}}"
+29.7.2 linux/arm64
+
+$ minikube profile list
+┌──────────┬────────┬────────────┬──────────────┬─────────┬────────┬───────┬────────────────┬────────────────────┐
+│ PROFILE  │ DRIVER │  RUNTIME   │      IP      │ VERSION │ STATUS │ NODES │ ACTIVE PROFILE │ ACTIVE KUBECONTEXT │
+├──────────┼────────┼────────────┼──────────────┼─────────┼────────┼───────┼────────────────┼────────────────────┤
+│ minikube │ docker │ containerd │ 192.168.49.2 │ v1.37.0 │ OK     │ 1     │ *              │ *                  │
+└──────────┴────────┴────────────┴──────────────┴─────────┴────────┴───────┴────────────────┴────────────────────┘
+
+$ kubectl config get-contexts
+CURRENT   NAME       CLUSTER    AUTHINFO   NAMESPACE
+*         minikube   minikube   minikube   default
+

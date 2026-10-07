@@ -79,6 +79,8 @@ Report location   : /home/ridaa/sysinfo-run/sysinfo_report
 ==============================================
 ```
 
+![Running sysinfo.sh](screenshots/01-run-sysinfo.png)
+
 Checking that mkdir and touch actually worked:
 
 ```
@@ -91,6 +93,8 @@ $ ls -l sysinfo_report/
 total 8
 -rw-r--r-- 1 ridaa ridaa 6961 Sep  2 17:17 process.log
 ```
+
+![Checking the directory and file were created](screenshots/02-verify-dir-file.png)
 
 Both sysinfo_report/ and process.log got created by the script, as expected.
 
@@ -112,6 +116,8 @@ root         122     107  0 17:17 ?        00:00:00 (udev-worker)
 $ wc -l sysinfo_report/process.log
 93 sysinfo_report/process.log
 ```
+
+![Checking process.log contents](screenshots/03-verify-process-log.png)
 
 93 lines got written into the file by `ps -ef > "$process_file"`.
 

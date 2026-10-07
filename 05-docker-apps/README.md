@@ -52,6 +52,8 @@ docker run -d -p 3000:3000 --name hello-node hello-node
 curl http://localhost:3000
 ```
 
+![docker build output for nodejs-app](screenshots/01-nodejs-build.png)
+
 Expected: Hello World from Node.js
 
 ## 2. python-app - Python + Flask
@@ -75,6 +77,8 @@ docker build -t hello-python ./python-app
 docker run -d -p 5000:5000 --name hello-python hello-python
 curl http://localhost:5000
 ```
+
+![docker build output for python-app](screenshots/02-python-build.png)
 
 Expected: Hello World from Python
 
@@ -105,6 +109,8 @@ docker run -d -p 8000:8000 --name hello-java hello-java
 curl http://localhost:8000
 ```
 
+![docker build output for java-app (multi-stage)](screenshots/03-java-build.png)
+
 Expected: Hello World from Java
 
 ## 4. Apache-app - Apache HTTP Server
@@ -124,6 +130,8 @@ docker build -t hello-apache ./Apache-app
 docker run -d -p 8081:80 --name hello-apache hello-apache
 curl http://localhost:8081
 ```
+
+![docker build output for Apache-app](screenshots/04-apache-build.png)
 
 Expected: Hello World from Apache
 
@@ -152,6 +160,8 @@ docker run -d -p 8082:80 --name hello-react hello-react
 curl http://localhost:8082
 ```
 
+![docker build output for React-app (vite build + nginx stage)](screenshots/05-react-build.png)
+
 Expected: Hello World from React
 
 ## 6. nginx-app - Nginx
@@ -172,6 +182,8 @@ docker run -d -p 8083:80 --name hello-nginx hello-nginx
 curl http://localhost:8083
 ```
 
+![docker build output for nginx-app](screenshots/06-nginx-build.png)
+
 Expected: Hello World from Nginx
 
 ## Checking all six at once
@@ -184,6 +196,14 @@ for p in 3000 5000 8000 8081 8082 8083; do
   curl -s "http://localhost:$p" | grep -o "Hello World from [A-Za-z.]*"
 done
 ```
+
+![docker ps with all six containers running](screenshots/07-docker-ps.png)
+
+![docker images showing the six built images and their sizes](screenshots/08-docker-images.png)
+
+![curl responses from the Node.js, Python and Java containers](screenshots/09-curl-node-python-java.png)
+
+![curl responses from the Apache, React and Nginx containers](screenshots/10-curl-apache-react-nginx.png)
 
 Cleanup:
 

@@ -1,0 +1,111 @@
+### Module 3 - explore pods, logs, exec
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp -o wide
+NAME                                   READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+kubernetes-bootcamp-7f55cc94d7-4ptq7   1/1     Running   0          9s    10.244.0.33   minikube   <none>           <none>
+
+$ kubectl describe pod kubernetes-bootcamp-7f55cc94d7-4ptq7 -n s09 | sed -n '1,32p'
+Name:             kubernetes-bootcamp-7f55cc94d7-4ptq7
+Namespace:        s09
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Wed, 07 Oct 2026 17:01:11 +0530
+Labels:           app=kubernetes-bootcamp
+                  pod-template-hash=7f55cc94d7
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.33
+IPs:
+  IP:           10.244.0.33
+Controlled By:  ReplicaSet/kubernetes-bootcamp-7f55cc94d7
+Containers:
+  kubernetes-bootcamp:
+    Container ID:   containerd://f3f3c3d524dc65b537a86e06dedc55af56b5558cb32df6a60e474bbd2bc4a4c3
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image ID:       gcr.io/google-samples/kubernetes-bootcamp@sha256:0d6b8ee63bb57c5f5b6156f446b3bc3b3c143d233037f3a2f00e279c8fcc64af
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Wed, 07 Oct 2026 17:01:12 +0530
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     200m
+      memory:  128Mi
+    Requests:
+      cpu:        10m
+      memory:     32Mi
+    Environment:  <none>
+
+$ kubectl logs kubernetes-bootcamp-7f55cc94d7-4ptq7 -n s09
+Kubernetes Bootcamp App Started At: 2026-10-07T11:31:14.084Z | Running On:  kubernetes-bootcamp-7f55cc94d7-4ptq7 
+
+
+$ kubectl exec kubernetes-bootcamp-7f55cc94d7-4ptq7 -n s09 -- env
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=kubernetes-bootcamp-7f55cc94d7-4ptq7
+NPM_CONFIG_LOGLEVEL=info
+NODE_VERSION=6.3.1
+KUBERNETES_PORT_443_TCP=tcp://10.96.0.1:443
+KUBERNETES_PORT_443_TCP_PROTO=tcp
+KUBERNETES_PORT_443_TCP_PORT=443
+KUBERNETES_PORT_443_TCP_ADDR=10.96.0.1
+KUBERNETES_SERVICE_HOST=10.96.0.1
+KUBERNETES_SERVICE_PORT=443
+KUBERNETES_SERVICE_PORT_HTTPS=443
+KUBERNETES_PORT=tcp://10.96.0.1:443
+HOME=/root
+
+$ kubectl exec kubernetes-bootcamp-7f55cc94d7-4ptq7 -n s09 -- sh -c 'ls; head -20 server.js'
+bin
+boot
+core
+dev
+etc
+home
+lib
+lib64
+media
+mnt
+opt
+proc
+root
+run
+sbin
+server.js
+srv
+sys
+tmp
+usr
+var
+var http = require('http');
+var requests=0;
+var podname= process.env.HOSTNAME;
+var startTime;
+var host;
+var handleRequest = function(request, response) {
+  response.setHeader('Content-Type', 'text/plain');
+  response.writeHead(200);
+  response.write("Hello Kubernetes bootcamp! | Running on: ");
+  response.write(host);
+  response.end(" | v=1\n");
+  console.log("Running On:" ,host, "| Total Requests:", ++requests,"| App Uptime:", (new Date() - startTime)/1000 , "seconds", "| Log Time:",new Date());
+}
+var www = http.createServer(handleRequest);
+www.listen(8080,function () {
+    startTime = new Date();;
+    host = process.env.HOSTNAME;
+    console.log ("Kubernetes Bootcamp App Started At:",startTime, "| Running On: " ,host, "\n" );
+});
+
+$ kubectl exec kubernetes-bootcamp-7f55cc94d7-4ptq7 -n s09 -- curl -s http://localhost:8080
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-7f55cc94d7-4ptq7 | v=1
+
+$ kubectl logs kubernetes-bootcamp-7f55cc94d7-4ptq7 -n s09
+Kubernetes Bootcamp App Started At: 2026-10-07T11:31:14.084Z | Running On:  kubernetes-bootcamp-7f55cc94d7-4ptq7 
+
+Running On: kubernetes-bootcamp-7f55cc94d7-4ptq7 | Total Requests: 1 | App Uptime: 7.406 seconds | Log Time: 2026-10-07T11:31:21.491Z
+
+$ kubectl port-forward -n s09 pod/kubernetes-bootcamp-7f55cc94d7-4ptq7 18080:8080 >/dev/null 2>&1 & PF=$!; sleep 4; curl -s http://localhost:18080; kill $PF; wait $PF 2>/dev/null
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-7f55cc94d7-4ptq7 | v=1
+

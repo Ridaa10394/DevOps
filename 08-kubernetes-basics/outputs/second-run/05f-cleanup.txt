@@ -1,0 +1,16 @@
+### cleanup
+$ kubectl delete service kubernetes-bootcamp -n s09
+service "kubernetes-bootcamp" deleted from s09 namespace
+
+$ kubectl delete deployment kubernetes-bootcamp -n s09
+deployment.apps "kubernetes-bootcamp" deleted from s09 namespace
+
+$ kubectl delete pod curl-client -n s09 --wait=false
+pod "curl-client" deleted from s09 namespace
+
+$ kubectl get all -n s09
+NAME                                       READY   STATUS   RESTARTS   AGE
+pod/curl-client                            0/1     Error    0          2m28s
+pod/kubernetes-bootcamp-55587bb4dd-5ztkg   0/1     Error    0          83s
+pod/kubernetes-bootcamp-55587bb4dd-pps5k   0/1     Error    0          82s
+

@@ -1,0 +1,89 @@
+$ kubectl get pods -n kube-system -o wide
+NAME                               READY   STATUS    RESTARTS   AGE     IP             NODE       NOMINATED NODE   READINESS GATES
+coredns-559f6c778d-hkp62           0/1     Running   0          3m5s    10.244.0.2     minikube   <none>           <none>
+etcd-minikube                      1/1     Running   0          3m11s   192.168.49.2   minikube   <none>           <none>
+kindnet-kz4qr                      1/1     Running   0          3m5s    192.168.49.2   minikube   <none>           <none>
+kube-apiserver-minikube            1/1     Running   0          3m12s   192.168.49.2   minikube   <none>           <none>
+kube-controller-manager-minikube   1/1     Running   0          3m11s   192.168.49.2   minikube   <none>           <none>
+kube-proxy-pq7f8                   1/1     Running   0          3m5s    192.168.49.2   minikube   <none>           <none>
+kube-scheduler-minikube            1/1     Running   0          3m11s   192.168.49.2   minikube   <none>           <none>
+storage-provisioner                1/1     Running   0          3m10s   192.168.49.2   minikube   <none>           <none>
+
+$ kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo}' | python3 -m json.tool
+{
+    "architecture": "arm64",
+    "bootID": "5ce6d47a-b33f-430b-8d6d-c4116f73f1d4",
+    "containerRuntimeVersion": "containerd://2.3.4",
+    "kernelVersion": "7.0.12-linuxkit",
+    "kubeProxyVersion": "",
+    "kubeletVersion": "v1.37.0",
+    "machineID": "c7552358bf1aab9f1f21b3de6a971616",
+    "operatingSystem": "linux",
+    "osImage": "Debian GNU/Linux 12 (bookworm)",
+    "runningInUserNamespace": false,
+    "swap": {
+        "capacity": 1073737728
+    },
+    "systemUUID": "c7552358bf1aab9f1f21b3de6a971616"
+}
+
+$ minikube ssh -- 'ls /etc/kubernetes/manifests'
+etcd.yaml	     kube-controller-manager.yaml
+kube-apiserver.yaml  kube-scheduler.yaml
+
+$ minikube ssh -- 'systemctl is-active kubelet'
+active
+
+$ kubectl get ds -n kube-system
+NAME         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kindnet      1         1         1       1            1           <none>                   3m11s
+kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   3m12s
+
+$ kubectl api-resources | head -25
+NAME                                SHORTNAMES   APIVERSION                        NAMESPACED   KIND
+bindings                                         v1                                true         Binding
+componentstatuses                   cs           v1                                false        ComponentStatus
+configmaps                          cm           v1                                true         ConfigMap
+endpoints                           ep           v1                                true         Endpoints
+events                              ev           v1                                true         Event
+limitranges                         limits       v1                                true         LimitRange
+namespaces                          ns           v1                                false        Namespace
+nodes                               no           v1                                false        Node
+persistentvolumeclaims              pvc          v1                                true         PersistentVolumeClaim
+persistentvolumes                   pv           v1                                false        PersistentVolume
+pods                                po           v1                                true         Pod
+podtemplates                                     v1                                true         PodTemplate
+replicationcontrollers              rc           v1                                true         ReplicationController
+resourcequotas                      quota        v1                                true         ResourceQuota
+secrets                                          v1                                true         Secret
+serviceaccounts                     sa           v1                                true         ServiceAccount
+services                            svc          v1                                true         Service
+mutatingadmissionpolicies                        admissionregistration.k8s.io/v1   false        MutatingAdmissionPolicy
+mutatingadmissionpolicybindings                  admissionregistration.k8s.io/v1   false        MutatingAdmissionPolicyBinding
+mutatingwebhookconfigurations                    admissionregistration.k8s.io/v1   false        MutatingWebhookConfiguration
+validatingadmissionpolicies                      admissionregistration.k8s.io/v1   false        ValidatingAdmissionPolicy
+validatingadmissionpolicybindings                admissionregistration.k8s.io/v1   false        ValidatingAdmissionPolicyBinding
+validatingwebhookconfigurations                  admissionregistration.k8s.io/v1   false        ValidatingWebhookConfiguration
+customresourcedefinitions           crd,crds     apiextensions.k8s.io/v1           false        CustomResourceDefinition
+
+$ kubectl get pods -n kube-system -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image
+NAME                               IMAGE
+coredns-559f6c778d-hkp62           registry.k8s.io/coredns/coredns:v1.14.6
+etcd-minikube                      registry.k8s.io/etcd:3.7.0-0
+kindnet-kz4qr                      docker.io/kindest/kindnetd:v20260820-69b56db7
+kube-apiserver-minikube            registry.k8s.io/kube-apiserver:v1.37.0
+kube-controller-manager-minikube   registry.k8s.io/kube-controller-manager:v1.37.0
+kube-proxy-pq7f8                   registry.k8s.io/kube-proxy:v1.37.0
+kube-scheduler-minikube            registry.k8s.io/kube-scheduler:v1.37.0
+storage-provisioner                gcr.io/k8s-minikube/storage-provisioner:v5
+
+$ minikube ssh -- sudo crictl ps
+CONTAINER           IMAGE               CREATED             STATE               NAME                      ATTEMPT             POD ID              POD           
+a9bd4d8d971ac       fbccbf70a429f       16 seconds ago      Running             coredns                   0                   0c1a504cdc050       coredns-559f6c
+5dcee12c2dfbe       ba04bb24b9575       16 seconds ago      Running             storage-provisioner       0                   c6b644be5d8fa       storage-provis
+56077c699177b       8e13ccc0aaa68       35 seconds ago      Running             kindnet-cni               0                   3f46b8f37275b       kindnet-kz4qr 
+5178c3773c625       550b682d81d41       3 minutes ago       Running             kube-proxy                0                   cd0159b75ebd0       kube-proxy-pq7
+ea1108df2de9f       6003d52023b9d       3 minutes ago       Running             kube-apiserver            0                   ed91bbf0d8865       kube-apiserver
+095b81fa6608c       384eabc4fe526       3 minutes ago       Running             kube-scheduler            0                   54772d0659af5       kube-scheduler
+3483024633aaf       c2e426bbd1cd6       3 minutes ago       Running             etcd                      0                   44ba070b7d076       etcd-minikube 
+ca5eb5be18388       b1ad0e33c9012       3 minutes ago       Running             kube-controller-manager   0                   f2837eeefa4d3       kube-controlle

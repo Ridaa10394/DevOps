@@ -1,0 +1,64 @@
+### Module 4 - expose with a service
+$ kubectl get services -n s09
+No resources found in s09 namespace.
+
+$ kubectl apply -f manifests/06-bootcamp-service.yaml
+service/kubernetes-bootcamp created
+
+$ kubectl get services -n s09
+NAME                  TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+kubernetes-bootcamp   NodePort   10.103.135.29   <none>        8080:31372/TCP   0s
+
+$ kubectl describe services/kubernetes-bootcamp -n s09
+Name:                     kubernetes-bootcamp
+Namespace:                s09
+Labels:                   app=kubernetes-bootcamp
+Annotations:              <none>
+Selector:                 app=kubernetes-bootcamp
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.103.135.29
+IPs:                      10.103.135.29
+Port:                     <unset>  8080/TCP
+TargetPort:               8080/TCP
+NodePort:                 <unset>  31372/TCP
+Endpoints:                10.244.0.237:8080
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+$ echo NODE_PORT=31372
+NODE_PORT=31372
+
+$ kubectl exec -n s09 curl-client -- curl -s http://kubernetes-bootcamp.s09.svc.cluster.local:8080
+command terminated with exit code 7
+
+$ kubectl exec -n s09 curl-client -- curl -s http://192.168.49.2:31372
+command terminated with exit code 7
+
+$ kubectl port-forward -n s09 svc/kubernetes-bootcamp 18081:8080 >/dev/null 2>&1 & PF=$!; sleep 4; curl -s http://localhost:18081; kill $PF; wait $PF 2>/dev/null
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-7f55cc94d7-4frgm | v=1
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp --show-labels
+NAME                                   READY   STATUS    RESTARTS   AGE   LABELS
+kubernetes-bootcamp-7f55cc94d7-4frgm   1/1     Running   0          18s   app=kubernetes-bootcamp,pod-template-hash=7f55cc94d7
+
+$ kubectl label pods kubernetes-bootcamp-7f55cc94d7-4frgm -n s09 version=v1
+pod/kubernetes-bootcamp-7f55cc94d7-4frgm labeled
+
+$ kubectl describe pods kubernetes-bootcamp-7f55cc94d7-4frgm -n s09 | grep -A3 '^Labels'
+Labels:           app=kubernetes-bootcamp
+                  pod-template-hash=7f55cc94d7
+                  version=v1
+Annotations:      <none>
+
+$ kubectl get pods -n s09 -l version=v1
+NAME                                   READY   STATUS    RESTARTS   AGE
+kubernetes-bootcamp-7f55cc94d7-4frgm   1/1     Running   0          19s
+
+$ kubectl get services -n s09 -l app=kubernetes-bootcamp
+NAME                  TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+kubernetes-bootcamp   NodePort   10.103.135.29   <none>        8080:31372/TCP   5s
+

@@ -38,7 +38,11 @@ total 8
 11857 lrwxrwxrwx 1 ridaa ridaa 12 Sep  2 17:16 softlink.txt -> original.txt
 ```
 
+![Creating hard and soft links, then ls -li](screenshots/01-links-ls-li.png)
+
 original.txt and hardlink.txt share inode 11856 and both show link count 2, so they are really the same file. softlink.txt has its own inode (11857), link count 1, type l, and just points at original.txt.
+
+![Both links read the same content](screenshots/02-links-read-content.png)
 
 Now the actual test - delete the original and see what happens to each link:
 
@@ -52,6 +56,8 @@ Line added via hardlink.
 $ cat softlink.txt   # broken, target is gone
 cat: softlink.txt: No such file or directory
 ```
+
+![Deleting the original: hard link survives, soft link breaks](screenshots/03-links-delete-original.png)
 
 That is the whole point of the exercise - the hard link kept the data alive, the soft link broke because it only had the path, not the data.
 
@@ -129,6 +135,8 @@ Sep 02 17:18:53 RidasDen systemd-resolved[116]: Using system hostname 'RidasDen'
 Sep 02 17:18:53 RidasDen systemd[1]: Started systemd-resolved.service - Network Name Resolution.
 ```
 
+![journalctl -u systemd-resolved output](screenshots/04-journalctl-unit.png)
+
 And filtered down to just errors:
 
 ```
@@ -138,9 +146,17 @@ Sep 02 17:18:42 RidasDen login[362]: PAM unable to dlopen(pam_lastlog.so): No su
 Sep 02 17:18:42 RidasDen login[362]: PAM adding faulty module: pam_lastlog.so
 ```
 
+![journalctl -p err output](screenshots/05-journalctl-priority-err.png)
+
 That is basically the whole point of journalctl - one flag cut thousands of lines down to the 3 that actually matter.
 
 Full output including -b, --disk-usage and -o json-pretty is in [journalctl-output.txt](journalctl-output.txt).
+
+![journalctl --version output](screenshots/06-journalctl-version.png)
+
+![journalctl -n 10 output](screenshots/07-journalctl-last-10.png)
+
+![journalctl -b output](screenshots/08-journalctl-boot.png)
 
 ## Task 4 - Linux command cheat sheet
 

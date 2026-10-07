@@ -1,0 +1,52 @@
+### Module 5 - scale
+$ kubectl get rs -n s09 -l app=kubernetes-bootcamp
+NAME                             DESIRED   CURRENT   READY   AGE
+kubernetes-bootcamp-7f55cc94d7   1         1         1       17s
+
+$ kubectl scale deployments/kubernetes-bootcamp --replicas=4 -n s09
+deployment.apps/kubernetes-bootcamp scaled
+
+$ kubectl rollout status deployment/kubernetes-bootcamp -n s09 --timeout=300s
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 of 4 updated replicas are available...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 2 of 4 updated replicas are available...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 3 of 4 updated replicas are available...
+deployment "kubernetes-bootcamp" successfully rolled out
+
+$ kubectl get deployments -n s09
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   4/4     4            4           17s
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp -o wide
+NAME                                   READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+kubernetes-bootcamp-7f55cc94d7-8p4f2   1/1     Running   0          0s    10.244.0.182   minikube   <none>           <none>
+kubernetes-bootcamp-7f55cc94d7-lph75   1/1     Running   0          17s   10.244.0.174   minikube   <none>           <none>
+kubernetes-bootcamp-7f55cc94d7-mflzp   1/1     Running   0          0s    10.244.0.181   minikube   <none>           <none>
+kubernetes-bootcamp-7f55cc94d7-vjwh4   1/1     Running   0          0s    10.244.0.183   minikube   <none>           <none>
+
+$ kubectl describe deployments/kubernetes-bootcamp -n s09 | grep -A12 ^Events
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  17s   deployment-controller  Scaled up replica set kubernetes-bootcamp-7f55cc94d7 from 0 to 1
+  Normal  ScalingReplicaSet  0s    deployment-controller  Scaled up replica set kubernetes-bootcamp-7f55cc94d7 from 1 to 4
+
+$ kubectl get endpointslices -n s09 -l kubernetes.io/service-name=kubernetes-bootcamp
+NAME                        ADDRESSTYPE   PORTS   ENDPOINTS                                            AGE
+kubernetes-bootcamp-76wgw   IPv4          8080    10.244.0.174,10.244.0.183,10.244.0.182 + 1 more...   9s
+
+$ for i in 1 2 3 4 5 6; do kubectl run tmp-curl -n s09 --rm -i --image=curlimages/curl:latest --image-pull-policy=IfNotPresent --restart=Never --pod-running-timeout=4m -- curl -s http://kubernetes-bootcamp.s09.svc.cluster.local:8080 2>/dev/null | grep Running; done
+
+$ kubectl scale deployments/kubernetes-bootcamp --replicas=2 -n s09
+deployment.apps/kubernetes-bootcamp scaled
+
+$ kubectl get deployments -n s09
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   2/2     2            2           4m38s
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp -o wide
+NAME                                   READY   STATUS        RESTARTS   AGE     IP             NODE       NOMINATED NODE   READINESS GATES
+kubernetes-bootcamp-7f55cc94d7-8p4f2   1/1     Running       0          4m21s   10.244.0.182   minikube   <none>           <none>
+kubernetes-bootcamp-7f55cc94d7-lph75   1/1     Terminating   0          4m38s   10.244.0.174   minikube   <none>           <none>
+kubernetes-bootcamp-7f55cc94d7-mflzp   1/1     Terminating   0          4m21s   10.244.0.181   minikube   <none>           <none>
+kubernetes-bootcamp-7f55cc94d7-vjwh4   1/1     Running       0          4m21s   10.244.0.183   minikube   <none>           <none>
+

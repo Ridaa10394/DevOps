@@ -1,0 +1,40 @@
+### Module 2 - create a deployment
+$ kubectl create deployment kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1 -n s09 --dry-run=client -o yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: kubernetes-bootcamp
+  name: kubernetes-bootcamp
+  namespace: s09
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubernetes-bootcamp
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: kubernetes-bootcamp
+    spec:
+      containers:
+      - image: gcr.io/google-samples/kubernetes-bootcamp:v1
+        name: kubernetes-bootcamp
+        resources: {}
+status: {}
+
+$ kubectl apply -f manifests/05-bootcamp-deployment.yaml
+deployment.apps/kubernetes-bootcamp created
+
+$ kubectl rollout status deployment/kubernetes-bootcamp -n s09 --timeout=300s
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 0 of 1 updated replicas are available...
+deployment "kubernetes-bootcamp" successfully rolled out
+
+$ kubectl annotate deployment/kubernetes-bootcamp -n s09 kubernetes.io/change-cause='initial v1 deploy'
+deployment.apps/kubernetes-bootcamp annotated
+
+$ kubectl get deployments -n s09
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   1/1     1            1           1s
+

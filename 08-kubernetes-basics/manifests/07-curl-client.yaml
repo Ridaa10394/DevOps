@@ -1,0 +1,21 @@
+# Long-lived helper pod so I can `kubectl exec` curl requests from inside the cluster
+apiVersion: v1
+kind: Pod
+metadata:
+  name: curl-client
+  namespace: s09
+  labels:
+    app: curl-client
+spec:
+  containers:
+    - name: curl
+      image: curlimages/curl:latest
+      imagePullPolicy: IfNotPresent
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: 5m
+          memory: 8Mi
+        limits:
+          cpu: 100m
+          memory: 32Mi

@@ -1,0 +1,156 @@
+### Module 6 - rolling update and undo
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp
+NAME                                   READY   STATUS    RESTARTS   AGE
+kubernetes-bootcamp-7f55cc94d7-4ptq7   1/1     Running   0          61s
+kubernetes-bootcamp-7f55cc94d7-g6s8g   1/1     Running   0          39s
+
+$ kubectl describe pods -n s09 -l app=kubernetes-bootcamp | grep 'Image:'
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+
+$ kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=docker.io/jocatalin/kubernetes-bootcamp:v2 -n s09
+deployment.apps/kubernetes-bootcamp image updated
+
+$ kubectl annotate deployment/kubernetes-bootcamp -n s09 kubernetes.io/change-cause='update to v2' --overwrite
+deployment.apps/kubernetes-bootcamp annotated
+
+$ kubectl rollout status deployments/kubernetes-bootcamp -n s09 --timeout=300s
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 old replicas are pending termination...
+deployment "kubernetes-bootcamp" successfully rolled out
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp
+NAME                                   READY   STATUS    RESTARTS   AGE
+kubernetes-bootcamp-55587bb4dd-lk92j   1/1     Running   0          32s
+kubernetes-bootcamp-55587bb4dd-w2k6v   1/1     Running   0          31s
+kubernetes-bootcamp-7f55cc94d7-g6s8g   0/1     Error     0          71s
+
+$ kubectl get rs -n s09 -l app=kubernetes-bootcamp
+NAME                             DESIRED   CURRENT   READY   AGE
+kubernetes-bootcamp-55587bb4dd   2         2         2       32s
+kubernetes-bootcamp-7f55cc94d7   0         0         0       93s
+
+$ kubectl describe pods -n s09 -l app=kubernetes-bootcamp | grep 'Image:'
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+
+$ for i in 1 2 3; do kubectl exec -n s09 curl-client -- curl -s http://kubernetes-bootcamp.s09.svc.cluster.local:8080; done
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-55587bb4dd-lk92j | v=2
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-55587bb4dd-w2k6v | v=2
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-55587bb4dd-w2k6v | v=2
+
+$ kubectl rollout history deployments/kubernetes-bootcamp -n s09
+deployment.apps/kubernetes-bootcamp 
+REVISION  CHANGE-CAUSE
+1         initial v1 deploy
+2         update to v2
+
+
+### bad update (image tag that doesn't exist)
+$ kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=gcr.io/google-samples/kubernetes-bootcamp:v10 -n s09
+deployment.apps/kubernetes-bootcamp image updated
+
+$ kubectl annotate deployment/kubernetes-bootcamp -n s09 kubernetes.io/change-cause='broken v10' --overwrite
+deployment.apps/kubernetes-bootcamp annotated
+
+$ kubectl rollout status deployments/kubernetes-bootcamp -n s09 --timeout=10s
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+error: timed out waiting for the condition
+
+$ kubectl get deployments -n s09
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   2/2     1            2           110s
+
+$ kubectl get rs -n s09 -l app=kubernetes-bootcamp
+NAME                             DESIRED   CURRENT   READY   AGE
+kubernetes-bootcamp-55587bb4dd   2         2         2       49s
+kubernetes-bootcamp-7f55cc94d7   0         0         0       110s
+kubernetes-bootcamp-9ccdddfbc    1         1         0       16s
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp
+NAME                                   READY   STATUS         RESTARTS   AGE
+kubernetes-bootcamp-55587bb4dd-lk92j   1/1     Running        0          49s
+kubernetes-bootcamp-55587bb4dd-w2k6v   1/1     Running        0          48s
+kubernetes-bootcamp-9ccdddfbc-mjnh4    0/1     ErrImagePull   0          16s
+
+$ kubectl get events -n s09 --field-selector reason=Failed --sort-by=.lastTimestamp | tail -4
+3m26s       Warning   Failed   pod/kubernetes-bootcamp-9ccdddfbc-zpjb4   Error: ImagePullBackOff
+13s         Warning   Failed   pod/kubernetes-bootcamp-9ccdddfbc-mjnh4   Failed to pull image "gcr.io/google-samples/kubernetes-bootcamp:v10": rpc error: code = NotFound desc = failed to pull and unpack image "gcr.io/google-samples/kubernetes-bootcamp:v10": failed to resolve reference "gcr.io/google-samples/kubernetes-bootcamp:v10": gcr.io/google-samples/kubernetes-bootcamp:v10: not found
+13s         Warning   Failed   pod/kubernetes-bootcamp-9ccdddfbc-mjnh4   Error: ErrImagePull
+13s         Warning   Failed   pod/kubernetes-bootcamp-9ccdddfbc-mjnh4   Error: ImagePullBackOff
+
+$ kubectl exec -n s09 curl-client -- curl -s http://kubernetes-bootcamp.s09.svc.cluster.local:8080
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-55587bb4dd-w2k6v | v=2
+
+$ kubectl rollout history deployments/kubernetes-bootcamp -n s09
+deployment.apps/kubernetes-bootcamp 
+REVISION  CHANGE-CAUSE
+1         initial v1 deploy
+2         update to v2
+3         broken v10
+
+
+$ kubectl rollout undo deployments/kubernetes-bootcamp -n s09
+Warning: resource deployments/kubernetes-bootcamp was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/kubernetes-bootcamp rolled back
+
+$ kubectl rollout status deployments/kubernetes-bootcamp -n s09 --timeout=300s
+deployment "kubernetes-bootcamp" successfully rolled out
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp
+NAME                                   READY   STATUS    RESTARTS   AGE
+kubernetes-bootcamp-55587bb4dd-lk92j   1/1     Running   0          52s
+kubernetes-bootcamp-55587bb4dd-w2k6v   1/1     Running   0          51s
+
+$ kubectl describe pods -n s09 -l app=kubernetes-bootcamp | grep 'Image:'
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+
+$ kubectl rollout history deployments/kubernetes-bootcamp -n s09
+deployment.apps/kubernetes-bootcamp 
+REVISION  CHANGE-CAUSE
+1         initial v1 deploy
+3         broken v10
+4         update to v2
+
+
+### undo all the way back to v1
+$ kubectl rollout undo deployments/kubernetes-bootcamp --to-revision=1 -n s09
+Warning: resource deployments/kubernetes-bootcamp was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/kubernetes-bootcamp rolled back
+
+$ kubectl rollout status deployments/kubernetes-bootcamp -n s09 --timeout=300s
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 old replicas are pending termination...
+deployment "kubernetes-bootcamp" successfully rolled out
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp
+NAME                                   READY   STATUS    RESTARTS   AGE
+kubernetes-bootcamp-7f55cc94d7-jt52c   1/1     Running   0          31s
+kubernetes-bootcamp-7f55cc94d7-wz8v9   1/1     Running   0          32s
+
+$ kubectl describe pods -n s09 -l app=kubernetes-bootcamp | grep 'Image:'
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+
+$ for i in 1 2 3; do kubectl exec -n s09 curl-client -- curl -s http://kubernetes-bootcamp.s09.svc.cluster.local:8080; done
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-7f55cc94d7-wz8v9 | v=1
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-7f55cc94d7-jt52c | v=1
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-7f55cc94d7-wz8v9 | v=1
+
+$ kubectl rollout history deployments/kubernetes-bootcamp -n s09
+deployment.apps/kubernetes-bootcamp 
+REVISION  CHANGE-CAUSE
+3         broken v10
+4         update to v2
+5         initial v1 deploy
+
+

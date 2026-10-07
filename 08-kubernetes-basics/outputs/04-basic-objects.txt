@@ -1,0 +1,126 @@
+$ kubectl apply -f manifests/00-namespace.yaml
+namespace/s09 unchanged
+
+$ kubectl get ns s09 --show-labels
+NAME   STATUS   AGE   LABELS
+s09    Active   39m   kubernetes.io/metadata.name=s09,owner=ridaa,session=9
+
+### Pod
+$ kubectl apply -f manifests/01-pod.yaml
+pod/nginx-pod created
+
+$ kubectl wait --for=condition=Ready pod/nginx-pod -n s09 --timeout=300s
+pod/nginx-pod condition met
+
+$ kubectl get pod nginx-pod -n s09 -o wide
+NAME        READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+nginx-pod   1/1     Running   0          1s    10.244.0.20   minikube   <none>           <none>
+
+$ kubectl describe pod nginx-pod -n s09 | grep -A20 '^Events:'
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  1s    default-scheduler  Successfully assigned s09/nginx-pod to minikube
+  Normal  Pulled     0s    kubelet            spec.containers{nginx}: Container image "nginx:1.27-alpine" already present on machine and can be accessed by the pod
+  Normal  Created    0s    kubelet            spec.containers{nginx}: Container created
+  Normal  Started    0s    kubelet            spec.containers{nginx}: Container started
+
+### ReplicaSet (self-healing)
+$ kubectl apply -f manifests/02-replicaset.yaml
+replicaset.apps/nginx-rs created
+
+$ kubectl wait --for=condition=Ready pod -l app=nginx-rs -n s09 --timeout=300s
+pod/nginx-rs-fcs6g condition met
+pod/nginx-rs-n86dr condition met
+pod/nginx-rs-ndlw8 condition met
+
+$ kubectl get rs,pods -n s09 -l app=nginx-rs
+NAME                 READY   STATUS    RESTARTS   AGE
+pod/nginx-rs-fcs6g   1/1     Running   0          1s
+pod/nginx-rs-n86dr   1/1     Running   0          1s
+pod/nginx-rs-ndlw8   1/1     Running   0          1s
+
+$ kubectl delete pod nginx-rs-fcs6g -n s09 --wait=false
+pod "nginx-rs-fcs6g" deleted from s09 namespace
+
+$ kubectl get pods -n s09 -l app=nginx-rs
+NAME             READY   STATUS              RESTARTS   AGE
+nginx-rs-fcs6g   1/1     Terminating         0          1s
+nginx-rs-n86dr   1/1     Running             0          1s
+nginx-rs-ndlw8   1/1     Running             0          1s
+nginx-rs-v4qxp   0/1     ContainerCreating   0          0s
+
+$ kubectl get rs,pods -n s09 -l app=nginx-rs
+NAME                 READY   STATUS    RESTARTS   AGE
+pod/nginx-rs-n86dr   1/1     Running   0          5s
+pod/nginx-rs-ndlw8   1/1     Running   0          5s
+pod/nginx-rs-v4qxp   1/1     Running   0          4s
+
+### Deployment
+$ kubectl apply -f manifests/03-deployment.yaml
+deployment.apps/web created
+
+$ kubectl rollout status deployment/web -n s09 --timeout=300s
+Waiting for deployment "web" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "web" rollout to finish: 1 of 2 updated replicas are available...
+deployment "web" successfully rolled out
+
+$ kubectl get deploy,rs,pods -n s09 -l app=web --show-labels
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE   LABELS
+deployment.apps/web   2/2     2            2           0s    app=web
+
+NAME                             DESIRED   CURRENT   READY   AGE   LABELS
+replicaset.apps/web-5c6f4bf8d6   2         2         2       0s    app=web,pod-template-hash=5c6f4bf8d6
+
+NAME                       READY   STATUS    RESTARTS   AGE   LABELS
+pod/web-5c6f4bf8d6-7mpjf   1/1     Running   0          0s    app=web,pod-template-hash=5c6f4bf8d6
+pod/web-5c6f4bf8d6-c5c6v   1/1     Running   0          0s    app=web,pod-template-hash=5c6f4bf8d6
+
+### Service
+$ kubectl apply -f manifests/04-service.yaml
+service/web-svc created
+
+$ kubectl get svc web-svc -n s09
+NAME      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+web-svc   ClusterIP   10.102.250.21   <none>        80/TCP    1s
+
+$ kubectl get endpointslices -n s09 -l kubernetes.io/service-name=web-svc
+NAME            ADDRESSTYPE   PORTS   ENDPOINTS                 AGE
+web-svc-wd8kq   IPv4          80      10.244.0.31,10.244.0.32   1s
+
+$ until kubectl exec -n s09 curl-client -- curl -s -o /dev/null http://web-svc.s09.svc.cluster.local; do echo 'not reachable yet, retrying'; sleep 3; done
+command terminated with exit code 7
+not reachable yet, retrying
+
+$ kubectl exec -n s09 curl-client -- sh -c 'curl -s http://web-svc.s09.svc.cluster.local | grep -i title'
+<title>Welcome to nginx!</title>
+
+$ kubectl exec -n s09 curl-client -- nslookup web-svc.s09.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+
+Name:	web-svc.s09.svc.cluster.local
+Address: 10.102.250.21
+
+
+$ kubectl get all -n s09
+NAME                       READY   STATUS    RESTARTS   AGE
+pod/curl-client            1/1     Running   0          11s
+pod/nginx-pod              1/1     Running   0          10s
+pod/nginx-rs-n86dr         1/1     Running   0          9s
+pod/nginx-rs-ndlw8         1/1     Running   0          9s
+pod/nginx-rs-v4qxp         1/1     Running   0          8s
+pod/web-5c6f4bf8d6-7mpjf   1/1     Running   0          4s
+pod/web-5c6f4bf8d6-c5c6v   1/1     Running   0          4s
+
+NAME              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+service/web-svc   ClusterIP   10.102.250.21   <none>        80/TCP    4s
+
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web   2/2     2            2           4s
+
+NAME                             DESIRED   CURRENT   READY   AGE
+replicaset.apps/nginx-rs         3         3         3       9s
+replicaset.apps/web-5c6f4bf8d6   2         2         2       4s
+

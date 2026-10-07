@@ -1,0 +1,141 @@
+### Module 6 - rolling update and undo
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp
+NAME                                   READY   STATUS        RESTARTS   AGE
+kubernetes-bootcamp-7f55cc94d7-8p4f2   1/1     Running       0          4m21s
+kubernetes-bootcamp-7f55cc94d7-lph75   1/1     Terminating   0          4m38s
+kubernetes-bootcamp-7f55cc94d7-mflzp   1/1     Terminating   0          4m21s
+kubernetes-bootcamp-7f55cc94d7-vjwh4   1/1     Running       0          4m21s
+
+$ kubectl describe pods -n s09 -l app=kubernetes-bootcamp | grep Image:
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+
+$ kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=docker.io/jocatalin/kubernetes-bootcamp:v2 -n s09
+deployment.apps/kubernetes-bootcamp image updated
+
+$ kubectl rollout status deployments/kubernetes-bootcamp -n s09 --timeout=300s
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 old replicas are pending termination...
+deployment "kubernetes-bootcamp" successfully rolled out
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp
+NAME                                   READY   STATUS        RESTARTS   AGE
+kubernetes-bootcamp-55587bb4dd-rc59v   1/1     Running       0          1s
+kubernetes-bootcamp-55587bb4dd-sqvqk   1/1     Running       0          1s
+kubernetes-bootcamp-7f55cc94d7-8p4f2   1/1     Terminating   0          4m22s
+kubernetes-bootcamp-7f55cc94d7-lph75   1/1     Terminating   0          4m39s
+kubernetes-bootcamp-7f55cc94d7-mflzp   1/1     Terminating   0          4m22s
+kubernetes-bootcamp-7f55cc94d7-vjwh4   1/1     Terminating   0          4m22s
+
+$ kubectl get rs -n s09 -l app=kubernetes-bootcamp
+NAME                             DESIRED   CURRENT   READY   AGE
+kubernetes-bootcamp-55587bb4dd   2         2         2       1s
+kubernetes-bootcamp-7f55cc94d7   0         0         0       4m39s
+
+$ kubectl describe pods -n s09 -l app=kubernetes-bootcamp | grep Image:
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+
+$ kubectl run tmp-curl -n s09 --rm -i --image=curlimages/curl:latest --image-pull-policy=IfNotPresent --restart=Never --pod-running-timeout=4m -- curl -s http://kubernetes-bootcamp.s09.svc.cluster.local:8080
+Error from server (AlreadyExists): object is being deleted: pods "tmp-curl" already exists
+
+$ kubectl rollout history deployments/kubernetes-bootcamp -n s09
+deployment.apps/kubernetes-bootcamp 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+
+
+### bad update (image tag that doesn't exist)
+$ kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=gcr.io/google-samples/kubernetes-bootcamp:v10 -n s09
+deployment.apps/kubernetes-bootcamp image updated
+
+$ kubectl get deployments -n s09
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   2/2     1            2           5m24s
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp
+NAME                                   READY   STATUS              RESTARTS   AGE
+kubernetes-bootcamp-55587bb4dd-rc59v   1/1     Running             0          46s
+kubernetes-bootcamp-55587bb4dd-sqvqk   1/1     Running             0          46s
+kubernetes-bootcamp-9ccdddfbc-zqvsj    0/1     ContainerCreating   0          45s
+
+$ kubectl describe pods -n s09 -l app=kubernetes-bootcamp | grep -E 'Image:|Reason|Failed' | sort | uniq -c
+   1       Reason:       ContainerCreating
+   2     Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+   1     Image:          gcr.io/google-samples/kubernetes-bootcamp:v10
+
+$ kubectl rollout history deployments/kubernetes-bootcamp -n s09
+deployment.apps/kubernetes-bootcamp 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+3         <none>
+
+
+$ kubectl rollout undo deployments/kubernetes-bootcamp -n s09
+Warning: resource deployments/kubernetes-bootcamp was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/kubernetes-bootcamp rolled back
+
+$ kubectl rollout status deployments/kubernetes-bootcamp -n s09 --timeout=300s
+deployment "kubernetes-bootcamp" successfully rolled out
+
+$ kubectl get pods -n s09 -l app=kubernetes-bootcamp
+NAME                                   READY   STATUS        RESTARTS   AGE
+kubernetes-bootcamp-55587bb4dd-rc59v   1/1     Running       0          46s
+kubernetes-bootcamp-55587bb4dd-sqvqk   1/1     Running       0          46s
+kubernetes-bootcamp-9ccdddfbc-zqvsj    0/1     Terminating   0          45s
+
+$ kubectl describe pods -n s09 -l app=kubernetes-bootcamp | grep Image:
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v10
+
+$ kubectl rollout history deployments/kubernetes-bootcamp -n s09
+deployment.apps/kubernetes-bootcamp 
+REVISION  CHANGE-CAUSE
+1         <none>
+3         <none>
+4         <none>
+
+
+### undo back to v1 (revision 1)
+$ kubectl rollout undo deployments/kubernetes-bootcamp --to-revision=1 -n s09
+Warning: resource deployments/kubernetes-bootcamp was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/kubernetes-bootcamp rolled back
+
+$ kubectl rollout status deployments/kubernetes-bootcamp -n s09 --timeout=300s
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "kubernetes-bootcamp" rollout to finish: 1 old replicas are pending termination...
+deployment "kubernetes-bootcamp" successfully rolled out
+
+$ kubectl describe pods -n s09 -l app=kubernetes-bootcamp | grep Image:
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+    Image:          docker.io/jocatalin/kubernetes-bootcamp:v2
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v10
+
+$ kubectl run tmp-curl -n s09 --rm -i --image=curlimages/curl:latest --image-pull-policy=IfNotPresent --restart=Never --pod-running-timeout=4m -- curl -s http://kubernetes-bootcamp.s09.svc.cluster.local:8080
+Error from server (AlreadyExists): object is being deleted: pods "tmp-curl" already exists
+
+$ kubectl rollout history deployments/kubernetes-bootcamp -n s09
+deployment.apps/kubernetes-bootcamp 
+REVISION  CHANGE-CAUSE
+3         <none>
+4         <none>
+5         <none>
+
+

@@ -1,0 +1,110 @@
+$ kubectl apply -f manifests/00-namespace.yaml
+namespace/s09 created
+
+$ kubectl get ns s09 --show-labels
+NAME   STATUS   AGE   LABELS
+s09    Active   0s    kubernetes.io/metadata.name=s09,owner=ridaa,session=9
+
+$ kubectl apply -f manifests/01-pod.yaml
+pod/nginx-pod created
+
+$ kubectl wait --for=condition=Ready pod/nginx-pod -n s09 --timeout=180s
+error: timed out waiting for the condition on pods/nginx-pod
+
+$ kubectl get pod nginx-pod -n s09 -o wide
+NAME        READY   STATUS              RESTARTS   AGE   IP       NODE       NOMINATED NODE   READINESS GATES
+nginx-pod   0/1     ContainerCreating   0          3m    <none>   minikube   <none>           <none>
+
+$ kubectl describe pod nginx-pod -n s09 | tail -12
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  3m    default-scheduler  Successfully assigned s09/nginx-pod to minikube
+  Normal  Pulling    3m    kubelet            spec.containers{nginx}: Pulling image "nginx:1.27-alpine"
+
+$ kubectl apply -f manifests/02-replicaset.yaml
+replicaset.apps/nginx-rs created
+
+$ kubectl wait --for=condition=Ready pod -l app=nginx-rs -n s09 --timeout=180s
+timed out waiting for the condition on pods/nginx-rs-jmff6
+timed out waiting for the condition on pods/nginx-rs-qjrft
+timed out waiting for the condition on pods/nginx-rs-r66xc
+
+$ kubectl get rs,pods -n s09 -l app=nginx-rs
+NAME                 READY   STATUS              RESTARTS   AGE
+pod/nginx-rs-jmff6   0/1     ContainerCreating   0          3m
+pod/nginx-rs-qjrft   0/1     ContainerCreating   0          3m
+pod/nginx-rs-r66xc   0/1     ContainerCreating   0          3m
+
+$ kubectl delete pod nginx-rs-jmff6 -n s09 --wait=false
+pod "nginx-rs-jmff6" deleted from s09 namespace
+
+$ kubectl get pods -n s09 -l app=nginx-rs
+NAME             READY   STATUS              RESTARTS   AGE
+nginx-rs-hflkp   1/1     Running             0          4s
+nginx-rs-jmff6   0/1     Terminating         0          3m4s
+nginx-rs-qjrft   0/1     ContainerCreating   0          3m4s
+nginx-rs-r66xc   0/1     ContainerCreating   0          3m4s
+
+$ kubectl apply -f manifests/03-deployment.yaml
+deployment.apps/web created
+
+$ kubectl rollout status deployment/web -n s09 --timeout=180s
+Waiting for deployment "web" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "web" rollout to finish: 1 of 2 updated replicas are available...
+deployment "web" successfully rolled out
+
+$ kubectl get deploy,rs,pods -n s09 -l app=web
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web   2/2     2            2           1s
+
+NAME                             DESIRED   CURRENT   READY   AGE
+replicaset.apps/web-5c6f4bf8d6   2         2         2       1s
+
+NAME                       READY   STATUS    RESTARTS   AGE
+pod/web-5c6f4bf8d6-h5vv4   1/1     Running   0          1s
+pod/web-5c6f4bf8d6-vnzrw   1/1     Running   0          1s
+
+$ kubectl apply -f manifests/04-service.yaml
+service/web-svc created
+
+$ kubectl get svc web-svc -n s09
+NAME      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+web-svc   ClusterIP   10.100.122.208   <none>        80/TCP    0s
+
+$ kubectl get endpointslices -n s09 -l kubernetes.io/service-name=web-svc
+NAME            ADDRESSTYPE   PORTS   ENDPOINTS                 AGE
+web-svc-x96hs   IPv4          80      10.244.0.41,10.244.0.42   0s
+
+$ kubectl run tmp-curl -n s09 --rm -i --image=curlimages/curl --restart=Never -- curl -s -o /dev/null -w "HTTP %{http_code} from web-svc\n" http://web-svc.s09.svc.cluster.local
+pod "tmp-curl" deleted from s09 namespace
+error: timed out waiting for the condition
+
+$ kubectl get all -n s09
+NAME                       READY   STATUS              RESTARTS   AGE
+pod/nginx-pod              0/1     ContainerCreating   0          7m5s
+pod/nginx-rs-hflkp         1/1     Running             0          65s
+pod/nginx-rs-jmff6         0/1     Terminating         0          4m5s
+pod/nginx-rs-qjrft         0/1     ContainerCreating   0          4m5s
+pod/nginx-rs-r66xc         0/1     ContainerCreating   0          4m5s
+pod/tmp-curl               0/1     Terminating         0          60s
+pod/web-5c6f4bf8d6-h5vv4   1/1     Running             0          61s
+pod/web-5c6f4bf8d6-vnzrw   1/1     Running             0          61s
+
+NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/web-svc   ClusterIP   10.100.122.208   <none>        80/TCP    60s
+
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web   2/2     2            2           61s
+
+NAME                             DESIRED   CURRENT   READY   AGE
+replicaset.apps/nginx-rs         3         3         1       4m5s
+replicaset.apps/web-5c6f4bf8d6   2         2         2       61s
+

@@ -38,6 +38,8 @@ docker network create isolated-net
 docker network ls
 ```
 
+![creating the three networks and docker network ls](screenshots/01-network-create.png)
+
 ### Step 2 - create the containers
 
 ```bash
@@ -54,6 +56,8 @@ docker run -d --name database --network backend-net \
 docker run -d --name backend --network frontend-net alpine:latest sleep infinity
 ```
 
+![creating the frontend, database and backend containers](screenshots/02-create-containers.png)
+
 ### Step 3 - attach backend to the second network
 
 docker run only lets you pick one network up front. Extra ones get attached after the fact:
@@ -68,6 +72,8 @@ Check it's actually on both:
 docker inspect backend -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'
 # expected: backend-net frontend-net
 ```
+
+![backend attached to both networks](screenshots/03-backend-on-both-networks.png)
 
 ### Step 4 - check connectivity
 
@@ -91,6 +97,10 @@ docker exec frontend ping -c 3 database
 docker exec frontend ping -c 3 backend
 ```
 
+![backend pinging frontend and database (both succeed)](screenshots/04-ping-from-backend.png)
+
+![frontend cannot resolve database, but can reach backend](screenshots/05-ping-from-frontend.png)
+
 Also checked the actual database port from backend:
 
 ```bash
@@ -106,6 +116,8 @@ docker network inspect frontend-net -f '{{range .Containers}}{{.Name}} {{end}}'
 docker network inspect backend-net -f '{{range .Containers}}{{.Name}} {{end}}'
 # expected: backend database
 ```
+
+![nc to MySQL port, network membership and docker ps](screenshots/06-nc-and-network-inspect.png)
 
 ### Expected results
 
@@ -127,6 +139,10 @@ docker compose up -d
 docker compose ps
 docker compose down
 ```
+
+![docker compose up -d and docker compose ps](screenshots/07-compose-up-ps.png)
+
+![docker compose down](screenshots/08-compose-down.png)
 
 ### Cleanup
 
@@ -182,6 +198,10 @@ docker ps
 curl http://localhost:80
 ```
 
+![docker pull httpd:2.4](screenshots/09-pull-httpd.png)
+
+![Apache on the host network - docker run, docker ps (no PORTS) and curl on port 80](screenshots/10-host-network-run-curl.png)
+
 Then open http://localhost - should show the Apache default page ("It works!").
 
 ### What the host network actually does
@@ -205,6 +225,8 @@ docker exec apache-host ip addr show
 # apache shows up bound on the host itself
 sudo ss -tulnp | grep :80
 ```
+
+![ip addr not available in the httpd image; ss shows *:80 bound directly on the host](screenshots/11-host-network-ss.png)
 
 ### Bridge vs host
 
@@ -262,6 +284,8 @@ docker run -d --name nginx-bind \
   nginx:alpine
 ```
 
+![starting nginx with the bind mount](screenshots/12-bind-mount-run.png)
+
 On Windows PowerShell:
 
 ```powershell
@@ -275,6 +299,8 @@ The -v syntax is hostPath:containerPath. The host path has to be absolute - if i
 ```bash
 curl http://localhost:8090
 ```
+
+![curl before editing - Hello students](screenshots/13-bind-mount-before-edit.png)
 
 Expected: `<h1>Hello students</h1>` - or open http://localhost:8090 in a browser.
 
@@ -294,6 +320,8 @@ The new content shows up right away. Confirm the container was never restarted:
 docker ps --filter name=nginx-bind --format "{{.Names}} {{.Status}}"
 # status should still show the original uptime, no restart
 ```
+
+![curl after editing the host file - updated live, uptime kept climbing](screenshots/14-bind-mount-after-edit.png)
 
 ### What's actually happening
 

@@ -25,6 +25,8 @@ $ git status --short
 ?? untracked.txt
 ```
 
+![git status before committing](screenshots/01-status-start.png)
+
 Attempt 1, plain git commit -m with nothing staged:
 
 ```
@@ -42,6 +44,8 @@ Untracked files:
 no changes added to commit (use "git add" and/or "git commit -a")
 ```
 
+![git commit -m with nothing staged](screenshots/02-commit-without-a.png)
+
 Nothing got committed since the modification was never staged.
 
 Attempt 2, git commit -a -m:
@@ -52,6 +56,8 @@ $ git commit -a -m "Update app.txt using commit -a -m"
  1 file changed, 1 insertion(+), 1 deletion(-)
 ```
 
+![git commit -a -m](screenshots/03-commit-with-a.png)
+
 That worked, -a staged the modified tracked file on its own.
 
 But checking what got left behind:
@@ -60,6 +66,8 @@ But checking what got left behind:
 $ git status --short
 ?? untracked.txt
 ```
+
+![untracked file left behind](screenshots/04-status-after.png)
 
 untracked.txt is still sitting there uncommitted. That's the actual difference, and why you can't just assume -a is the same as git add . - it quietly skips anything new.
 
@@ -77,6 +85,8 @@ de7cce5 main: commit number 4
 6d4d5d7 Update app.txt using commit -a -m
 3093bd9 Initial commit: add app.txt
 ```
+
+![commits on main](screenshots/05-log-main.png)
 
 Five commits on main.
 
@@ -101,12 +111,16 @@ de7cce5 main: commit number 4
 3093bd9 Initial commit: add app.txt
 ```
 
+![feature branch commits](screenshots/06-feature-branch.png)
+
 Step 3, find the one I actually want:
 
 ```
 $ git log --oneline --grep=bugfix
 58158ad feature: add bugfix.txt (THIS ONE WILL BE CHERRY-PICKED)
 ```
+
+![finding the bugfix commit](screenshots/07-find-bugfix.png)
 
 Target commit: 58158add711db70938ec3a178537e167486d9311
 
@@ -128,6 +142,8 @@ $ git cherry-pick 58158add711db70938ec3a178537e167486d9311
  create mode 100644 bugfix.txt
 ```
 
+![cherry-picking onto main](screenshots/08-cherry-pick.png)
+
 Step 5, confirm it landed on main:
 
 ```
@@ -138,6 +154,8 @@ bugfix.txt
 $ cat bugfix.txt
 BUGFIX applied
 ```
+
+![bugfix.txt on main](screenshots/09-verify-main.png)
 
 bugfix.txt is now on main. alpha.txt and beta.txt are not - only the one commit I picked came across.
 
@@ -150,6 +168,8 @@ de7cce5 main: commit number 4
 6d4d5d7 Update app.txt using commit -a -m
 3093bd9 Initial commit: add app.txt
 ```
+
+![main log after cherry-pick](screenshots/10-log-after.png)
 
 Step 6, the branch graph, this is the interesting part:
 
@@ -166,6 +186,8 @@ $ git log --oneline --all --graph
 * 6d4d5d7 Update app.txt using commit -a -m
 * 3093bd9 Initial commit: add app.txt
 ```
+
+![branch graph after cherry-pick](screenshots/11-graph.png)
 
 Same commit message shows up twice, on two different branches, with two different hashes:
 

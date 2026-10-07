@@ -73,6 +73,14 @@ docker ps
 curl http://localhost:8080
 ```
 
+![docker build - builder stage (full npm install)](screenshots/01-build-builder-stage.png)
+
+![docker build - production stage (npm install --omit=dev, copy from builder)](screenshots/02-build-production-stage.png)
+
+![docker run with -p 8080:3000 and docker ps showing the port mapping](screenshots/03-run-and-ps.png)
+
+![curl http://localhost:8080 returning the multi-stage app response](screenshots/04-curl-8080.png)
+
 Then open http://localhost:8080 in a browser.
 
 ### Expected result
@@ -101,6 +109,8 @@ aa7dc0a0adcf   hw-multistage   "docker-entrypoint.s…"   3 seconds ago   Up 2 s
 $ curl http://localhost:8080
 <h1>Hello World from Docker Multi-Stage Build!</h1>
 ```
+
+![docker images size comparison](screenshots/05-image-size-comparison.png)
 
 Matches what was expected above. Full build/run log is in [docker-run-logs/06-output.txt](../docker-run-logs/06-output.txt).
 
@@ -161,4 +171,4 @@ java-app and React-app are both multi-stage builds themselves, so the technique 
 
 ## Still missing
 
-Browser screenshot at http://localhost:8080 and a docker ps screenshot showing the port mapping - no GUI browser available where I ran this, so those are still open. The command output that would go with them is already captured in [docker-run-logs/06-output.txt](../docker-run-logs/06-output.txt), including a docker images comparison.
+Browser screenshot at http://localhost:8080 - no GUI browser available where I ran this, so that one is still open. The docker ps output showing the port mapping is now in [screenshots/03-run-and-ps.png](screenshots/03-run-and-ps.png). The command output that would go with them is already captured in [docker-run-logs/06-output.txt](../docker-run-logs/06-output.txt), including a docker images comparison.
