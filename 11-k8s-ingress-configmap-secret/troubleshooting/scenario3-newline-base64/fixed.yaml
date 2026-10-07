@@ -1,0 +1,42 @@
+# FIXED: value generated with  echo -n "mypassword" | base64   (no trailing newline)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pg-secret
+  namespace: s12-trouble
+type: Opaque
+data:
+  POSTGRES_PASSWORD: bXlwYXNzd29yZA==
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pg-client
+  namespace: s12-trouble
+spec:
+  containers:
+    - name: client
+      image: busybox:latest
+      imagePullPolicy: IfNotPresent
+      # pretend "app" that compares the password it got against what the DB expects
+      command:
+        - sh
+        - -c
+        - |
+          if [ "$(cat /etc/pg/POSTGRES_PASSWORD)" = "mypassword" ] && [ $(wc -c < /etc/pg/POSTGRES_PASSWORD) -eq 10 ]; then
+            echo "auth OK"
+          else
+            echo "FATAL: password authentication failed (got $(wc -c < /etc/pg/POSTGRES_PASSWORD) bytes)"
+          fi
+          sleep 3600
+      volumeMounts:
+        - name: pg
+          mountPath: /etc/pg
+          readOnly: true
+      resources:
+        requests: { cpu: 10m, memory: 16Mi }
+        limits:   { cpu: 50m, memory: 32Mi }
+  volumes:
+    - name: pg
+      secret:
+        secretName: pg-secret

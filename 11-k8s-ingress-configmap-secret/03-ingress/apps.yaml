@@ -1,0 +1,137 @@
+# Two tiny backends for the Ingress demo (app1 = blue, app2 = green)
+---
+# app1: nginx whose config comes from a ConfigMap. It echoes back which app answered,
+# which pod, and the Host/URI it actually received - handy for proving routing.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app1-nginx-conf
+  namespace: s12
+data:
+  default.conf: |
+    server {
+      listen 80;
+      location / {
+        default_type text/plain;
+        return 200 "Hello from app1 (blue)\npod=$hostname host=$host uri=$request_uri\n";
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app1
+  namespace: s12
+  labels:
+    app: app1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app1
+  template:
+    metadata:
+      labels:
+        app: app1
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/nginx/conf.d
+          readinessProbe:
+            httpGet: { path: /, port: 80 }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits:   { cpu: 100m, memory: 64Mi }
+      volumes:
+        - name: conf
+          configMap:
+            name: app1-nginx-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app1-svc
+  namespace: s12
+spec:
+  type: ClusterIP
+  selector:
+    app: app1
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+# app2: nginx whose config comes from a ConfigMap. It echoes back which app answered,
+# which pod, and the Host/URI it actually received - handy for proving routing.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app2-nginx-conf
+  namespace: s12
+data:
+  default.conf: |
+    server {
+      listen 80;
+      location / {
+        default_type text/plain;
+        return 200 "Hello from app2 (green)\npod=$hostname host=$host uri=$request_uri\n";
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  namespace: s12
+  labels:
+    app: app2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app2
+  template:
+    metadata:
+      labels:
+        app: app2
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/nginx/conf.d
+          readinessProbe:
+            httpGet: { path: /, port: 80 }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits:   { cpu: 100m, memory: 64Mi }
+      volumes:
+        - name: conf
+          configMap:
+            name: app2-nginx-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app2-svc
+  namespace: s12
+spec:
+  type: ClusterIP
+  selector:
+    app: app2
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

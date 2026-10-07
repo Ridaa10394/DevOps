@@ -1,0 +1,54 @@
+# before the change
+$ kubectl -n s12 exec cm-demo -- cat /etc/app/LOG_LEVEL
+INFO
+$ kubectl -n s12 exec cm-demo -- printenv MY_LOG_LEVEL
+INFO
+
+$ kubectl -n s12 patch configmap app-config --type merge -p '{"data":{"LOG_LEVEL":"DEBUG"}}'
+configmap/app-config patched
+
+$ kubectl -n s12 get configmap app-config -o jsonpath={.data.LOG_LEVEL}
+DEBUG
+# polling the mounted file every 10s (kubelet sync period + cache TTL)
+t=10s  /etc/app/LOG_LEVEL=INFO
+t=20s  /etc/app/LOG_LEVEL=INFO
+t=30s  /etc/app/LOG_LEVEL=INFO
+t=40s  /etc/app/LOG_LEVEL=INFO
+t=50s  /etc/app/LOG_LEVEL=INFO
+t=60s  /etc/app/LOG_LEVEL=INFO
+t=70s  /etc/app/LOG_LEVEL=INFO
+t=80s  /etc/app/LOG_LEVEL=INFO
+t=90s  /etc/app/LOG_LEVEL=INFO
+t=100s  /etc/app/LOG_LEVEL=DEBUG
+
+# after the change
+$ kubectl -n s12 exec cm-demo -- cat /etc/app/LOG_LEVEL
+DEBUG
+$ kubectl -n s12 exec cm-demo -- printenv MY_LOG_LEVEL
+INFO
+
+$ kubectl -n s12 exec cm-demo -- ls -la /etc/app
+total 12
+drwxrwxrwx    3 root     root          4096 Oct  7 11:05 .
+drwxr-xr-x    1 root     root          4096 Oct  7 11:04 ..
+drwxr-xr-x    2 root     root          4096 Oct  7 11:05 ..2026_10_07_11_05_54.1612623162
+lrwxrwxrwx    1 root     root            32 Oct  7 11:05 ..data -> ..2026_10_07_11_05_54.1612623162
+lrwxrwxrwx    1 root     root            14 Oct  7 11:04 APP_ENV -> ..data/APP_ENV
+lrwxrwxrwx    1 root     root            15 Oct  7 11:04 APP_PORT -> ..data/APP_PORT
+lrwxrwxrwx    1 root     root            24 Oct  7 11:04 FEATURE_DARK_MODE -> ..data/FEATURE_DARK_MODE
+lrwxrwxrwx    1 root     root            16 Oct  7 11:04 LOG_LEVEL -> ..data/LOG_LEVEL
+lrwxrwxrwx    1 root     root            21 Oct  7 11:04 app.properties -> ..data/app.properties
+
+# env vars are read once at container start - recreate the pod to pick up the new value
+$ kubectl -n s12 delete pod cm-demo
+pod "cm-demo" deleted from s12 namespace
+
+$ kubectl apply -f 01-configmap/configmap-demo-pod.yaml
+pod/cm-demo created
+
+$ kubectl -n s12 wait --for=condition=Ready pod/cm-demo --timeout=120s
+pod/cm-demo condition met
+
+$ kubectl -n s12 exec cm-demo -- printenv MY_LOG_LEVEL
+DEBUG
+

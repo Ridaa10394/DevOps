@@ -1,0 +1,48 @@
+########## BEFORE ##########
+$ kubectl apply -f troubleshooting/scenario4-double-base64/broken.yaml
+secret/redis-secret created
+pod/cache-client created
+
+$ kubectl -n s12-trouble wait --for=condition=Ready pod/cache-client --timeout=120s
+pod/cache-client condition met
+
+$ kubectl -n s12-trouble logs cache-client
+(error) WRONGPASS invalid username-password pair
+
+$ kubectl -n s12-trouble exec cache-client -- printenv REDIS_PASSWORD
+ZGVtby1yZWRpcy1wYXNzLW5vdC1yZWFs
+
+$ kubectl -n s12-trouble get secret redis-secret -o jsonpath='{.data.REDIS_PASSWORD}'; echo
+WkdWdGJ5MXlaV1JwY3kxd1lYTnpMVzV2ZEMxeVpXRnM=
+
+$ kubectl -n s12-trouble get secret redis-secret -o jsonpath='{.data.REDIS_PASSWORD}' | base64 --decode; echo
+ZGVtby1yZWRpcy1wYXNzLW5vdC1yZWFs
+
+$ kubectl -n s12-trouble get secret redis-secret -o jsonpath='{.data.REDIS_PASSWORD}' | base64 --decode | base64 --decode; echo
+demo-redis-pass-not-real
+
+########## FIX ##########
+$ kubectl apply -f troubleshooting/scenario4-double-base64/fixed.yaml
+secret/redis-secret configured
+pod/cache-client unchanged
+
+$ kubectl -n s12-trouble delete pod cache-client
+pod "cache-client" deleted from s12-trouble namespace
+
+$ kubectl apply -f troubleshooting/scenario4-double-base64/fixed.yaml
+secret/redis-secret configured
+pod/cache-client created
+
+$ kubectl -n s12-trouble wait --for=condition=Ready pod/cache-client --timeout=120s
+pod/cache-client condition met
+
+########## AFTER ##########
+$ kubectl -n s12-trouble get secret redis-secret -o jsonpath='{.data.REDIS_PASSWORD}'; echo
+ZGVtby1yZWRpcy1wYXNzLW5vdC1yZWFs
+
+$ kubectl -n s12-trouble exec cache-client -- printenv REDIS_PASSWORD
+demo-redis-pass-not-real
+
+$ kubectl -n s12-trouble logs cache-client
+redis AUTH OK
+

@@ -1,0 +1,30 @@
+# FIXED: the env var now references the key that actually exists (DB_URL)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orders-config
+  namespace: s12-trouble
+data:
+  DB_URL: "postgres://orders-db:5432/orders"
+  LOG_LEVEL: "WARN"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: orders-api
+  namespace: s12-trouble
+spec:
+  containers:
+    - name: api
+      image: busybox:latest
+      imagePullPolicy: IfNotPresent
+      command: ["sh", "-c", "echo DATABASE_URL=$DATABASE_URL; sleep 3600"]
+      env:
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: orders-config
+              key: DB_URL               # <-- fixed
+      resources:
+        requests: { cpu: 10m, memory: 16Mi }
+        limits:   { cpu: 50m, memory: 32Mi }

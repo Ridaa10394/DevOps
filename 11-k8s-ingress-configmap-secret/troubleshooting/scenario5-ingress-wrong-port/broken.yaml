@@ -1,0 +1,22 @@
+# BROKEN: the Ingress sends traffic to shop-svc:8080, but shop-svc only exposes port 80
+# (someone used the app's "usual" port instead of the Service port)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shop-ingress
+  namespace: s12-trouble
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: shop.s12.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: shop-svc
+                port:
+                  number: 8080      # <-- wrong: Service port is 80

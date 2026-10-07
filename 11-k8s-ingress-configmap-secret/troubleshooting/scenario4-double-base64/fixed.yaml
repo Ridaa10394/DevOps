@@ -1,0 +1,36 @@
+# FIXED: stringData takes the plain value; Kubernetes does the (single) base64 encoding.
+# (Equivalent alternative: keep the encoded value but move it under "data:".)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+  namespace: s12-trouble
+type: Opaque
+stringData:
+  REDIS_PASSWORD: "demo-redis-pass-not-real"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cache-client
+  namespace: s12-trouble
+spec:
+  containers:
+    - name: client
+      image: busybox:latest
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+        - -c
+        - |
+          if [ "$REDIS_PASSWORD" = "demo-redis-pass-not-real" ]; then echo "redis AUTH OK"; else echo "(error) WRONGPASS invalid username-password pair"; fi
+          sleep 3600
+      env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: REDIS_PASSWORD
+      resources:
+        requests: { cpu: 10m, memory: 16Mi }
+        limits:   { cpu: 50m, memory: 32Mi }

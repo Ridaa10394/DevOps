@@ -1,0 +1,113 @@
+# instructor's app/backend-with-config.yaml applied as-is into s12-trouble (no ConfigMap/Secret created yet)
+$ kubectl -n s12-trouble apply -f troubleshooting/scenario1-instructor-app/backend-with-config.yaml
+deployment.apps/yatri-backend created
+
+########## BEFORE ##########
+$ kubectl -n s12-trouble get deploy yatri-backend
+NAME            READY   UP-TO-DATE   AVAILABLE   AGE
+yatri-backend   0/2     2            0           20m
+
+$ kubectl -n s12-trouble get pods -l app=yatri-backend
+NAME                             READY   STATUS                       RESTARTS   AGE
+yatri-backend-679fbcd789-bpjlw   0/1     CreateContainerConfigError   0          4m33s
+yatri-backend-679fbcd789-qq9m9   0/1     CreateContainerConfigError   0          4m33s
+
+$ kubectl -n s12-trouble describe pod yatri-backend-679fbcd789-bpjlw | sed -n '/Environment Variables from:/,/Environment:/p;/Events:/,$p'
+    Environment Variables from:
+      yatri-app-config  ConfigMap  Optional: false
+      yatri-db-secret   Secret     Optional: false
+    Environment:        <none>
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  4m33s             default-scheduler  Successfully assigned s12-trouble/yatri-backend-679fbcd789-bpjlw to minikube
+  Normal   Pulling    4m33s             kubelet            spec.containers{backend}: Pulling image "python:3.11-alpine3.19"
+  Normal   Pulled     30s               kubelet            spec.containers{backend}: Successfully pulled image "python:3.11-alpine3.19" in 3.29s (4m2.556s including waiting). Image size: 22329854 bytes.
+  Warning  Failed     6s (x4 over 30s)  kubelet            spec.containers{backend}: Error: configmap "yatri-app-config" not found
+  Normal   Pulled     6s (x3 over 30s)  kubelet            spec.containers{backend}: Container image "python:3.11-alpine3.19" already present on machine and can be accessed by the pod
+
+$ kubectl -n s12-trouble get configmap,secret
+NAME                         DATA   AGE
+configmap/kube-root-ca.crt   1      29m
+configmap/orders-config      2      20m
+configmap/shop-nginx-conf    1      52s
+
+NAME                  TYPE     DATA   AGE
+secret/pg-secret      Opaque   1      19m
+secret/redis-secret   Opaque   1      18m
+
+$ kubectl get configmap -A --field-selector metadata.name=yatri-app-config
+No resources found
+
+$ kubectl -n s12-trouble logs yatri-backend-679fbcd789-bpjlw
+Error from server (BadRequest): container "backend" in pod "yatri-backend-679fbcd789-bpjlw" is waiting to start: CreateContainerConfigError
+
+########## FIX ##########
+$ kubectl apply -f troubleshooting/scenario1-instructor-app/fix-config-and-secret.yaml
+configmap/yatri-app-config created
+secret/yatri-db-secret created
+
+# kubelet retries CreateContainerConfigError on its own - no restart needed
+$ kubectl -n s12-trouble rollout status deploy/yatri-backend --timeout=120s
+Waiting for deployment "yatri-backend" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "yatri-backend" rollout to finish: 1 of 2 updated replicas are available...
+deployment "yatri-backend" successfully rolled out
+
+########## AFTER ##########
+$ kubectl -n s12-trouble get pods -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-679fbcd789-bpjlw   1/1     Running   0          4m44s
+yatri-backend-679fbcd789-qq9m9   1/1     Running   0          4m44s
+
+$ kubectl -n s12-trouble logs deploy/yatri-backend
+Found 2 pods, using pod/yatri-backend-679fbcd789-bpjlw
+
+$ kubectl -n s12-trouble exec deploy/yatri-backend -- env | grep -E 'ENVIRONMENT|LOG_LEVEL|DEFAULT_CURRENCY|POSTGRES_' | sort
+DEFAULT_CURRENCY=INR
+ENVIRONMENT=production
+LOG_LEVEL=INFO
+POSTGRES_DB=yatri_production_db
+POSTGRES_PASSWORD=demo-password-not-real
+POSTGRES_USER=yatri_admin
+
+
+########## SECOND ISSUE: pods Running but 'kubectl logs' is empty ##########
+$ kubectl -n s12-trouble logs deploy/yatri-backend | wc -c
+Found 2 pods, using pod/yatri-backend-679fbcd789-bpjlw
+       0
+
+$ kubectl -n s12-trouble exec deploy/yatri-backend -- ps
+PID   USER     TIME  COMMAND
+    1 root      0:00 python3 -c import os, time; print(f'Running with ENV={os.getenv("ENVIRONMENT")} and USER={os.getenv("POSTGRES_USER")}'); time.sleep(3600)
+   13 root      0:00 ps
+
+$ diff troubleshooting/scenario1-instructor-app/backend-with-config.yaml troubleshooting/scenario1-instructor-app/backend-with-config.fixed.yaml
+0a1
+> # Instructor's app/backend-with-config.yaml + one fix (PYTHONUNBUFFERED), namespaced to s12-trouble
+23a25,29
+>           # FIX 2: python buffers stdout when it's not a terminal, so the print()
+>           # never reached `kubectl logs` before the 1h sleep. Unbuffer it.
+>           env:
+>             - name: PYTHONUNBUFFERED
+>               value: "1"
+
+$ kubectl -n s12-trouble apply -f troubleshooting/scenario1-instructor-app/backend-with-config.fixed.yaml
+deployment.apps/yatri-backend configured
+
+$ kubectl -n s12-trouble rollout status deploy/yatri-backend --timeout=120s
+Waiting for deployment "yatri-backend" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "yatri-backend" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "yatri-backend" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "yatri-backend" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "yatri-backend" rollout to finish: 1 old replicas are pending termination...
+deployment "yatri-backend" successfully rolled out
+
+$ kubectl -n s12-trouble get pods -l app=yatri-backend
+NAME                             READY   STATUS    RESTARTS   AGE
+yatri-backend-76475cff4b-9jqpx   1/1     Running   0          32s
+yatri-backend-76475cff4b-l5k4k   1/1     Running   0          32s
+
+$ kubectl -n s12-trouble logs -l app=yatri-backend --prefix
+[pod/yatri-backend-76475cff4b-9jqpx/backend] Running with ENV=production and USER=yatri_admin
+[pod/yatri-backend-76475cff4b-l5k4k/backend] Running with ENV=production and USER=yatri_admin
+

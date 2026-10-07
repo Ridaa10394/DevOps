@@ -1,0 +1,33 @@
+# Host-based routing: the Host header decides the backend.
+#   http://app1.s12.local/ -> app1-svc
+#   http://app2.s12.local/ -> app2-svc
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: s12-host-ingress
+  namespace: s12
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: app1.s12.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app1-svc
+                port:
+                  number: 80
+    - host: app2.s12.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app2-svc
+                port:
+                  number: 80

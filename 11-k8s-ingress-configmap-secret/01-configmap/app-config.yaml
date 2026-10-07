@@ -1,0 +1,19 @@
+# Declarative ConfigMap - plain, non-sensitive settings
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: s12
+  labels:
+    app: s12-demo
+data:
+  # simple key/value pairs (good for env / envFrom)
+  APP_ENV: "staging"
+  LOG_LEVEL: "INFO"
+  APP_PORT: "8080"
+  FEATURE_DARK_MODE: "true"
+  # a whole file as one key (good for volume mounts)
+  app.properties: |
+    app.name=s12-demo
+    app.greeting=Hello from a ConfigMap
+    cache.ttl.seconds=60

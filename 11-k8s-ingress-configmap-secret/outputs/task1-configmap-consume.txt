@@ -1,0 +1,40 @@
+$ kubectl apply -f 01-configmap/configmap-demo-pod.yaml
+pod/cm-demo created
+
+$ kubectl -n s12 wait --for=condition=Ready pod/cm-demo --timeout=180s
+pod/cm-demo condition met
+
+$ kubectl -n s12 get pod cm-demo -o wide
+NAME      READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+cm-demo   1/1     Running   0          1s    10.244.0.51   minikube   <none>           <none>
+
+$ kubectl -n s12 exec cm-demo -- env | sort | grep -E 'MY_LOG_LEVEL|DB_HOST|DB_PORT|CACHE_ENABLED'
+CACHE_ENABLED=true
+DB_HOST=postgres.s12.svc.cluster.local
+DB_PORT=5432
+MY_LOG_LEVEL=INFO
+
+$ kubectl -n s12 exec cm-demo -- ls -la /etc/app
+total 12
+drwxrwxrwx    3 root     root          4096 Oct  7 11:04 .
+drwxr-xr-x    1 root     root          4096 Oct  7 11:04 ..
+drwxr-xr-x    2 root     root          4096 Oct  7 11:04 ..2026_10_07_11_04_24.2894288849
+lrwxrwxrwx    1 root     root            32 Oct  7 11:04 ..data -> ..2026_10_07_11_04_24.2894288849
+lrwxrwxrwx    1 root     root            14 Oct  7 11:04 APP_ENV -> ..data/APP_ENV
+lrwxrwxrwx    1 root     root            15 Oct  7 11:04 APP_PORT -> ..data/APP_PORT
+lrwxrwxrwx    1 root     root            24 Oct  7 11:04 FEATURE_DARK_MODE -> ..data/FEATURE_DARK_MODE
+lrwxrwxrwx    1 root     root            16 Oct  7 11:04 LOG_LEVEL -> ..data/LOG_LEVEL
+lrwxrwxrwx    1 root     root            21 Oct  7 11:04 app.properties -> ..data/app.properties
+
+$ kubectl -n s12 exec cm-demo -- cat /etc/app/app.properties
+app.name=s12-demo
+app.greeting=Hello from a ConfigMap
+cache.ttl.seconds=60
+
+$ kubectl -n s12 exec cm-demo -- cat /etc/app/LOG_LEVEL
+INFO
+$ kubectl -n s12 exec cm-demo -- cat /etc/nginx-extra/nginx-extra.conf
+# sample file loaded with: kubectl create configmap ... --from-file
+server_tokens off;
+client_max_body_size 2m;
+

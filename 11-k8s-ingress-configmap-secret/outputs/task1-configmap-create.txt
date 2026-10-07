@@ -1,0 +1,86 @@
+$ kubectl apply -f 00-namespace.yaml
+namespace/s12 created
+namespace/s12-trouble created
+
+$ kubectl apply -f 01-configmap/app-config.yaml
+configmap/app-config created
+
+$ kubectl -n s12 create configmap cli-config --from-literal=DB_HOST=postgres.s12.svc.cluster.local --from-literal=DB_PORT=5432 --from-literal=CACHE_ENABLED=true
+configmap/cli-config created
+
+$ kubectl -n s12 create configmap nginx-extra --from-file=01-configmap/nginx-extra.conf
+configmap/nginx-extra created
+
+$ kubectl -n s12 get configmaps
+NAME               DATA   AGE
+app-config         5      0s
+cli-config         3      0s
+kube-root-ca.crt   1      0s
+nginx-extra        1      0s
+
+$ kubectl -n s12 describe configmap app-config
+Name:         app-config
+Namespace:    s12
+Labels:       app=s12-demo
+Annotations:  <none>
+
+Data
+====
+APP_ENV:
+----
+staging
+
+APP_PORT:
+----
+8080
+
+FEATURE_DARK_MODE:
+----
+true
+
+LOG_LEVEL:
+----
+INFO
+
+app.properties:
+----
+app.name=s12-demo
+app.greeting=Hello from a ConfigMap
+cache.ttl.seconds=60
+
+
+
+BinaryData
+====
+
+Events:  <none>
+
+$ kubectl -n s12 get configmap cli-config -o yaml
+apiVersion: v1
+data:
+  CACHE_ENABLED: "true"
+  DB_HOST: postgres.s12.svc.cluster.local
+  DB_PORT: "5432"
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2026-10-07T10:59:02Z"
+  name: cli-config
+  namespace: s12
+  resourceVersion: "1663"
+  uid: ffd54e47-4249-47d2-b2c8-61cfa3714fa0
+
+$ kubectl -n s12 get configmap nginx-extra -o yaml
+apiVersion: v1
+data:
+  nginx-extra.conf: |
+    # sample file loaded with: kubectl create configmap ... --from-file
+    server_tokens off;
+    client_max_body_size 2m;
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2026-10-07T10:59:02Z"
+  name: nginx-extra
+  namespace: s12
+  resourceVersion: "1664"
+  uid: 8cdba4ae-eea0-48e7-bbd1-b9fcf71ea018
+

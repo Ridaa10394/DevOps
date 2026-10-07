@@ -1,0 +1,72 @@
+$ kubectl apply -f 03-ingress/ingress-path.yaml
+ingress.networking.k8s.io/s12-path-ingress created
+ingress.networking.k8s.io/s12-rewrite-ingress created
+
+$ kubectl apply -f 03-ingress/ingress-host.yaml
+ingress.networking.k8s.io/s12-host-ingress created
+
+$ kubectl -n s12 get ingress
+NAME                  CLASS   HOSTS                           ADDRESS        PORTS   AGE
+s12-host-ingress      nginx   app1.s12.local,app2.s12.local   192.168.49.2   80      45s
+s12-path-ingress      nginx   app.s12.local                   192.168.49.2   80      46s
+s12-rewrite-ingress   nginx   api.s12.local                   192.168.49.2   80      46s
+
+$ kubectl -n s12 describe ingress s12-path-ingress
+Name:             s12-path-ingress
+Labels:           <none>
+Namespace:        s12
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host           Path  Backends
+  ----           ----  --------
+  app.s12.local  
+                 /app1   app1-svc:80 (10.244.0.85:80,10.244.0.84:80)
+                 /app2   app2-svc:80 (10.244.0.86:80,10.244.0.87:80)
+Annotations:     nginx.ingress.kubernetes.io/ssl-redirect: false
+Events:
+  Type    Reason  Age               From                      Message
+  ----    ------  ----              ----                      -------
+  Normal  Sync    0s (x2 over 46s)  nginx-ingress-controller  Scheduled for sync
+
+$ kubectl -n s12 describe ingress s12-host-ingress
+Name:             s12-host-ingress
+Labels:           <none>
+Namespace:        s12
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host            Path  Backends
+  ----            ----  --------
+  app1.s12.local  
+                  /   app1-svc:80 (10.244.0.85:80,10.244.0.84:80)
+  app2.s12.local  
+                  /   app2-svc:80 (10.244.0.86:80,10.244.0.87:80)
+Annotations:      nginx.ingress.kubernetes.io/ssl-redirect: false
+Events:
+  Type    Reason  Age               From                      Message
+  ----    ------  ----              ----                      -------
+  Normal  Sync    0s (x2 over 45s)  nginx-ingress-controller  Scheduled for sync
+
+$ kubectl -n s12 describe ingress s12-rewrite-ingress
+Name:             s12-rewrite-ingress
+Labels:           <none>
+Namespace:        s12
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host           Path  Backends
+  ----           ----  --------
+  api.s12.local  
+                 /api(/|$)(.*)   app2-svc:80 (10.244.0.86:80,10.244.0.87:80)
+Annotations:     nginx.ingress.kubernetes.io/rewrite-target: /$2
+                 nginx.ingress.kubernetes.io/ssl-redirect: false
+                 nginx.ingress.kubernetes.io/use-regex: true
+Events:
+  Type    Reason  Age               From                      Message
+  ----    ------  ----              ----                      -------
+  Normal  Sync    0s (x2 over 46s)  nginx-ingress-controller  Scheduled for sync
+

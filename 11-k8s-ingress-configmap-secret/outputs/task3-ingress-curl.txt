@@ -1,0 +1,70 @@
+# kubectl -n ingress-nginx port-forward svc/ingress-nginx-controller 18120:80   (running in background)
+
+## path-based routing (host app.s12.local)
+$ curl -s -H 'Host: app.s12.local' localhost:18120/app1
+Hello from app1 (blue)
+pod=app1-55d65ddfc8-fp4m7 host=app.s12.local uri=/app1
+
+$ curl -s -H 'Host: app.s12.local' localhost:18120/app2
+Hello from app2 (green)
+pod=app2-865dc465b4-q57jf host=app.s12.local uri=/app2
+
+$ curl -s -H 'Host: app.s12.local' localhost:18120/app1/orders/42
+Hello from app1 (blue)
+pod=app1-55d65ddfc8-fp4m7 host=app.s12.local uri=/app1/orders/42
+
+$ curl -s -H 'Host: app.s12.local' localhost:18120/app2/healthz
+Hello from app2 (green)
+pod=app2-865dc465b4-q57jf host=app.s12.local uri=/app2/healthz
+
+## no rule for / or /app3 on this host -> controller's default backend
+$ curl -s -i -H 'Host: app.s12.local' localhost:18120/ | head -1
+HTTP/1.1 404 Not Found
+
+$ curl -s -i -H 'Host: app.s12.local' localhost:18120/app3 | head -1
+HTTP/1.1 404 Not Found
+
+## Prefix matching is per path element: /app1x is NOT /app1
+$ curl -s -i -H 'Host: app.s12.local' localhost:18120/app1x | head -1
+HTTP/1.1 404 Not Found
+
+## host-based routing
+$ curl -s -H 'Host: app1.s12.local' localhost:18120/
+Hello from app1 (blue)
+pod=app1-55d65ddfc8-fp4m7 host=app1.s12.local uri=/
+
+$ curl -s -H 'Host: app2.s12.local' localhost:18120/
+Hello from app2 (green)
+pod=app2-865dc465b4-q57jf host=app2.s12.local uri=/
+
+$ curl -s -H 'Host: app1.s12.local' localhost:18120/anything/here
+Hello from app1 (blue)
+pod=app1-55d65ddfc8-klr2v host=app1.s12.local uri=/anything/here
+
+## unknown host -> 404
+$ curl -s -i -H 'Host: nope.s12.local' localhost:18120/ | head -1
+HTTP/1.1 404 Not Found
+
+## rewrite-target example (api.s12.local, /api prefix stripped)
+$ curl -s -H 'Host: api.s12.local' localhost:18120/api/users
+Hello from app2 (green)
+pod=app2-865dc465b4-q57jf host=api.s12.local uri=/users
+
+$ curl -s -H 'Host: api.s12.local' localhost:18120/api
+Hello from app2 (green)
+pod=app2-865dc465b4-7fzg9 host=api.s12.local uri=/
+
+## load balancing across the 2 replicas of app1 (6 requests)
+$ for i in 1 2 3 4 5 6; do curl -s -H 'Host: app1.s12.local' localhost:18120/ | sed -n 2p; done
+pod=app1-55d65ddfc8-klr2v host=app1.s12.local uri=/
+pod=app1-55d65ddfc8-fp4m7 host=app1.s12.local uri=/
+pod=app1-55d65ddfc8-klr2v host=app1.s12.local uri=/
+pod=app1-55d65ddfc8-klr2v host=app1.s12.local uri=/
+pod=app1-55d65ddfc8-klr2v host=app1.s12.local uri=/
+pod=app1-55d65ddfc8-fp4m7 host=app1.s12.local uri=/
+
+## alternative: --resolve instead of a Host header (same as an /etc/hosts entry)
+$ curl -s --resolve app2.s12.local:18120:127.0.0.1 http://app2.s12.local:18120/
+Hello from app2 (green)
+pod=app2-865dc465b4-q57jf host=app2.s12.local uri=/
+

@@ -1,0 +1,11 @@
+$ kubectl delete namespace s12 s12-trouble
+namespace "s12" deleted
+namespace "s12-trouble" deleted
+
+$ kubectl get ns s12 s12-trouble
+Error from server (NotFound): namespaces "s12" not found
+Error from server (NotFound): namespaces "s12-trouble" not found
+
+$ lsof -iTCP:18120 -sTCP:LISTEN | wc -l
+       0
+

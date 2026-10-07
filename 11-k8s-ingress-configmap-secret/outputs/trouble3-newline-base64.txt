@@ -1,0 +1,79 @@
+########## BEFORE ##########
+$ echo "mypassword" | xxd
+00000000: 6d79 7061 7373 776f 7264 0a              mypassword.
+
+$ echo "mypassword" | base64
+bXlwYXNzd29yZAo=
+
+$ echo -n "mypassword" | base64
+bXlwYXNzd29yZA==
+
+$ kubectl apply -f troubleshooting/scenario3-newline-base64/broken.yaml
+secret/pg-secret created
+pod/pg-client created
+
+$ kubectl -n s12-trouble wait --for=condition=Ready pod/pg-client --timeout=120s
+pod/pg-client condition met
+
+$ kubectl -n s12-trouble get pod pg-client
+NAME        READY   STATUS    RESTARTS   AGE
+pg-client   1/1     Running   0          1s
+
+$ kubectl -n s12-trouble logs pg-client
+FATAL: password authentication failed (got 11 bytes)
+
+$ kubectl -n s12-trouble describe secret pg-secret
+Name:         pg-secret
+Namespace:    s12-trouble
+Labels:       <none>
+Annotations:  <none>
+
+Type:  Opaque
+
+Data
+====
+POSTGRES_PASSWORD:  11 bytes
+
+$ kubectl -n s12-trouble get secret pg-secret -o jsonpath='{.data.POSTGRES_PASSWORD}' | base64 --decode | xxd
+00000000: 6d79 7061 7373 776f 7264 0a              mypassword.
+
+$ kubectl -n s12-trouble exec pg-client -- od -c /etc/pg/POSTGRES_PASSWORD
+0000000   m   y   p   a   s   s   w   o   r   d  \n
+0000013
+
+########## FIX ##########
+$ kubectl apply -f troubleshooting/scenario3-newline-base64/fixed.yaml
+secret/pg-secret configured
+pod/pg-client configured
+
+# the pod read the file at startup, so restart it (a Deployment would use rollout restart)
+$ kubectl -n s12-trouble delete pod pg-client
+pod "pg-client" deleted from s12-trouble namespace
+
+$ kubectl apply -f troubleshooting/scenario3-newline-base64/fixed.yaml
+secret/pg-secret unchanged
+pod/pg-client created
+
+$ kubectl -n s12-trouble wait --for=condition=Ready pod/pg-client --timeout=120s
+pod/pg-client condition met
+
+########## AFTER ##########
+$ kubectl -n s12-trouble describe secret pg-secret
+Name:         pg-secret
+Namespace:    s12-trouble
+Labels:       <none>
+Annotations:  <none>
+
+Type:  Opaque
+
+Data
+====
+POSTGRES_PASSWORD:  10 bytes
+
+$ kubectl -n s12-trouble exec pg-client -- od -c /etc/pg/POSTGRES_PASSWORD
+0000000   m   y   p   a   s   s   w   o   r   d
+0000012
+
+$ kubectl -n s12-trouble logs pg-client
+auth OK
+

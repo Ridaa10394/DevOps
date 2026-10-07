@@ -1,0 +1,43 @@
+# One pod, three ways of consuming ConfigMaps:
+#   1. env + configMapKeyRef  (single key)
+#   2. envFrom + configMapRef (every key becomes an env var)
+#   3. volume mount           (every key becomes a file)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cm-demo
+  namespace: s12
+  labels:
+    app: cm-demo
+spec:
+  containers:
+    - name: app
+      image: busybox:latest
+      imagePullPolicy: IfNotPresent
+      command: ["sh", "-c", "sleep 3600"]
+      env:
+        - name: MY_LOG_LEVEL            # renamed on the way in
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: LOG_LEVEL
+      envFrom:
+        - configMapRef:
+            name: cli-config            # created with kubectl create configmap --from-literal
+      volumeMounts:
+        - name: config-vol
+          mountPath: /etc/app
+          readOnly: true
+        - name: nginx-vol
+          mountPath: /etc/nginx-extra
+          readOnly: true
+      resources:
+        requests: { cpu: 10m, memory: 16Mi }
+        limits:   { cpu: 50m, memory: 32Mi }
+  volumes:
+    - name: config-vol
+      configMap:
+        name: app-config
+    - name: nginx-vol
+      configMap:
+        name: nginx-extra               # created with --from-file

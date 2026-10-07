@@ -1,0 +1,56 @@
+# Path-based routing: one host, the URL path decides the backend.
+#   http://app.s12.local/app1  -> app1-svc
+#   http://app.s12.local/app2  -> app2-svc
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: s12-path-ingress
+  namespace: s12
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: app.s12.local
+      http:
+        paths:
+          - path: /app1
+            pathType: Prefix
+            backend:
+              service:
+                name: app1-svc
+                port:
+                  number: 80
+          - path: /app2
+            pathType: Prefix
+            backend:
+              service:
+                name: app2-svc
+                port:
+                  number: 80
+---
+# Same idea but with a rewrite (like the instructor's 04-full-demo /api rule):
+# the /api prefix is stripped before the request reaches the pod.
+#   http://api.s12.local/api/users -> app2-svc sees "/users"
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: s12-rewrite-ingress
+  namespace: s12
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.s12.local
+      http:
+        paths:
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: app2-svc
+                port:
+                  number: 80

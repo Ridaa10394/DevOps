@@ -1,0 +1,53 @@
+########## BEFORE ##########
+$ kubectl apply -f troubleshooting/scenario2-missing-cm-key/broken.yaml
+configmap/orders-config created
+pod/orders-api created
+
+$ kubectl -n s12-trouble get pod orders-api
+NAME         READY   STATUS                       RESTARTS   AGE
+orders-api   0/1     CreateContainerConfigError   0          15s
+
+$ kubectl -n s12-trouble describe pod orders-api | sed -n '/State:/,/Ready:/p;/Events:/,$p'
+    State:          Waiting
+      Reason:       CreateContainerConfigError
+    Ready:          False
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  15s                default-scheduler  Successfully assigned s12-trouble/orders-api to minikube
+  Normal   Pulled     14s (x2 over 14s)  kubelet            spec.containers{api}: Container image "busybox:latest" already present on machine and can be accessed by the pod
+  Warning  Failed     14s (x2 over 14s)  kubelet            spec.containers{api}: Error: couldn't find key DATABASE_URL in ConfigMap s12-trouble/orders-config
+
+$ kubectl -n s12-trouble get events --field-selector involvedObject.name=orders-api --sort-by=.lastTimestamp | tail -3
+15s         Normal    Scheduled   pod/orders-api   Successfully assigned s12-trouble/orders-api to minikube
+14s         Normal    Pulled      pod/orders-api   Container image "busybox:latest" already present on machine and can be accessed by the pod
+14s         Warning   Failed      pod/orders-api   Error: couldn't find key DATABASE_URL in ConfigMap s12-trouble/orders-config
+
+$ kubectl -n s12-trouble get configmap orders-config -o jsonpath='{.data}'; echo
+{"DB_URL":"postgres://orders-db:5432/orders","LOG_LEVEL":"WARN"}
+
+$ kubectl -n s12-trouble logs orders-api
+Error from server (BadRequest): container "api" in pod "orders-api" is waiting to start: CreateContainerConfigError
+
+########## FIX ##########
+# env/valueFrom on a Pod is immutable -> delete and re-apply
+$ kubectl -n s12-trouble delete pod orders-api
+pod "orders-api" deleted from s12-trouble namespace
+
+$ kubectl apply -f troubleshooting/scenario2-missing-cm-key/fixed.yaml
+configmap/orders-config unchanged
+pod/orders-api created
+
+$ kubectl -n s12-trouble wait --for=condition=Ready pod/orders-api --timeout=120s
+pod/orders-api condition met
+
+########## AFTER ##########
+$ kubectl -n s12-trouble get pod orders-api
+NAME         READY   STATUS    RESTARTS   AGE
+orders-api   1/1     Running   0          1s
+
+$ kubectl -n s12-trouble logs orders-api
+DATABASE_URL=postgres://orders-db:5432/orders
+
+$ kubectl -n s12-trouble exec orders-api -- printenv DATABASE_URL
+postgres://orders-db:5432/orders

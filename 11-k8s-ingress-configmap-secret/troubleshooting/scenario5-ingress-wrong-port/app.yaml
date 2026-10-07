@@ -1,0 +1,57 @@
+# Backend for scenario 5: a normal nginx Deployment + Service that exposes port 80
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shop-nginx-conf
+  namespace: s12-trouble
+data:
+  default.conf: |
+    server {
+      listen 80;
+      location / {
+        default_type text/plain;
+        return 200 "Hello from shop\npod=$hostname uri=$request_uri\n";
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop
+  namespace: s12-trouble
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: shop }
+  template:
+    metadata:
+      labels: { app: shop }
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/nginx/conf.d
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits:   { cpu: 100m, memory: 64Mi }
+      volumes:
+        - name: conf
+          configMap:
+            name: shop-nginx-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop-svc
+  namespace: s12-trouble
+spec:
+  selector: { app: shop }
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

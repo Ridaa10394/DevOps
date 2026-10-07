@@ -1,0 +1,23 @@
+# captured while the ingress-nginx controller pod was still ContainerCreating (image pulling)
+$ kubectl -n ingress-nginx get pods
+NAME                                       READY   STATUS              RESTARTS      AGE
+ingress-nginx-admission-create-2dc8d       0/1     Completed           0             22m
+ingress-nginx-admission-patch-rnkf9        0/1     Completed           2 (18m ago)   22m
+ingress-nginx-controller-d7cd8c989-svgrl   0/1     ContainerCreating   0             22m
+
+$ kubectl get ingressclass
+NAME              CONTROLLER             PARAMETERS   AGE
+nginx (default)   k8s.io/ingress-nginx   <none>       22m
+
+$ kubectl -n ingress-nginx get endpoints ingress-nginx-controller-admission
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                                 ENDPOINTS   AGE
+ingress-nginx-controller-admission   <none>      22m
+
+$ kubectl apply -f 03-ingress/ingress-path.yaml
+Error from server (InternalError): error when creating "03-ingress/ingress-path.yaml": Internal error occurred: failed calling webhook "validate.nginx.ingress.kubernetes.io": failed to call webhook: Post "https://ingress-nginx-controller-admission.ingress-nginx.svc:443/networking/v1/ingresses?timeout=10s": dial tcp 10.109.10.22:443: connect: connection refused
+Error from server (InternalError): error when creating "03-ingress/ingress-path.yaml": Internal error occurred: failed calling webhook "validate.nginx.ingress.kubernetes.io": failed to call webhook: Post "https://ingress-nginx-controller-admission.ingress-nginx.svc:443/networking/v1/ingresses?timeout=10s": dial tcp 10.109.10.22:443: connect: connection refused
+
+$ kubectl -n s12 get ingress
+No resources found in s12 namespace.
+

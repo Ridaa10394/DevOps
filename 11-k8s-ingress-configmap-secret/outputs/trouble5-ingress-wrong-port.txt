@@ -1,0 +1,98 @@
+########## BEFORE ##########
+$ kubectl apply -f troubleshooting/scenario5-ingress-wrong-port/app.yaml
+configmap/shop-nginx-conf unchanged
+deployment.apps/shop unchanged
+service/shop-svc unchanged
+
+$ kubectl apply -f troubleshooting/scenario5-ingress-wrong-port/broken.yaml
+ingress.networking.k8s.io/shop-ingress created
+
+$ curl -s -i -H 'Host: shop.s12.local' localhost:18120/ | head -1
+HTTP/1.1 503 Service Temporarily Unavailable
+
+$ curl -s -H 'Host: shop.s12.local' localhost:18120/
+<html>
+<head><title>503 Service Temporarily Unavailable</title></head>
+<body>
+<center><h1>503 Service Temporarily Unavailable</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+
+$ kubectl -n s12-trouble get pods -l app=shop
+NAME                    READY   STATUS    RESTARTS   AGE
+shop-855d7875d5-9tfmz   1/1     Running   0          32s
+
+$ kubectl -n s12-trouble describe ingress shop-ingress
+Name:             shop-ingress
+Labels:           <none>
+Namespace:        s12-trouble
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host            Path  Backends
+  ----            ----  --------
+  shop.s12.local  
+                  /   shop-svc:8080 ()
+Annotations:      nginx.ingress.kubernetes.io/ssl-redirect: false
+Events:
+  Type    Reason  Age               From                      Message
+  ----    ------  ----              ----                      -------
+  Normal  Sync    5s (x2 over 31s)  nginx-ingress-controller  Scheduled for sync
+
+$ kubectl -n s12-trouble get svc shop-svc
+NAME       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+shop-svc   ClusterIP   10.101.153.148   <none>        80/TCP    32s
+
+$ kubectl -n s12-trouble get endpointslices -l kubernetes.io/service-name=shop-svc
+NAME             ADDRESSTYPE   PORTS   ENDPOINTS      AGE
+shop-svc-bnlvr   IPv4          80      10.244.0.226   32s
+
+$ kubectl -n ingress-nginx logs deploy/ingress-nginx-controller --tail=300 | grep -E 'shop' | tail -4
+I1007 11:27:44.661045       7 status.go:311] "updating Ingress status" namespace="s12-trouble" ingress="shop-ingress" currentValue=null newValue=[{"ip":"192.168.49.2"}]
+I1007 11:27:44.664199       7 event.go:377] Event(v1.ObjectReference{Kind:"Ingress", Namespace:"s12-trouble", Name:"shop-ingress", UID:"6459fbf4-0a09-4dfc-9b7f-4e431bbf34db", APIVersion:"networking.k8s.io/v1", ResourceVersion:"8670", FieldPath:""}): type: 'Normal' reason: 'Sync' Scheduled for sync
+127.0.0.1 - - [07/Oct/2026:11:27:49 +0000] "GET / HTTP/1.1" 503 190 "-" "curl/8.7.1" 77 0.000 [s12-trouble-shop-svc-8080] [] - - - - 5413d29e78c52d07c5a82eba8287a739
+127.0.0.1 - - [07/Oct/2026:11:27:49 +0000] "GET / HTTP/1.1" 503 190 "-" "curl/8.7.1" 77 0.000 [s12-trouble-shop-svc-8080] [] - - - - b5fa1634fa4887e553af99dcc99de9f4
+
+########## FIX ##########
+$ diff troubleshooting/scenario5-ingress-wrong-port/broken.yaml troubleshooting/scenario5-ingress-wrong-port/fixed.yaml
+1,2c1
+< # BROKEN: the Ingress sends traffic to shop-svc:8080, but shop-svc only exposes port 80
+< # (someone used the app's "usual" port instead of the Service port)
+---
+> # FIXED: backend port now matches the Service port (80)
+22c21
+<                   number: 8080      # <-- wrong: Service port is 80
+---
+>                   number: 80
+
+$ kubectl apply -f troubleshooting/scenario5-ingress-wrong-port/fixed.yaml
+ingress.networking.k8s.io/shop-ingress configured
+
+########## AFTER ##########
+$ kubectl -n s12-trouble describe ingress shop-ingress
+Name:             shop-ingress
+Labels:           <none>
+Namespace:        s12-trouble
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host            Path  Backends
+  ----            ----  --------
+  shop.s12.local  
+                  /   shop-svc:80 (10.244.0.226:80)
+Annotations:      nginx.ingress.kubernetes.io/ssl-redirect: false
+Events:
+  Type    Reason  Age               From                      Message
+  ----    ------  ----              ----                      -------
+  Normal  Sync    5s (x3 over 36s)  nginx-ingress-controller  Scheduled for sync
+
+$ curl -s -i -H 'Host: shop.s12.local' localhost:18120/ | head -1
+HTTP/1.1 200 OK
+
+$ curl -s -H 'Host: shop.s12.local' localhost:18120/
+Hello from shop
+pod=shop-855d7875d5-9tfmz uri=/
+

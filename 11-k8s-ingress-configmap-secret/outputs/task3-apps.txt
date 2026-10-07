@@ -1,0 +1,37 @@
+$ kubectl apply -f 03-ingress/apps.yaml
+configmap/app1-nginx-conf created
+deployment.apps/app1 created
+service/app1-svc created
+configmap/app2-nginx-conf created
+deployment.apps/app2 created
+service/app2-svc created
+
+$ kubectl -n s12 rollout status deploy/app1 --timeout=180s
+Waiting for deployment "app1" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "app1" rollout to finish: 1 of 2 updated replicas are available...
+deployment "app1" successfully rolled out
+
+$ kubectl -n s12 rollout status deploy/app2 --timeout=180s
+deployment "app2" successfully rolled out
+
+$ kubectl -n s12 get svc app1-svc app2-svc
+NAME       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+app1-svc   ClusterIP   10.100.238.205   <none>        80/TCP    1s
+app2-svc   ClusterIP   10.110.206.21    <none>        80/TCP    1s
+
+$ kubectl -n s12 get deploy,pods -l 'app in (app1,app2)' -o wide
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES              SELECTOR
+deployment.apps/app1   2/2     2            2           6s    web          nginx:1.27-alpine   app=app1
+deployment.apps/app2   2/2     2            2           6s    web          nginx:1.27-alpine   app=app2
+
+NAME                        READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+pod/app1-55d65ddfc8-fp4m7   1/1     Running   0          6s    10.244.0.85   minikube   <none>           <none>
+pod/app1-55d65ddfc8-klr2v   1/1     Running   0          6s    10.244.0.84   minikube   <none>           <none>
+pod/app2-865dc465b4-7fzg9   1/1     Running   0          6s    10.244.0.87   minikube   <none>           <none>
+pod/app2-865dc465b4-q57jf   1/1     Running   0          6s    10.244.0.86   minikube   <none>           <none>
+
+$ kubectl -n s12 get endpoints app1-svc app2-svc
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME       ENDPOINTS                       AGE
+app1-svc   10.244.0.84:80,10.244.0.85:80   6s
+app2-svc   10.244.0.86:80,10.244.0.87:80   6s

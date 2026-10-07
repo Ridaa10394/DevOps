@@ -1,0 +1,19 @@
+## in-cluster test: curl the controller Service from a throwaway pod
+$ kubectl -n s12 run curl-test --rm -i --restart=Never --image=curlimages/curl:latest --image-pull-policy=IfNotPresent --command -- sh -c 'curl -s -H "Host: app.s12.local" http://ingress-nginx-controller.ingress-nginx.svc/app1; curl -s -H "Host: app2.s12.local" http://ingress-nginx-controller.ingress-nginx.svc/'
+Hello from app1 (blue)
+pod=app1-55d65ddfc8-fp4m7 host=app.s12.local uri=/app1
+Hello from app2 (green)
+pod=app2-865dc465b4-7fzg9 host=app2.s12.local uri=/
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+pod "curl-test" deleted from s12 namespace
+
+## controller access log for my requests
+$ kubectl -n ingress-nginx logs deploy/ingress-nginx-controller --tail=200 | grep -E 's12-(app1|app2)-svc' | tail -6
+127.0.0.1 - - [07/Oct/2026:11:27:00 +0000] "GET / HTTP/1.1" 200 75 "-" "curl/8.7.1" 77 0.000 [s12-app1-svc-80] [] 10.244.0.84:80 75 0.000 200 f5d835f235454cb36a1c809cee9e313b
+127.0.0.1 - - [07/Oct/2026:11:27:00 +0000] "GET / HTTP/1.1" 200 75 "-" "curl/8.7.1" 77 0.000 [s12-app1-svc-80] [] 10.244.0.84:80 75 0.000 200 3d28df14b3a04a0df25c41ee3cd0a3f0
+127.0.0.1 - - [07/Oct/2026:11:27:00 +0000] "GET / HTTP/1.1" 200 75 "-" "curl/8.7.1" 77 0.002 [s12-app1-svc-80] [] 10.244.0.85:80 75 0.002 200 4e9de839ca4b77aca851da9c30a2067b
+127.0.0.1 - - [07/Oct/2026:11:27:00 +0000] "GET / HTTP/1.1" 200 76 "-" "curl/8.7.1" 83 0.000 [s12-app2-svc-80] [] 10.244.0.86:80 76 0.000 200 15923dfac6f3da0a2dae733fd557e169
+10.244.0.225 - - [07/Oct/2026:11:27:07 +0000] "GET /app1 HTTP/1.1" 200 78 "-" "curl/8.22.0" 81 0.000 [s12-app1-svc-80] [] 10.244.0.85:80 78 0.000 200 dfae8abd873db1acea40f9188f8c6d26
+10.244.0.225 - - [07/Oct/2026:11:27:07 +0000] "GET / HTTP/1.1" 200 76 "-" "curl/8.22.0" 78 0.000 [s12-app2-svc-80] [] 10.244.0.87:80 76 0.000 200 c0e4477afc49ea923dcfdced4e7a67c3
+

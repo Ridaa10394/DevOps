@@ -1,0 +1,37 @@
+# BROKEN: someone base64-encoded the value by hand AND put it under stringData.
+# stringData is plain text, so Kubernetes encodes it again -> the pod receives the
+# base64 string itself instead of the real password (double encoding).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+  namespace: s12-trouble
+type: Opaque
+stringData:
+  REDIS_PASSWORD: "ZGVtby1yZWRpcy1wYXNzLW5vdC1yZWFs"     # <-- already base64, should be plain text here
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cache-client
+  namespace: s12-trouble
+spec:
+  containers:
+    - name: client
+      image: busybox:latest
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+        - -c
+        - |
+          if [ "$REDIS_PASSWORD" = "demo-redis-pass-not-real" ]; then echo "redis AUTH OK"; else echo "(error) WRONGPASS invalid username-password pair"; fi
+          sleep 3600
+      env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: REDIS_PASSWORD
+      resources:
+        requests: { cpu: 10m, memory: 16Mi }
+        limits:   { cpu: 50m, memory: 32Mi }
