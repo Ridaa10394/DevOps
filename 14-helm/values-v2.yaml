@@ -1,0 +1,12 @@
+# Revision 2: new page text/colour, new nginx tag, 3 replicas
+replicaCount: 3
+image:
+  tag: "1.28-alpine"
+page:
+  version: "v2"
+  message: "Hello from revision v2 - upgraded with helm upgrade"
+  color: "#2f855a"
+  features:
+    - "Deployment + Service + ConfigMap"
+    - "Values-driven replicas, image and service type"
+    - "v2: scaled to 3 replicas, nginx 1.28"

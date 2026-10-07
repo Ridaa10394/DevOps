@@ -1,0 +1,62 @@
+$ helm get values cmd-demo -n s15-cmd
+USER-SUPPLIED VALUES:
+null
+
+$ helm get values cmd-demo -n s15-cmd --all
+COMPUTED VALUES:
+affinity: {}
+fullnameOverride: ""
+image:
+  pullPolicy: IfNotPresent
+  repository: nginx
+  tag: ""
+ingress:
+  annotations: {}
+  className: nginx
+  enabled: false
+  hosts:
+  - host: my-web.local
+    paths:
+    - path: /
+      pathType: Prefix
+  tls: []
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+nameOverride: ""
+nodeSelector: {}
+page:
+  color: '#2b6cb0'
+  features:
+  - Deployment + Service + ConfigMap
+  - Values-driven replicas, image and service type
+  message: Hello from revision v1 - deployed with Helm
+  owner: Ridaa Mirza (24BCS10394)
+  title: Ridaa's Helm Web App
+  version: v1
+podAnnotations: {}
+podLabels: {}
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+replicaCount: 2
+resources:
+  limits:
+    cpu: 100m
+    memory: 64Mi
+  requests:
+    cpu: 25m
+    memory: 32Mi
+service:
+  nodePort: ""
+  port: 80
+  type: ClusterIP
+serviceAccount:
+  annotations: {}
+  automount: true
+  create: true
+  name: ""
+tolerations: []
+

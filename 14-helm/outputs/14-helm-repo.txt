@@ -1,0 +1,18 @@
+$ helm repo list
+no repositories to show
+
+$ helm repo add bitnami https://charts.bitnami.com/bitnami
+Error: looks like "https://charts.bitnami.com/bitnami" is not a valid chart repository or cannot be reached: context deadline exceeded (Client.Timeout or context cancellation while reading body)
+
+$ helm repo add podinfo https://stefanprodan.github.io/podinfo
+"podinfo" has been added to your repositories
+
+$ helm repo list
+NAME   	URL                                   
+podinfo	https://stefanprodan.github.io/podinfo
+
+$ helm repo update
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "podinfo" chart repository
+Update Complete. ⎈Happy Helming!⎈
+

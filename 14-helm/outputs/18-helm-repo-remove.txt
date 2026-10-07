@@ -1,0 +1,13 @@
+$ helm list -n s15-cmd
+NAME	NAMESPACE	REVISION	UPDATED	STATUS	CHART	APP VERSION
+
+$ kubectl delete pod cmd-demo-my-web-chart-test-connection -n s15-cmd
+pod "cmd-demo-my-web-chart-test-connection" deleted from s15-cmd namespace
+
+$ helm repo remove ingress-nginx
+"ingress-nginx" has been removed from your repositories
+
+$ helm repo list
+NAME   	URL                                   
+podinfo	https://stefanprodan.github.io/podinfo
+

@@ -1,0 +1,28 @@
+$ helm upgrade web ./my-web-chart -n s15 -f values-v2.yaml -f values-v3-broken.yaml --atomic --timeout 60s
+Flag --atomic has been deprecated, use --rollback-on-failure instead
+level=WARN msg="upgrade failed" name=web error="resource Deployment/s15/web-my-web-chart not ready. status: InProgress, message: Updated: 1/3\ncontext deadline exceeded"
+Error: UPGRADE FAILED: release web failed, and has been rolled back due to rollback-on-failure being set: resource Deployment/s15/web-my-web-chart not ready. status: InProgress, message: Updated: 1/3
+context deadline exceeded
+
+$ helm upgrade web ./my-web-chart -n s15 -f values-v2.yaml -f values-v3-broken.yaml --rollback-on-failure --timeout 60s
+level=WARN msg="upgrade failed" name=web error="resource Deployment/s15/web-my-web-chart not ready. status: InProgress, message: Updated: 1/3\ncontext deadline exceeded"
+Error: UPGRADE FAILED: release web failed, and has been rolled back due to rollback-on-failure being set: resource Deployment/s15/web-my-web-chart not ready. status: InProgress, message: Updated: 1/3
+context deadline exceeded
+
+$ helm history web -n s15
+REVISION	UPDATED                 	STATUS    	CHART             	APP VERSION	DESCRIPTION                                                                                                        
+1       	Wed Oct  7 16:55:33 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Install complete                                                                                                   
+2       	Wed Oct  7 16:55:52 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Upgrade complete                                                                                                   
+3       	Wed Oct  7 16:56:08 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Upgrade complete                                                                                                   
+4       	Wed Oct  7 16:58:00 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Rollback to 2                                                                                                      
+5       	Wed Oct  7 16:58:28 2026	failed    	my-web-chart-0.1.0	1.27-alpine	Upgrade "web" failed: resource Deployment/s15/web-my-web-chart not ready. status: InProgress, message: Updated: ...
+6       	Wed Oct  7 16:59:28 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Rollback to 4                                                                                                      
+7       	Wed Oct  7 16:59:28 2026	failed    	my-web-chart-0.1.0	1.27-alpine	Upgrade "web" failed: resource Deployment/s15/web-my-web-chart not ready. status: InProgress, message: Updated: ...
+8       	Wed Oct  7 17:00:28 2026	deployed  	my-web-chart-0.1.0	1.27-alpine	Rollback to 6                                                                                                      
+
+$ kubectl get pods -n s15
+NAME                                READY   STATUS        RESTARTS   AGE
+web-my-web-chart-548987c944-h2j2h   0/1     Terminating   0          60s
+web-my-web-chart-75ffc88b54-5cmz6   1/1     Running       0          4m36s
+web-my-web-chart-75ffc88b54-fj85f   1/1     Running       0          4m33s
+web-my-web-chart-75ffc88b54-ghpbq   1/1     Running       0          4m34s

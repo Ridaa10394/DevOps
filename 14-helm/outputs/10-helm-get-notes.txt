@@ -1,0 +1,15 @@
+$ helm get notes cmd-demo -n s15-cmd
+NOTES:
+my-web-chart is installed.
+
+  Release:   cmd-demo (revision 2)
+  Namespace: s15-cmd
+  Image:     nginx:1.27-alpine
+  Replicas:  2
+  Page:      v1 - "Hello from revision v1 - deployed with Helm"
+
+Get the application URL by running these commands:
+  kubectl --namespace s15-cmd port-forward svc/cmd-demo-my-web-chart 8080:80
+  curl http://127.0.0.1:8080
+
+

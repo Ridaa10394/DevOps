@@ -1,0 +1,21 @@
+$ helm test cmd-demo -n s15-cmd --timeout 180s --logs
+NAME: cmd-demo
+LAST DEPLOYED: Wed Oct  7 16:35:01 2026
+NAMESPACE: s15-cmd
+STATUS: deployed
+REVISION: 4
+DESCRIPTION: Rollback to 2
+TEST SUITE:     cmd-demo-my-web-chart-test-connection
+Last Started:   Wed Oct  7 16:56:31 2026
+Last Completed: Wed Oct  7 16:57:51 2026
+Phase:          Succeeded
+
+POD LOGS: cmd-demo-my-web-chart-test-connection (wget)
+Connecting to cmd-demo-my-web-chart:80 (10.107.10.219:80)
+saving to 'index.html'
+index.html           100% |********************************|   521  0:00:00 ETA
+'index.html' saved
+
+
+
+[exited with code 0]

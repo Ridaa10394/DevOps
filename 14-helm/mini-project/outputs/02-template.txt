@@ -1,0 +1,105 @@
+$ helm template notes-dev notes-chart -n s15-notes
+---
+# Source: notes-chart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notes-dev-config
+  labels:
+    app: notes-dev
+    environment: development
+    helm.sh/chart: notes-chart-0.2.0
+    app.kubernetes.io/managed-by: Helm
+data:
+  APP_NAME: "notes-app"
+  ENVIRONMENT: "development"
+
+---
+# Source: notes-chart/templates/configmap.yaml
+# separate ConfigMap for the page so the HTML does not end up as an env var
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notes-dev-page
+  labels:
+    app: notes-dev
+    environment: development
+    helm.sh/chart: notes-chart-0.2.0
+    app.kubernetes.io/managed-by: Helm
+data:
+  index.html: |
+    <html>
+    <body>
+      <h1>notes-app (development)</h1>
+      <p>image: nginx:1.24 | revision: 1</p>
+      <ul>
+        <li>note 1: Buy milk</li>
+        <li>note 2: Finish Session 15 Helm homework</li>
+        <li>note 3: Read about helm rollback --rollback-on-failure</li>
+      </ul>
+    </body>
+    </html>
+
+---
+# Source: notes-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: notes-dev-svc
+  labels:
+    app: notes-dev
+    environment: development
+    helm.sh/chart: notes-chart-0.2.0
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: NodePort
+  selector:
+    app: notes-dev
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30915
+
+---
+# Source: notes-chart/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notes-dev-deploy
+  labels:
+    app: notes-dev
+    environment: development
+    helm.sh/chart: notes-chart-0.2.0
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notes-dev
+  template:
+    metadata:
+      labels:
+        app: notes-dev
+      annotations:
+        checksum/config: caa18f68f6dc320d9bdcce188cdcb3b52c659eb3e1c3d333fc4cf39d7389516e
+    spec:
+      containers:
+        - name: notes
+          image: "nginx:1.24"
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: notes-dev-config
+          volumeMounts:
+            - name: page
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
+      volumes:
+        - name: page
+          configMap:
+            name: notes-dev-page
+            items:
+              - key: index.html
+                path: index.html
+

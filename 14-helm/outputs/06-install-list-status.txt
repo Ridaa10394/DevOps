@@ -1,0 +1,74 @@
+$ helm install cmd-demo ./my-web-chart -n s15-cmd --create-namespace --wait --timeout 180s
+Error: INSTALLATION FAILED: resource Deployment/s15-cmd/cmd-demo-my-web-chart not ready. status: InProgress, message: Available: 0/2
+context deadline exceeded
+
+$ helm list -n s15-cmd
+NAME    	NAMESPACE	REVISION	UPDATED                             	STATUS	CHART             	APP VERSION
+cmd-demo	s15-cmd  	1       	2026-10-07 16:21:20.009413 +0530 IST	failed	my-web-chart-0.1.0	1.27-alpine
+
+$ helm list -A
+NAME    	NAMESPACE	REVISION	UPDATED                             	STATUS	CHART             	APP VERSION
+cmd-demo	s15-cmd  	1       	2026-10-07 16:21:20.009413 +0530 IST	failed	my-web-chart-0.1.0	1.27-alpine
+
+$ kubectl get all,cm -n s15-cmd
+NAME                                         READY   STATUS              RESTARTS   AGE
+pod/cmd-demo-my-web-chart-5958b646fd-9k4dn   0/1     ContainerCreating   0          3m
+pod/cmd-demo-my-web-chart-5958b646fd-vps9f   0/1     ContainerCreating   0          3m
+
+NAME                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+service/cmd-demo-my-web-chart   ClusterIP   10.107.10.219   <none>        80/TCP    3m
+
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/cmd-demo-my-web-chart   0/2     2            0           3m
+
+NAME                                               DESIRED   CURRENT   READY   AGE
+replicaset.apps/cmd-demo-my-web-chart-5958b646fd   2         2         0       3m
+
+NAME                                   DATA   AGE
+configmap/cmd-demo-my-web-chart-html   1      3m
+configmap/kube-root-ca.crt             1      3m
+
+$ helm status cmd-demo -n s15-cmd
+NAME: cmd-demo
+LAST DEPLOYED: Wed Oct  7 16:21:20 2026
+NAMESPACE: s15-cmd
+STATUS: failed
+REVISION: 1
+DESCRIPTION: Release "cmd-demo" failed: resource Deployment/s15-cmd/cmd-demo-my-web-chart not ready. status: InProgress, message: Available: 0/2
+context deadline exceeded
+RESOURCES:
+==> v1/ServiceAccount
+NAME                    AGE
+cmd-demo-my-web-chart   3m
+
+==> v1/ConfigMap
+NAME                         DATA   AGE
+cmd-demo-my-web-chart-html   1      3m
+
+==> v1/Service
+NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+cmd-demo-my-web-chart   ClusterIP   10.107.10.219   <none>        80/TCP    3m
+
+==> v1/Deployment
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+cmd-demo-my-web-chart   0/2     2            0           3m
+
+==> v1/Pod(related)
+NAME                                     READY   STATUS              RESTARTS   AGE
+cmd-demo-my-web-chart-5958b646fd-9k4dn   0/1     ContainerCreating   0          3m
+cmd-demo-my-web-chart-5958b646fd-vps9f   0/1     ContainerCreating   0          3m
+
+
+NOTES:
+my-web-chart is installed.
+
+  Release:   cmd-demo (revision 1)
+  Namespace: s15-cmd
+  Image:     nginx:1.27-alpine
+  Replicas:  2
+  Page:      v1 - "Hello from revision v1 - deployed with Helm"
+
+Get the application URL by running these commands:
+  kubectl --namespace s15-cmd port-forward svc/cmd-demo-my-web-chart 8080:80
+  curl http://127.0.0.1:8080
+

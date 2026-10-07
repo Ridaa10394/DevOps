@@ -1,0 +1,72 @@
+# Default values for my-web-chart.
+# Override with -f my-values.yaml or --set key=value
+
+replicaCount: 2
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # empty = use .Chart.AppVersion (1.27-alpine)
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# The HTML page served by nginx. Rendered into a ConfigMap and mounted
+# at /usr/share/nginx/html, so changing these values and upgrading makes
+# the change visible with a simple curl.
+page:
+  version: "v1"
+  title: "Ridaa's Helm Web App"
+  message: "Hello from revision v1 - deployed with Helm"
+  color: "#2b6cb0"
+  owner: "Ridaa Mirza (24BCS10394)"
+  features:
+    - "Deployment + Service + ConfigMap"
+    - "Values-driven replicas, image and service type"
+
+service:
+  type: ClusterIP    # ClusterIP | NodePort | LoadBalancer
+  port: 80
+  nodePort: ""       # only used when type is NodePort (empty = random)
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: my-web.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

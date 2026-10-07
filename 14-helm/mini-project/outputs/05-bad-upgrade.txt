@@ -1,0 +1,42 @@
+$ helm upgrade notes-dev notes-chart -n s15-notes --set image.tag=broken-tag-does-not-exist
+Release "notes-dev" has been upgraded. Happy Helming!
+NAME: notes-dev
+LAST DEPLOYED: Wed Oct  7 17:01:13 2026
+NAMESPACE: s15-notes
+STATUS: deployed
+REVISION: 3
+DESCRIPTION: Upgrade complete
+TEST SUITE: None
+NOTES:
+notes-app is deployed (development).
+
+  Release:  notes-dev  revision 3
+  Image:    nginx:broken-tag-does-not-exist
+  Replicas: 1
+
+Check it:
+  kubectl get pods,svc,cm -n s15-notes -l app=notes-dev
+  kubectl -n s15-notes port-forward svc/notes-dev-svc 8081:80
+  curl http://127.0.0.1:8081
+or via NodePort: curl http://$(minikube ip):30915
+
+$ kubectl get pods -n s15-notes
+NAME                                READY   STATUS         RESTARTS   AGE
+notes-dev-deploy-745797f8db-f9sgp   0/1     ErrImagePull   0          11s
+notes-dev-deploy-f585db698-dpftb    1/1     Running        0          20s
+
+$ kubectl get deploy notes-dev-deploy -n s15-notes -o jsonpath={.spec.replicas} {.spec.template.spec.containers[0].image}{"
+"}
+1 nginx:broken-tag-does-not-exist
+
+$ helm get values notes-dev -n s15-notes
+USER-SUPPLIED VALUES:
+image:
+  tag: broken-tag-does-not-exist
+
+$ helm history notes-dev -n s15-notes
+REVISION	UPDATED                 	STATUS    	CHART            	APP VERSION	DESCRIPTION     
+1       	Wed Oct  7 17:00:50 2026	superseded	notes-chart-0.2.0	1.0        	Install complete
+2       	Wed Oct  7 17:01:03 2026	superseded	notes-chart-0.2.0	1.0        	Upgrade complete
+3       	Wed Oct  7 17:01:13 2026	deployed  	notes-chart-0.2.0	1.0        	Upgrade complete
+

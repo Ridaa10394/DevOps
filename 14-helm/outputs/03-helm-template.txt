@@ -1,0 +1,152 @@
+$ helm template web ./my-web-chart -n s15
+---
+# Source: my-web-chart/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web-my-web-chart
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: web
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken: true
+
+---
+# Source: my-web-chart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-my-web-chart-html
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: web
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+data:
+  index.html: |
+    <!doctype html>
+    <html>
+    <head><title>Ridaa's Helm Web App</title></head>
+    <body style="font-family: sans-serif; border-top: 8px solid #2b6cb0;">
+      <h1>Ridaa's Helm Web App</h1>
+      <p id="message">Hello from revision v1 - deployed with Helm</p>
+      <p>page version: <b>v1</b></p>
+      <p>release: web | revision: 1 | chart: my-web-chart-0.1.0</p>
+      <p>owner: Ridaa Mirza (24BCS10394)</p>
+      <ul>
+        <li>Deployment + Service + ConfigMap</li>
+        <li>Values-driven replicas, image and service type</li>
+      </ul>
+    </body>
+    </html>
+
+---
+# Source: my-web-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-my-web-chart
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: web
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: web
+
+---
+# Source: my-web-chart/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-my-web-chart
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: web
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: my-web-chart
+      app.kubernetes.io/instance: web
+  template:
+    metadata:
+      annotations:
+        # changes whenever the ConfigMap content changes -> forces a rolling update
+        checksum/config: 28b1a357e25b776f25ba035199a978fed947e066aad86edad045bec0d928c4b8
+      labels:
+        helm.sh/chart: my-web-chart-0.1.0
+        app.kubernetes.io/name: my-web-chart
+        app.kubernetes.io/instance: web
+        app.kubernetes.io/version: "1.27-alpine"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: web-my-web-chart
+      containers:
+        - name: my-web-chart
+          image: "nginx:1.27-alpine"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 64Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+      volumes:
+        - name: html
+          configMap:
+            name: web-my-web-chart-html
+---
+# Source: my-web-chart/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "web-my-web-chart-test-connection"
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: web
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['web-my-web-chart:80']
+  restartPolicy: Never
+

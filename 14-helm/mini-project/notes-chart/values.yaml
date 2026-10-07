@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: "1.24"
+
+service:
+  type: NodePort
+  port: 80
+  # 30090 in the reference; moved to 30915 because the minikube cluster is shared
+  nodePort: 30915
+
+app:
+  name: notes-app
+  environment: development
+
+# rendered as a list on the landing page (range demo)
+notes:
+  - "Buy milk"
+  - "Finish Session 15 Helm homework"
+  - "Read about helm rollback --rollback-on-failure"

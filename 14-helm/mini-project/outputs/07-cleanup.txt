@@ -1,0 +1,16 @@
+$ helm uninstall notes-dev -n s15-notes --wait
+release "notes-dev" uninstalled
+
+$ kubectl get pods,svc,cm -n s15-notes
+NAME                                    READY   STATUS        RESTARTS   AGE
+pod/notes-dev-deploy-745797f8db-9bqms   0/1     Terminating   0          9s
+pod/notes-dev-deploy-f585db698-5zltc    1/1     Terminating   0          9s
+pod/notes-dev-deploy-f585db698-dpftb    1/1     Terminating   0          36s
+pod/notes-dev-deploy-f585db698-k5f4z    1/1     Terminating   0          8s
+
+NAME                         DATA   AGE
+configmap/kube-root-ca.crt   1      50s
+
+$ helm list -n s15-notes
+NAME	NAMESPACE	REVISION	UPDATED	STATUS	CHART	APP VERSION
+

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "notes-chart.fullname" . }}-svc
+  labels:
+    {{- include "notes-chart.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type | default "NodePort" }}
+  selector:
+    {{- include "notes-chart.selectorLabels" . | nindent 4 }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+      {{- if and (eq (.Values.service.type | default "NodePort") "NodePort") .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}

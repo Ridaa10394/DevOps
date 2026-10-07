@@ -1,0 +1,133 @@
+$ helm get manifest cmd-demo -n s15-cmd
+---
+# Source: my-web-chart/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cmd-demo-my-web-chart
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: cmd-demo
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken: true
+
+---
+# Source: my-web-chart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cmd-demo-my-web-chart-html
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: cmd-demo
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+data:
+  index.html: |
+    <!doctype html>
+    <html>
+    <head><title>Ridaa's Helm Web App</title></head>
+    <body style="font-family: sans-serif; border-top: 8px solid #2b6cb0;">
+      <h1>Ridaa's Helm Web App</h1>
+      <p id="message">Hello from revision v1 - deployed with Helm</p>
+      <p>page version: <b>v1</b></p>
+      <p>release: cmd-demo | revision: 2 | chart: my-web-chart-0.1.0</p>
+      <p>owner: Ridaa Mirza (24BCS10394)</p>
+      <ul>
+        <li>Deployment + Service + ConfigMap</li>
+        <li>Values-driven replicas, image and service type</li>
+      </ul>
+    </body>
+    </html>
+
+---
+# Source: my-web-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cmd-demo-my-web-chart
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: cmd-demo
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: cmd-demo
+
+---
+# Source: my-web-chart/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cmd-demo-my-web-chart
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: cmd-demo
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: my-web-chart
+      app.kubernetes.io/instance: cmd-demo
+  template:
+    metadata:
+      annotations:
+        # changes whenever the ConfigMap content changes -> forces a rolling update
+        checksum/config: 9fd02e41a11ce01eff02380f86ad6a2b39f6b05d4ab9ccc7737920bf6f9cb144
+      labels:
+        helm.sh/chart: my-web-chart-0.1.0
+        app.kubernetes.io/name: my-web-chart
+        app.kubernetes.io/instance: cmd-demo
+        app.kubernetes.io/version: "1.27-alpine"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: cmd-demo-my-web-chart
+      containers:
+        - name: my-web-chart
+          image: "nginx:1.27-alpine"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 64Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+      volumes:
+        - name: html
+          configMap:
+            name: cmd-demo-my-web-chart-html
+
+
+

@@ -1,0 +1,41 @@
+$ helm install web ./my-web-chart -n s15 --create-namespace --dry-run=server | head -40
+NAME: web
+LAST DEPLOYED: Wed Oct  7 16:21:07 2026
+NAMESPACE: s15
+STATUS: pending-install
+REVISION: 1
+DESCRIPTION: Dry run complete
+HOOKS:
+---
+# Source: my-web-chart/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "web-my-web-chart-test-connection"
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: web
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['web-my-web-chart:80']
+  restartPolicy: Never
+
+MANIFEST:
+---
+# Source: my-web-chart/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web-my-web-chart
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: web

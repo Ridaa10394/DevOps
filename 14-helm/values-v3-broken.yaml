@@ -1,0 +1,7 @@
+# Revision 3: deliberately broken - this nginx tag does not exist
+image:
+  tag: "9.99-does-not-exist"
+page:
+  version: "v3"
+  message: "Hello from revision v3 - this one should never be served"
+  color: "#c53030"

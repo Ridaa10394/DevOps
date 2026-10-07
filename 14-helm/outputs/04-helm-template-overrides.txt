@@ -1,0 +1,47 @@
+$ helm template web ./my-web-chart --set replicaCount=5 --set service.type=NodePort --set service.nodePort=30915 --set ingress.enabled=true | grep -E "replicas:|type:|nodePort:|kind:"
+kind: ServiceAccount
+kind: ConfigMap
+kind: Service
+  type: NodePort
+      nodePort: 30915
+kind: Deployment
+  replicas: 5
+kind: Ingress
+kind: Pod
+
+$ helm template web ./my-web-chart -f values-v2.yaml --show-only templates/configmap.yaml
+---
+# Source: my-web-chart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-my-web-chart-html
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: web
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+data:
+  index.html: |
+    <!doctype html>
+    <html>
+    <head><title>Ridaa's Helm Web App</title></head>
+    <body style="font-family: sans-serif; border-top: 8px solid #2f855a;">
+      <h1>Ridaa's Helm Web App</h1>
+      <p id="message">Hello from revision v2 - upgraded with helm upgrade</p>
+      <p>page version: <b>v2</b></p>
+      <p>release: web | revision: 1 | chart: my-web-chart-0.1.0</p>
+      <p>owner: Ridaa Mirza (24BCS10394)</p>
+      <ul>
+        <li>Deployment + Service + ConfigMap</li>
+        <li>Values-driven replicas, image and service type</li>
+        <li>v2: scaled to 3 replicas, nginx 1.28</li>
+      </ul>
+    </body>
+    </html>
+
+
+
+$ helm template web ./my-web-chart --set page.features=null --show-only templates/configmap.yaml | grep -c "<li>"
+0

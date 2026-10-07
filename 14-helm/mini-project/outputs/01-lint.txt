@@ -1,0 +1,12 @@
+$ helm lint notes-chart
+==> Linting notes-chart
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+
+$ helm lint notes-chart -f notes-chart/values-prod.yaml
+==> Linting notes-chart
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+

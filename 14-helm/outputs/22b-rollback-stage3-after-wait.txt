@@ -1,0 +1,32 @@
+$ # ~a few minutes after the v3 upgrade
+$ kubectl get deploy,pods -n s15 -o wide
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS     IMAGES                      SELECTOR
+web-my-web-chart   3/3     1            3           2m18s   my-web-chart   nginx:9.99-does-not-exist   app.kubernetes.io/instance=web,app.kubernetes.io/name=my-web-chart
+NAME                                STATUS    READY   IMAGE                       WAITING
+web-my-web-chart-75ffc88b54-5cmz6   Running   true    nginx:1.28-alpine           <none>
+web-my-web-chart-75ffc88b54-fj85f   Running   true    nginx:1.28-alpine           <none>
+web-my-web-chart-75ffc88b54-ghpbq   Running   true    nginx:1.28-alpine           <none>
+web-my-web-chart-7fc58cb99-bfm92    Pending   false   nginx:9.99-does-not-exist   ErrImagePull
+
+$ kubectl port-forward -n s15 svc/web-my-web-chart 18515:80 &  ;  curl -s http://127.0.0.1:18515 | grep -E 'message|version|revision'
+  <p id="message">Hello from revision v3 - this one should never be served</p>
+  <p>page version: <b>v3</b></p>
+  <p>release: web | revision: 3 | chart: my-web-chart-0.1.0</p>
+$ curl -sI http://127.0.0.1:18515 | grep -i server
+Server: nginx/1.28.3
+
+$ helm history web -n s15
+REVISION	UPDATED                 	STATUS    	CHART             	APP VERSION	DESCRIPTION     
+1       	Wed Oct  7 16:55:33 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Install complete
+2       	Wed Oct  7 16:55:52 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Upgrade complete
+3       	Wed Oct  7 16:56:08 2026	deployed  	my-web-chart-0.1.0	1.27-alpine	Upgrade complete
+
+$ kubectl describe pod -n s15 -l pod-template-hash=7fc58cb99 | tail -8
+  Type     Reason     Age   From               Message
+  ----     ------     ----  ----               -------
+  Normal   Scheduled  104s  default-scheduler  Successfully assigned s15/web-my-web-chart-7fc58cb99-bfm92 to minikube
+  Normal   Pulling    104s  kubelet            spec.containers{my-web-chart}: Pulling image "nginx:9.99-does-not-exist"
+  Warning  Failed     5s    kubelet            spec.containers{my-web-chart}: Failed to pull image "nginx:9.99-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/library/nginx:9.99-does-not-exist": failed to resolve reference "docker.io/library/nginx:9.99-does-not-exist": docker.io/library/nginx:9.99-does-not-exist: not found
+  Warning  Failed     5s    kubelet            spec.containers{my-web-chart}: Error: ErrImagePull
+  Normal   BackOff    4s    kubelet            spec.containers{my-web-chart}: Back-off pulling image "nginx:9.99-does-not-exist"
+  Warning  Failed     4s    kubelet            spec.containers{my-web-chart}: Error: ImagePullBackOff

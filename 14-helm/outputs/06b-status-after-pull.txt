@@ -1,0 +1,37 @@
+$ kubectl get pods -n s15-cmd
+NAME                                     READY   STATUS    RESTARTS   AGE
+cmd-demo-my-web-chart-5958b646fd-9k4dn   1/1     Running   0          13m
+cmd-demo-my-web-chart-5958b646fd-vps9f   1/1     Running   0          13m
+
+$ helm list -n s15-cmd
+NAME    	NAMESPACE	REVISION	UPDATED                             	STATUS	CHART             	APP VERSION
+cmd-demo	s15-cmd  	1       	2026-10-07 16:21:20.009413 +0530 IST	failed	my-web-chart-0.1.0	1.27-alpine
+
+$ helm upgrade cmd-demo ./my-web-chart -n s15-cmd --wait --timeout 180s
+Release "cmd-demo" has been upgraded. Happy Helming!
+NAME: cmd-demo
+LAST DEPLOYED: Wed Oct  7 16:34:43 2026
+NAMESPACE: s15-cmd
+STATUS: deployed
+REVISION: 2
+DESCRIPTION: Upgrade complete
+NOTES:
+my-web-chart is installed.
+
+  Release:   cmd-demo (revision 2)
+  Namespace: s15-cmd
+  Image:     nginx:1.27-alpine
+  Replicas:  2
+  Page:      v1 - "Hello from revision v1 - deployed with Helm"
+
+Get the application URL by running these commands:
+  kubectl --namespace s15-cmd port-forward svc/cmd-demo-my-web-chart 8080:80
+  curl http://127.0.0.1:8080
+
+$ helm list -n s15-cmd
+NAME    	NAMESPACE	REVISION	UPDATED                             	STATUS  	CHART             	APP VERSION
+cmd-demo	s15-cmd  	2       	2026-10-07 16:34:43.898839 +0530 IST	deployed	my-web-chart-0.1.0	1.27-alpine
+
+$ helm status cmd-demo -n s15-cmd --show-resources
+Error: unknown flag: --show-resources
+

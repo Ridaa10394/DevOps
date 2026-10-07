@@ -1,0 +1,13 @@
+{{ .Values.app.name }} is deployed ({{ .Values.app.environment }}).
+
+  Release:  {{ .Release.Name }}  revision {{ .Release.Revision }}
+  Image:    {{ .Values.image.repository }}:{{ .Values.image.tag }}
+  Replicas: {{ .Values.replicaCount }}
+
+Check it:
+  kubectl get pods,svc,cm -n {{ .Release.Namespace }} -l app={{ include "notes-chart.fullname" . }}
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "notes-chart.fullname" . }}-svc 8081:{{ .Values.service.port }}
+  curl http://127.0.0.1:8081
+{{- if eq (.Values.service.type | default "NodePort") "NodePort" }}
+or via NodePort: curl http://$(minikube ip):{{ .Values.service.nodePort }}
+{{- end }}

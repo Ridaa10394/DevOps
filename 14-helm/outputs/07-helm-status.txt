@@ -1,0 +1,43 @@
+$ helm status cmd-demo -n s15-cmd
+NAME: cmd-demo
+LAST DEPLOYED: Wed Oct  7 16:34:43 2026
+NAMESPACE: s15-cmd
+STATUS: deployed
+REVISION: 2
+DESCRIPTION: Upgrade complete
+RESOURCES:
+==> v1/Pod(related)
+NAME                                     READY   STATUS    RESTARTS   AGE
+cmd-demo-my-web-chart-7569f966fb-lbmrc   1/1     Running   0          8s
+cmd-demo-my-web-chart-7569f966fb-z5hqs   1/1     Running   0          7s
+
+==> v1/ServiceAccount
+NAME                    AGE
+cmd-demo-my-web-chart   13m
+
+==> v1/ConfigMap
+NAME                         DATA   AGE
+cmd-demo-my-web-chart-html   1      13m
+
+==> v1/Service
+NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+cmd-demo-my-web-chart   ClusterIP   10.107.10.219   <none>        80/TCP    13m
+
+==> v1/Deployment
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+cmd-demo-my-web-chart   2/2     2            2           13m
+
+
+NOTES:
+my-web-chart is installed.
+
+  Release:   cmd-demo (revision 2)
+  Namespace: s15-cmd
+  Image:     nginx:1.27-alpine
+  Replicas:  2
+  Page:      v1 - "Hello from revision v1 - deployed with Helm"
+
+Get the application URL by running these commands:
+  kubectl --namespace s15-cmd port-forward svc/cmd-demo-my-web-chart 8080:80
+  curl http://127.0.0.1:8080
+

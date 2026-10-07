@@ -1,0 +1,16 @@
+$ helm test cmd-demo -n s15-cmd --timeout 300s --logs
+NAME: cmd-demo
+LAST DEPLOYED: Wed Oct  7 16:35:01 2026
+NAMESPACE: s15-cmd
+STATUS: deployed
+REVISION: 4
+DESCRIPTION: Rollback to 2
+TEST SUITE:     cmd-demo-my-web-chart-test-connection
+Last Started:   Wed Oct  7 16:35:18 2026
+Last Completed: Wed Oct  7 16:40:18 2026
+Phase:          Failed
+
+Error: resource Pod/s15-cmd/cmd-demo-my-web-chart-test-connection not ready. status: InProgress, message: Pod in progress
+context deadline exceeded
+unable to get logs for pod cmd-demo-my-web-chart-test-connection, container wget: container "wget" in pod "cmd-demo-my-web-chart-test-connection" is waiting to start: ContainerCreating
+

@@ -1,0 +1,18 @@
+$ helm uninstall web -n s15 --wait
+release "web" uninstalled
+
+$ helm list -A
+NAME	NAMESPACE	REVISION	UPDATED	STATUS	CHART	APP VERSION
+
+$ kubectl get all -n s15
+NAME                                    READY   STATUS        RESTARTS   AGE
+pod/web-my-web-chart-75ffc88b54-5cmz6   1/1     Terminating   0          5m49s
+pod/web-my-web-chart-75ffc88b54-fj85f   1/1     Terminating   0          5m46s
+pod/web-my-web-chart-75ffc88b54-ghpbq   1/1     Terminating   0          5m47s
+
+$ helm repo remove podinfo
+"podinfo" has been removed from your repositories
+
+$ helm repo list
+no repositories to show
+

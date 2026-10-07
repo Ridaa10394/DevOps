@@ -1,0 +1,17 @@
+Creating my-web-chart
+my-web-chart
+my-web-chart/.helmignore
+my-web-chart/Chart.yaml
+my-web-chart/charts
+my-web-chart/templates
+my-web-chart/templates/NOTES.txt
+my-web-chart/templates/_helpers.tpl
+my-web-chart/templates/deployment.yaml
+my-web-chart/templates/hpa.yaml
+my-web-chart/templates/httproute.yaml
+my-web-chart/templates/ingress.yaml
+my-web-chart/templates/service.yaml
+my-web-chart/templates/serviceaccount.yaml
+my-web-chart/templates/tests
+my-web-chart/templates/tests/test-connection.yaml
+my-web-chart/values.yaml

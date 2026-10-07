@@ -1,0 +1,37 @@
+$ helm install web ./my-web-chart -n s15 --create-namespace --wait --timeout 300s
+NAME: web
+LAST DEPLOYED: Wed Oct  7 16:55:33 2026
+NAMESPACE: s15
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+NOTES:
+my-web-chart is installed.
+
+  Release:   web (revision 1)
+  Namespace: s15
+  Image:     nginx:1.27-alpine
+  Replicas:  2
+  Page:      v1 - "Hello from revision v1 - deployed with Helm"
+
+Get the application URL by running these commands:
+  kubectl --namespace s15 port-forward svc/web-my-web-chart 8080:80
+  curl http://127.0.0.1:8080
+
+$ kubectl get deploy,pods -n s15 -o wide
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS     IMAGES              SELECTOR
+web-my-web-chart   2/2     2            2           11s   my-web-chart   nginx:1.27-alpine   app.kubernetes.io/instance=web,app.kubernetes.io/name=my-web-chart
+NAME                               STATUS    READY   IMAGE               WAITING
+web-my-web-chart-6bd988499-nfc2f   Running   true    nginx:1.27-alpine   <none>
+web-my-web-chart-6bd988499-zrpbq   Running   true    nginx:1.27-alpine   <none>
+
+$ kubectl port-forward -n s15 svc/web-my-web-chart 18515:80 &  ;  curl -s http://127.0.0.1:18515 | grep -E 'message|version|revision'
+  <p id="message">Hello from revision v1 - deployed with Helm</p>
+  <p>page version: <b>v1</b></p>
+  <p>release: web | revision: 1 | chart: my-web-chart-0.1.0</p>
+$ curl -sI http://127.0.0.1:18515 | grep -i server
+Server: nginx/1.27.5
+
+$ helm history web -n s15
+REVISION	UPDATED                 	STATUS  	CHART             	APP VERSION	DESCRIPTION     
+1       	Wed Oct  7 16:55:33 2026	deployed	my-web-chart-0.1.0	1.27-alpine	Install complete

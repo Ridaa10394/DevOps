@@ -1,0 +1,17 @@
+replicaCount: 3
+
+image:
+  repository: nginx
+  tag: "1.25"
+
+service:
+  type: NodePort
+  port: 80
+  nodePort: 30915
+
+app:
+  name: notes-app
+  environment: production
+
+notes:
+  - "Production notes are served by 3 replicas"

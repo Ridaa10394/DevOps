@@ -1,0 +1,54 @@
+$ helm install notes-dev notes-chart -n s15-notes --create-namespace --wait --timeout 300s
+NAME: notes-dev
+LAST DEPLOYED: Wed Oct  7 17:00:50 2026
+NAMESPACE: s15-notes
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+notes-app is deployed (development).
+
+  Release:  notes-dev  revision 1
+  Image:    nginx:1.24
+  Replicas: 1
+
+Check it:
+  kubectl get pods,svc,cm -n s15-notes -l app=notes-dev
+  kubectl -n s15-notes port-forward svc/notes-dev-svc 8081:80
+  curl http://127.0.0.1:8081
+or via NodePort: curl http://$(minikube ip):30915
+
+$ kubectl get pods,svc,cm -n s15-notes
+NAME                                    READY   STATUS    RESTARTS   AGE
+pod/notes-dev-deploy-7d4fcffd87-xp7jb   1/1     Running   0          1s
+
+NAME                    TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+service/notes-dev-svc   NodePort   10.104.69.22   <none>        80:30915/TCP   1s
+
+NAME                         DATA   AGE
+configmap/kube-root-ca.crt   1      1s
+configmap/notes-dev-config   2      1s
+configmap/notes-dev-page     1      1s
+
+$ kubectl exec -n s15-notes deploy/notes-dev-deploy -- printenv APP_NAME ENVIRONMENT
+notes-app
+development
+
+$ curl -s http://127.0.0.1:18516   (via kubectl port-forward -n s15-notes svc/notes-dev-svc 18516:80)
+<html>
+<body>
+  <h1>notes-app (development)</h1>
+  <p>image: nginx:1.24 | revision: 1</p>
+  <ul>
+    <li>note 1: Buy milk</li>
+    <li>note 2: Finish Session 15 Helm homework</li>
+    <li>note 3: Read about helm rollback --rollback-on-failure</li>
+  </ul>
+</body>
+</html>
+
+$ minikube ip
+192.168.49.2
+$ curl -s --max-time 5 http://$(minikube ip):30915 | head -3
+(exit 0)

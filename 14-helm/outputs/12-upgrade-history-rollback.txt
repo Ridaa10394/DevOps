@@ -1,0 +1,64 @@
+$ helm upgrade cmd-demo ./my-web-chart -n s15-cmd --reuse-values --set replicaCount=3 --set page.message=scaled via --set --wait --timeout 180s
+Release "cmd-demo" has been upgraded. Happy Helming!
+NAME: cmd-demo
+LAST DEPLOYED: Wed Oct  7 16:34:57 2026
+NAMESPACE: s15-cmd
+STATUS: deployed
+REVISION: 3
+DESCRIPTION: Upgrade complete
+NOTES:
+my-web-chart is installed.
+
+  Release:   cmd-demo (revision 3)
+  Namespace: s15-cmd
+  Image:     nginx:1.27-alpine
+  Replicas:  3
+  Page:      v1 - "scaled via --set"
+
+Get the application URL by running these commands:
+  kubectl --namespace s15-cmd port-forward svc/cmd-demo-my-web-chart 8080:80
+  curl http://127.0.0.1:8080
+
+$ helm get values cmd-demo -n s15-cmd
+USER-SUPPLIED VALUES:
+page:
+  message: scaled via --set
+replicaCount: 3
+
+$ kubectl get deploy -n s15-cmd
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+cmd-demo-my-web-chart   3/3     3            3           13m
+
+$ helm history cmd-demo -n s15-cmd
+REVISION	UPDATED                 	STATUS    	CHART             	APP VERSION	DESCRIPTION                                                                                                                        
+1       	Wed Oct  7 16:21:20 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Release "cmd-demo" failed: resource Deployment/s15-cmd/cmd-demo-my-web-chart not ready. status: InProgress, message: Available: ...
+2       	Wed Oct  7 16:34:43 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Upgrade complete                                                                                                                   
+3       	Wed Oct  7 16:34:57 2026	deployed  	my-web-chart-0.1.0	1.27-alpine	Upgrade complete                                                                                                                   
+
+$ helm rollback cmd-demo 2 -n s15-cmd --wait --timeout 180s
+Rollback was a success! Happy Helming!
+
+$ helm history cmd-demo -n s15-cmd
+REVISION	UPDATED                 	STATUS    	CHART             	APP VERSION	DESCRIPTION                                                                                                                        
+1       	Wed Oct  7 16:21:20 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Release "cmd-demo" failed: resource Deployment/s15-cmd/cmd-demo-my-web-chart not ready. status: InProgress, message: Available: ...
+2       	Wed Oct  7 16:34:43 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Upgrade complete                                                                                                                   
+3       	Wed Oct  7 16:34:57 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Upgrade complete                                                                                                                   
+4       	Wed Oct  7 16:35:01 2026	deployed  	my-web-chart-0.1.0	1.27-alpine	Rollback to 2                                                                                                                      
+
+$ kubectl get deploy -n s15-cmd
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+cmd-demo-my-web-chart   2/2     2            2           13m
+
+$ helm get values cmd-demo -n s15-cmd --revision 3
+USER-SUPPLIED VALUES:
+page:
+  message: scaled via --set
+replicaCount: 3
+
+$ kubectl get secrets -n s15-cmd -l owner=helm
+NAME                             TYPE                 DATA   AGE
+sh.helm.release.v1.cmd-demo.v1   helm.sh/release.v1   1      13m
+sh.helm.release.v1.cmd-demo.v2   helm.sh/release.v1   1      29s
+sh.helm.release.v1.cmd-demo.v3   helm.sh/release.v1   1      16s
+sh.helm.release.v1.cmd-demo.v4   helm.sh/release.v1   1      12s
+

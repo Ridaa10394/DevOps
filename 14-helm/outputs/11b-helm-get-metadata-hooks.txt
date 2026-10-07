@@ -1,0 +1,38 @@
+$ helm get metadata cmd-demo -n s15-cmd
+NAME: cmd-demo
+CHART: my-web-chart
+VERSION: 0.1.0
+APP_VERSION: 1.27-alpine
+ANNOTATIONS: 
+LABELS: modifiedAt=1791370460,name=cmd-demo,owner=helm,status=deployed,version=2
+DEPENDENCIES: 
+NAMESPACE: s15-cmd
+REVISION: 2
+STATUS: deployed
+DEPLOYED_AT: 2026-10-07T16:34:43+05:30
+APPLY_METHOD: server-side apply
+
+$ helm get hooks cmd-demo -n s15-cmd
+---
+# Source: my-web-chart/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "cmd-demo-my-web-chart-test-connection"
+  labels:
+    helm.sh/chart: my-web-chart-0.1.0
+    app.kubernetes.io/name: my-web-chart
+    app.kubernetes.io/instance: cmd-demo
+    app.kubernetes.io/version: "1.27-alpine"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['cmd-demo-my-web-chart:80']
+  restartPolicy: Never
+
+

@@ -1,0 +1,13 @@
+apiVersion: v2
+name: my-web-chart
+description: Small nginx web app whose HTML page comes from a ConfigMap (Session 15 - Helm, Ridaa Mirza)
+type: application
+# version of the chart itself - bump when templates change
+version: 0.1.0
+# version of the app inside (used as image tag if image.tag is empty)
+appVersion: "1.27-alpine"
+maintainers:
+  - name: Ridaa Mirza
+keywords:
+  - nginx
+  - demo

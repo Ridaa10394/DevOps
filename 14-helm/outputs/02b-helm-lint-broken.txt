@@ -1,0 +1,7 @@
+$ helm lint ./broken-chart   # copy of my-web-chart with a missing "}" in deployment.yaml
+==> Linting ./broken-chart
+[INFO] Chart.yaml: icon is recommended
+[ERROR] templates/: parse error at (my-web-chart/templates/deployment.yaml:8): unexpected "}" in operand
+
+Error: 1 chart(s) linted, 1 chart(s) failed
+exit code: 1

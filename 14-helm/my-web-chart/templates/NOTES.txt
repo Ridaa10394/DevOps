@@ -1,0 +1,25 @@
+my-web-chart is installed.
+
+  Release:   {{ .Release.Name }} (revision {{ .Release.Revision }})
+  Namespace: {{ .Release.Namespace }}
+  Image:     {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+  Replicas:  {{ .Values.replicaCount }}
+  Page:      {{ .Values.page.version }} - "{{ .Values.page.message }}"
+
+Get the application URL by running these commands:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "my-web-chart.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+  kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "my-web-chart.fullname" . }}
+{{- else }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "my-web-chart.fullname" . }} 8080:{{ .Values.service.port }}
+  curl http://127.0.0.1:8080
+{{- end }}

@@ -1,0 +1,47 @@
+$ helm upgrade web ./my-web-chart -n s15 -f values-v2.yaml --wait --timeout 300s
+Release "web" has been upgraded. Happy Helming!
+NAME: web
+LAST DEPLOYED: Wed Oct  7 16:55:52 2026
+NAMESPACE: s15
+STATUS: deployed
+REVISION: 2
+DESCRIPTION: Upgrade complete
+NOTES:
+my-web-chart is installed.
+
+  Release:   web (revision 2)
+  Namespace: s15
+  Image:     nginx:1.28-alpine
+  Replicas:  3
+  Page:      v2 - "Hello from revision v2 - upgraded with helm upgrade"
+
+Get the application URL by running these commands:
+  kubectl --namespace s15 port-forward svc/web-my-web-chart 8080:80
+  curl http://127.0.0.1:8080
+
+$ kubectl get deploy,pods -n s15 -o wide
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS     IMAGES              SELECTOR
+web-my-web-chart   3/3     3            3           23s   my-web-chart   nginx:1.28-alpine   app.kubernetes.io/instance=web,app.kubernetes.io/name=my-web-chart
+NAME                                STATUS    READY   IMAGE               WAITING
+web-my-web-chart-6bd988499-c86km    Running   true    nginx:1.27-alpine   <none>
+web-my-web-chart-6bd988499-nfc2f    Running   true    nginx:1.27-alpine   <none>
+web-my-web-chart-75ffc88b54-5cmz6   Running   true    nginx:1.28-alpine   <none>
+web-my-web-chart-75ffc88b54-fj85f   Running   true    nginx:1.28-alpine   <none>
+web-my-web-chart-75ffc88b54-ghpbq   Running   true    nginx:1.28-alpine   <none>
+
+$ kubectl port-forward -n s15 svc/web-my-web-chart 18515:80 &  ;  curl -s http://127.0.0.1:18515 | grep -E 'message|version|revision'
+  <p id="message">Hello from revision v2 - upgraded with helm upgrade</p>
+  <p>page version: <b>v2</b></p>
+  <p>release: web | revision: 2 | chart: my-web-chart-0.1.0</p>
+$ curl -sI http://127.0.0.1:18515 | grep -i server
+Server: nginx/1.28.3
+
+$ helm history web -n s15
+REVISION	UPDATED                 	STATUS    	CHART             	APP VERSION	DESCRIPTION     
+1       	Wed Oct  7 16:55:33 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Install complete
+2       	Wed Oct  7 16:55:52 2026	deployed  	my-web-chart-0.1.0	1.27-alpine	Upgrade complete
+
+$ kubectl run wget-check -n s15 --image=busybox:1.36 --rm -i --restart=Never -- wget -qO- http://web-my-web-chart.s15.svc.cluster.local | grep message
+  <p id="message">Hello from revision v2 - upgraded with helm upgrade</p>
+  <p id="message">Hello from revision v2 - upgraded with helm upgrade</p>
+pod "wget-check" deleted from s15 namespace

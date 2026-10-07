@@ -1,0 +1,42 @@
+$ helm rollback web 2 -n s15 --wait --timeout 300s
+Rollback was a success! Happy Helming!
+
+$ sleep 15
+$ kubectl get deploy,pods -n s15 -o wide
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS     IMAGES              SELECTOR
+web-my-web-chart   3/3     3            3           2m42s   my-web-chart   nginx:1.28-alpine   app.kubernetes.io/instance=web,app.kubernetes.io/name=my-web-chart
+NAME                                STATUS    READY   IMAGE               WAITING
+web-my-web-chart-75ffc88b54-5cmz6   Running   true    nginx:1.28-alpine   <none>
+web-my-web-chart-75ffc88b54-fj85f   Running   true    nginx:1.28-alpine   <none>
+web-my-web-chart-75ffc88b54-ghpbq   Running   true    nginx:1.28-alpine   <none>
+
+$ kubectl port-forward -n s15 svc/web-my-web-chart 18515:80 &  ;  curl -s http://127.0.0.1:18515 | grep -E 'message|version|revision'
+  <p id="message">Hello from revision v2 - upgraded with helm upgrade</p>
+  <p>page version: <b>v2</b></p>
+  <p>release: web | revision: 2 | chart: my-web-chart-0.1.0</p>
+$ curl -sI http://127.0.0.1:18515 | grep -i server
+Server: nginx/1.28.3
+
+$ helm history web -n s15
+REVISION	UPDATED                 	STATUS    	CHART             	APP VERSION	DESCRIPTION     
+1       	Wed Oct  7 16:55:33 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Install complete
+2       	Wed Oct  7 16:55:52 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Upgrade complete
+3       	Wed Oct  7 16:56:08 2026	superseded	my-web-chart-0.1.0	1.27-alpine	Upgrade complete
+4       	Wed Oct  7 16:58:00 2026	deployed  	my-web-chart-0.1.0	1.27-alpine	Rollback to 2   
+
+$ helm get values web -n s15
+USER-SUPPLIED VALUES:
+image:
+  tag: 1.28-alpine
+page:
+  color: '#2f855a'
+  features:
+  - Deployment + Service + ConfigMap
+  - Values-driven replicas, image and service type
+  - 'v2: scaled to 3 replicas, nginx 1.28'
+  message: Hello from revision v2 - upgraded with helm upgrade
+  version: v2
+replicaCount: 3
+
+$ helm diff-style check: helm get manifest web -n s15 --revision 4 | grep image:
+          image: "nginx:1.28-alpine"

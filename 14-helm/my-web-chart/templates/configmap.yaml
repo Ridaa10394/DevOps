@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "my-web-chart.fullname" . }}-html
+  labels:
+    {{- include "my-web-chart.labels" . | nindent 4 }}
+data:
+  index.html: |
+    <!doctype html>
+    <html>
+    <head><title>{{ .Values.page.title }}</title></head>
+    <body style="font-family: sans-serif; border-top: 8px solid {{ .Values.page.color }};">
+      <h1>{{ .Values.page.title }}</h1>
+      <p id="message">{{ .Values.page.message }}</p>
+      <p>page version: <b>{{ .Values.page.version }}</b></p>
+      <p>release: {{ .Release.Name }} | revision: {{ .Release.Revision }} | chart: {{ include "my-web-chart.chart" . }}</p>
+      <p>owner: {{ .Values.page.owner }}</p>
+      {{- if .Values.page.features }}
+      <ul>
+      {{- range .Values.page.features }}
+        <li>{{ . }}</li>
+      {{- end }}
+      </ul>
+      {{- end }}
+    </body>
+    </html>

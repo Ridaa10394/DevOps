@@ -1,0 +1,11 @@
+$ helm lint ./my-web-chart
+==> Linting ./my-web-chart
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+
+$ helm lint ./my-web-chart -f values-v2.yaml --strict
+==> Linting ./my-web-chart
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed

@@ -1,0 +1,39 @@
+$ helm upgrade notes-dev notes-chart -n s15-notes -f notes-chart/values-prod.yaml --wait --timeout 300s
+Release "notes-dev" has been upgraded. Happy Helming!
+NAME: notes-dev
+LAST DEPLOYED: Wed Oct  7 17:01:03 2026
+NAMESPACE: s15-notes
+STATUS: deployed
+REVISION: 2
+DESCRIPTION: Upgrade complete
+TEST SUITE: None
+NOTES:
+notes-app is deployed (production).
+
+  Release:  notes-dev  revision 2
+  Image:    nginx:1.25
+  Replicas: 3
+
+Check it:
+  kubectl get pods,svc,cm -n s15-notes -l app=notes-dev
+  kubectl -n s15-notes port-forward svc/notes-dev-svc 8081:80
+  curl http://127.0.0.1:8081
+or via NodePort: curl http://$(minikube ip):30915
+
+$ kubectl get pods -n s15-notes -o wide
+NAME                                READY   STATUS      RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+notes-dev-deploy-7d4fcffd87-xp7jb   0/1     Completed   0          15s   10.244.0.18   minikube   <none>           <none>
+notes-dev-deploy-f585db698-6mqnk    1/1     Running     0          0s    10.244.0.30   minikube   <none>           <none>
+notes-dev-deploy-f585db698-dpftb    1/1     Running     0          1s    10.244.0.29   minikube   <none>           <none>
+notes-dev-deploy-f585db698-hln8v    1/1     Running     0          2s    10.244.0.28   minikube   <none>           <none>
+
+$ curl -s http://127.0.0.1:18516 | grep -E "h1|image"
+  <h1>notes-app (production)</h1>
+  <p>image: nginx:1.25 | revision: 2</p>
+    <li>note 1: Production notes are served by 3 replicas</li>
+
+$ helm history notes-dev -n s15-notes
+REVISION	UPDATED                 	STATUS    	CHART            	APP VERSION	DESCRIPTION     
+1       	Wed Oct  7 17:00:50 2026	superseded	notes-chart-0.2.0	1.0        	Install complete
+2       	Wed Oct  7 17:01:03 2026	deployed  	notes-chart-0.2.0	1.0        	Upgrade complete
+

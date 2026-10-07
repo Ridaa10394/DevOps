@@ -1,0 +1,33 @@
+$ helm uninstall cmd-demo -n s15-cmd --keep-history
+release "cmd-demo" uninstalled
+
+$ helm list -n s15-cmd
+NAME    	NAMESPACE	REVISION	UPDATED                             	STATUS     	CHART             	APP VERSION
+cmd-demo	s15-cmd  	4       	2026-10-07 16:35:01.422181 +0530 IST	uninstalled	my-web-chart-0.1.0	1.27-alpine
+
+$ helm list -n s15-cmd --uninstalled
+NAME    	NAMESPACE	REVISION	UPDATED                             	STATUS     	CHART             	APP VERSION
+cmd-demo	s15-cmd  	4       	2026-10-07 16:35:01.422181 +0530 IST	uninstalled	my-web-chart-0.1.0	1.27-alpine
+
+$ helm history cmd-demo -n s15-cmd
+REVISION	UPDATED                 	STATUS     	CHART             	APP VERSION	DESCRIPTION                                                                                                                        
+1       	Wed Oct  7 16:21:20 2026	superseded 	my-web-chart-0.1.0	1.27-alpine	Release "cmd-demo" failed: resource Deployment/s15-cmd/cmd-demo-my-web-chart not ready. status: InProgress, message: Available: ...
+2       	Wed Oct  7 16:34:43 2026	superseded 	my-web-chart-0.1.0	1.27-alpine	Upgrade complete                                                                                                                   
+3       	Wed Oct  7 16:34:57 2026	superseded 	my-web-chart-0.1.0	1.27-alpine	Upgrade complete                                                                                                                   
+4       	Wed Oct  7 16:35:01 2026	uninstalled	my-web-chart-0.1.0	1.27-alpine	Uninstallation complete                                                                                                            
+
+$ helm uninstall cmd-demo -n s15-cmd
+release "cmd-demo" uninstalled
+
+$ helm list -n s15-cmd --all
+Error: unknown flag: --all
+
+$ kubectl get all,cm,secret -n s15-cmd
+NAME                                         READY   STATUS        RESTARTS   AGE
+pod/cmd-demo-my-web-chart-7569f966fb-qz2cz   1/1     Terminating   0          25m
+pod/cmd-demo-my-web-chart-7569f966fb-vpd5l   1/1     Terminating   0          25m
+pod/cmd-demo-my-web-chart-test-connection    0/1     Completed     0          4m7s
+
+NAME                         DATA   AGE
+configmap/kube-root-ca.crt   1      39m
+
