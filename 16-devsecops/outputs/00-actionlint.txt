@@ -1,0 +1,2 @@
+$ actionlint .github/workflows/s17-devsecops.yml
+exit code: 0

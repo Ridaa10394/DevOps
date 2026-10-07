@@ -1,0 +1,35 @@
+$ pytest -v --cov=app --cov-report=term-missing --cov-fail-under=80
+============================= test session starts ==============================
+platform darwin -- Python 3.14.6, pytest-9.1.1, pluggy-1.6.0 -- /private/tmp/claude-501/-Users-ridaamahroozmirza-Desktop-AI-Labs/57dde1d4-70ab-40d8-b829-6f468f44cb3b/scratchpad/v17app/bin/python3.14
+rootdir: /Users/ridaamahroozmirza/Desktop/AI-Labs/DevOps/16-devsecops
+configfile: pytest.ini
+testpaths: tests
+plugins: cov-7.1.0
+collecting ... collected 13 items
+
+tests/test_app.py::test_home PASSED                                      [  7%]
+tests/test_app.py::test_health PASSED                                    [ 15%]
+tests/test_app.py::test_greet PASSED                                     [ 23%]
+tests/test_app.py::test_add_numbers PASSED                               [ 30%]
+tests/test_app.py::test_add_numbers_missing_fields PASSED                [ 38%]
+tests/test_app.py::test_calculator_multiply PASSED                       [ 46%]
+tests/test_app.py::test_calculator_divide_by_zero PASSED                 [ 53%]
+tests/test_app.py::test_status PASSED                                    [ 61%]
+tests/test_app.py::test_calculator_unknown_operation PASSED              [ 69%]
+tests/test_app.py::test_calculator_non_numeric PASSED                    [ 76%]
+tests/test_app.py::test_pipeline_all_pass PASSED                         [ 84%]
+tests/test_app.py::test_pipeline_fail_skips_rest PASSED                  [ 92%]
+tests/test_app.py::test_not_found PASSED                                 [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.14.6-final-0 _______________
+
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+app/__init__.py       0      0   100%
+app/app.py          104      7    93%   103, 113-114, 130, 137, 239, 246
+-----------------------------------------------
+TOTAL               104      7    93%
+Required test coverage of 80% reached. Total coverage: 93.27%
+============================== 13 passed in 0.39s ==============================
+exit code: 0

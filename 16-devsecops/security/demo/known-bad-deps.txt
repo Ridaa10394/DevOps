@@ -1,0 +1,7 @@
+# KNOWN-BAD dependency set - used ONLY to prove the security gate fails.
+# Not referenced by the Dockerfile or the pipeline. Flask 2.2.4 / Werkzeug 2.2.3
+# are old releases with published CVEs (fixed in later versions).
+# Named *.txt without "requirements" in it so Dependabot does not treat it as a real manifest.
+Flask==2.2.4
+Werkzeug==2.2.3
+gunicorn==26.2.0

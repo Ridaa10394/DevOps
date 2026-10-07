@@ -1,0 +1,32 @@
+# FAIL case: reports from the known-bad state
+#   bandit.json      - instructor app.py before my fix (debug=True, 0.0.0.0)
+#   pip-audit.json   - security/demo/known-bad-deps.txt (Flask 2.2.4 / Werkzeug 2.2.3)
+#   gitleaks.json    - scratch file with fake tokens (/tmp/secret-demo, deleted after scan)
+#   trivy-image.json - s17-devsecops:known-bad image
+$ python3 security/gate.py --reports reports-bad
+Security gate - policy security/gate-policy.toml, reports reports-bad/
+----------------------------------------------------------------
+[FAIL] SAST (bandit)        7 total, 2 blocking
+         - B201 HIGH/MEDIUM app/app.py:234 A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.
+         - B104 MEDIUM/MEDIUM app/app.py:234 Possible binding to all interfaces.
+[FAIL] SCA (pip-audit)      11 vulnerable (limit 0)
+         - flask==2.2.4 PYSEC-2023-62 (fix: 2.2.5,2.3.2)
+         - flask==2.2.4 PYSEC-2026-2151 (fix: 3.1.3)
+         - werkzeug==2.2.3 PYSEC-2023-221 (fix: 2.3.8,3.0.1)
+         - werkzeug==2.2.3 PYSEC-2026-2043 (fix: 3.0.3)
+         - werkzeug==2.2.3 PYSEC-2026-2045 (fix: 3.0.6)
+         - werkzeug==2.2.3 PYSEC-2026-1860 (fix: 3.0.6)
+         - werkzeug==2.2.3 PYSEC-2026-2046 (fix: 3.1.4)
+         - werkzeug==2.2.3 PYSEC-2026-2044 (fix: 3.1.5)
+         - werkzeug==2.2.3 PYSEC-2026-2320 (fix: 3.1.6)
+         - werkzeug==2.2.3 PYSEC-2026-3417 (fix: 3.0.6)
+         - werkzeug==2.2.3 CVE-2026-102598 (fix: 3.1.9)
+[FAIL] Secrets (gitleaks)   2 findings (limit 0)
+         - github-pat /tmp/secret-demo/config_leak_demo.py:3
+         - s17-app-api-key /tmp/secret-demo/config_leak_demo.py:4
+[FAIL] Image (trivy)        2 fixable CRITICAL/HIGH
+         - HIGH CVE-2023-30861 Flask 2.2.4 -> 2.3.2, 2.2.5 (Python)
+         - HIGH CVE-2024-34069 Werkzeug 2.2.3 -> 3.0.3 (Python)
+----------------------------------------------------------------
+GATE RESULT: FAILED - release blocked
+exit code: 1

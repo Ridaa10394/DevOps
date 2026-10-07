@@ -1,0 +1,11 @@
+# PASS case: reports from the fixed state (current code, requirements.txt, clean repo, s17-devsecops:1.0)
+$ python3 security/gate.py --reports reports
+Security gate - policy security/gate-policy.toml, reports reports/
+----------------------------------------------------------------
+[PASS] SAST (bandit)        0 total, 0 blocking
+[PASS] SCA (pip-audit)      0 vulnerable (limit 0)
+[PASS] Secrets (gitleaks)   0 findings (limit 0)
+[PASS] Image (trivy)        0 fixable CRITICAL/HIGH
+----------------------------------------------------------------
+GATE RESULT: PASSED - ok to push and deploy
+exit code: 0

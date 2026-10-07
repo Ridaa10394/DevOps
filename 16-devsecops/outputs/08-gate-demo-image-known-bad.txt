@@ -1,0 +1,60 @@
+# known-bad image: same Dockerfile + app, but requirements.txt replaced by security/demo/known-bad-deps.txt
+$ docker build -t s17-devsecops:known-bad <ctx-with-known-bad-deps>
+sha256:a4b7566dc9be2279f55b95ba3beaecfba43eac8f96d88ff807e458c274f40b0a
+exit code: 0
+
+$ trivy image --skip-db-update --no-progress --ignorefile security/.trivyignore --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 s17-devsecops:known-bad
+2026-10-07T16:36:50+05:30	INFO	[vuln] Vulnerability scanning is enabled
+2026-10-07T16:36:50+05:30	INFO	[secret] Secret scanning is enabled
+2026-10-07T16:36:50+05:30	INFO	[secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2026-10-07T16:36:50+05:30	INFO	[secret] Please see https://trivy.dev/docs/v0.75/guide/scanner/secret#recommendation for faster secret detection
+2026-10-07T16:36:50+05:30	INFO	[python] Licenses acquired from one or more METADATA files may be subject to additional terms. Use `--debug` flag to see all affected packages.
+2026-10-07T16:36:50+05:30	INFO	Detected OS	family="debian" version="13.7"
+2026-10-07T16:36:50+05:30	INFO	[debian] Detecting vulnerabilities...	os_version="13" pkg_num=87
+2026-10-07T16:36:50+05:30	INFO	Number of language-specific files	num=1
+2026-10-07T16:36:50+05:30	INFO	[python-pkg] Detecting vulnerabilities...
+2026-10-07T16:36:50+05:30	WARN	Using severities from other vendors for some vulnerabilities. Read https://trivy.dev/docs/v0.75/guide/scanner/vulnerability#severity-selection for details.
+2026-10-07T16:36:50+05:30	INFO	Table result includes only package filenames. Use '--format json' option to get the full path to the package file.
+
+Report Summary
+
+┌──────────────────────────────────────────────────────────────────────────────┬────────────┬─────────────────┬─────────┐
+│                                    Target                                    │    Type    │ Vulnerabilities │ Secrets │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ s17-devsecops:known-bad (debian 13.7)                                        │   debian   │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/Flask-2.2.4.dist-info/METADATA        │ python-pkg │        1        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/Werkzeug-2.2.3.dist-info/METADATA     │ python-pkg │        1        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/click-8.5.0.dist-info/METADATA        │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/gunicorn-26.2.0.dist-info/METADATA    │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/itsdangerous-2.2.0.dist-info/METADATA │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/jinja2-3.1.6.dist-info/METADATA       │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/markupsafe-3.0.4.dist-info/METADATA   │ python-pkg │        0        │    -    │
+└──────────────────────────────────────────────────────────────────────────────┴────────────┴─────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+Python (python-pkg)
+===================
+Total: 2 (HIGH: 2, CRITICAL: 0)
+
+┌─────────────────────┬────────────────┬──────────┬────────┬───────────────────┬───────────────┬────────────────────────────────────────────────────────────┐
+│       Library       │ Vulnerability  │ Severity │ Status │ Installed Version │ Fixed Version │                           Title                            │
+├─────────────────────┼────────────────┼──────────┼────────┼───────────────────┼───────────────┼────────────────────────────────────────────────────────────┤
+│ Flask (METADATA)    │ CVE-2023-30861 │ HIGH     │ fixed  │ 2.2.4             │ 2.3.2, 2.2.5  │ flask: Possible disclosure of permanent session cookie due │
+│                     │                │          │        │                   │               │ to missing Vary: Cookie...                                 │
+│                     │                │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2023-30861                 │
+├─────────────────────┼────────────────┤          │        ├───────────────────┼───────────────┼────────────────────────────────────────────────────────────┤
+│ Werkzeug (METADATA) │ CVE-2024-34069 │          │        │ 2.2.3             │ 3.0.3         │ python-werkzeug: user may execute code on a developer's    │
+│                     │                │          │        │                   │               │ machine                                                    │
+│                     │                │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2024-34069                 │
+└─────────────────────┴────────────────┴──────────┴────────┴───────────────────┴───────────────┴────────────────────────────────────────────────────────────┘
+exit code: 1

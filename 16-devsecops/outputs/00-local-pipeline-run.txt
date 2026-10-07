@@ -1,0 +1,113 @@
+$ DEPLOY=1 ./scripts/local-pipeline.sh
+
+========== 1. Build ==========
+No broken requirements found.
+
+========== 2. Unit Test ==========
+.............                                                            [100%]
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.14.6-final-0 _______________
+
+Name              Stmts   Miss  Cover
+-------------------------------------
+app/__init__.py       0      0   100%
+app/app.py          104      7    93%
+-------------------------------------
+TOTAL               104      7    93%
+Required test coverage of 80% reached. Total coverage: 93.27%
+13 passed in 0.09s
+
+========== 3. SAST (bandit) ==========
+
+========== 4. SCA (pip-audit + trivy fs) ==========
+No known vulnerabilities found
+No known vulnerabilities found
+
+Report Summary
+
+┌─────────────────────┬────────────┬─────────────────┬───────────────────┬─────────┐
+│       Target        │    Type    │ Vulnerabilities │ Misconfigurations │ Secrets │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ requirements.txt    │    pip     │        0        │         -         │    -    │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ Dockerfile          │ dockerfile │        -        │         0         │    -    │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ k8s/deployment.yaml │ kubernetes │        -        │         0         │    -    │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ k8s/namespace.yaml  │ kubernetes │        -        │         0         │    -    │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ k8s/service.yaml    │ kubernetes │        -        │         0         │    -    │
+└─────────────────────┴────────────┴─────────────────┴───────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+========== 5. Secret Scan (gitleaks) ==========
+4:42PM INF scanned ~87922 bytes (87.92 KB) in 21.9ms
+4:42PM INF no leaks found
+
+========== 6. Docker Build ==========
+sha256:c2902cd6148ef6ce00fa359b068076553998e1291193e9159fa01285a82c02b0
+
+========== 7. Container Image Scan (trivy) ==========
+
+Report Summary
+
+┌──────────────────────────────────────────────────────────────────────────────┬────────────┬─────────────────┬─────────┐
+│                                    Target                                    │    Type    │ Vulnerabilities │ Secrets │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ s17-devsecops:1.0 (debian 13.7)                                              │   debian   │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/blinker-1.9.0.dist-info/METADATA      │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/click-8.5.0.dist-info/METADATA        │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/flask-3.1.3.dist-info/METADATA        │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/gunicorn-26.2.0.dist-info/METADATA    │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/itsdangerous-2.2.0.dist-info/METADATA │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/jinja2-3.1.6.dist-info/METADATA       │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/markupsafe-3.0.4.dist-info/METADATA   │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.12/site-packages/werkzeug-3.1.9.dist-info/METADATA     │ python-pkg │        0        │    -    │
+└──────────────────────────────────────────────────────────────────────────────┴────────────┴─────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+========== 8. Security Gate ==========
+Security gate - policy security/gate-policy.toml, reports reports/
+----------------------------------------------------------------
+[PASS] SAST (bandit)        0 total, 0 blocking
+[PASS] SCA (pip-audit)      0 vulnerable (limit 0)
+[PASS] Secrets (gitleaks)   0 findings (limit 0)
+[PASS] Image (trivy)        0 fixable CRITICAL/HIGH
+----------------------------------------------------------------
+GATE RESULT: PASSED - ok to push and deploy
+
+========== 9. Push (local: minikube image load instead of GHCR) ==========
+
+========== 10. Deploy to Kubernetes (minikube, namespace s17) ==========
+namespace/s17 unchanged
+deployment.apps/s17-devsecops unchanged
+service/s17-devsecops unchanged
+deployment.apps/s17-devsecops restarted
+Waiting for deployment "s17-devsecops" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "s17-devsecops" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "s17-devsecops" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "s17-devsecops" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "s17-devsecops" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "s17-devsecops" rollout to finish: 1 old replicas are pending termination...
+deployment "s17-devsecops" successfully rolled out
+NAME                             READY   STATUS        RESTARTS   AGE     IP             NODE       NOMINATED NODE   READINESS GATES
+s17-devsecops-5545c6d6cd-22vvg   1/1     Running       0          3s      10.244.0.155   minikube   <none>           <none>
+s17-devsecops-5545c6d6cd-gd297   1/1     Running       0          6s      10.244.0.154   minikube   <none>           <none>
+s17-devsecops-6446478c9d-4l7bl   1/1     Terminating   0          3m42s   10.244.0.121   minikube   <none>           <none>
+
+Local pipeline finished OK
+exit code: 0

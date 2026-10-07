@@ -1,0 +1,25 @@
+# gitleaks config for the Session 17 folder.
+# Usage (from 16-devsecops/):
+#   gitleaks detect --no-git --source . --config security/.gitleaks.toml --redact
+title = "Session 17 DevSecOps - gitleaks"
+
+# Start from the full built-in rule set (AWS, GitHub tokens, Slack, private keys,
+# generic API keys, ...) and only add on top of it.
+[extend]
+useDefault = true
+
+# Extra rule: anything that looks like our app's own (hypothetical) API key format.
+[[rules]]
+id = "s17-app-api-key"
+description = "Session 17 app API key"
+regex = '''S17_API_KEY\s*[:=]\s*['"]?[A-Za-z0-9]{24,}['"]?'''
+keywords = ["s17_api_key"]
+
+# Paths that are generated scan output, not source. The secret-scan demo output
+# is already redacted (--redact), so nothing real ever lands here anyway.
+[allowlist]
+description = "generated scanner output"
+paths = [
+  '''outputs/''',
+  '''reports/''',
+]

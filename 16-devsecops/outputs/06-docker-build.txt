@@ -1,0 +1,121 @@
+$ docker build -t s17-devsecops:1.0 .
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.80kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 165B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 531B done
+#4 DONE 0.0s
+
+#5 [builder 1/4] FROM docker.io/library/python:3.12-slim@sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f
+#5 resolve docker.io/library/python:3.12-slim@sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f 0.0s done
+#5 CACHED
+
+#6 [builder 2/4] WORKDIR /build
+#6 CACHED
+
+#7 [builder 3/4] COPY requirements.txt .
+#7 DONE 0.0s
+
+#8 [builder 4/4] RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+#8 1.838 Collecting Flask==3.1.3 (from -r requirements.txt (line 1))
+#8 2.756   Downloading flask-3.1.3-py3-none-any.whl.metadata (3.2 kB)
+#8 3.310 Collecting Werkzeug==3.1.9 (from -r requirements.txt (line 2))
+#8 3.839   Downloading werkzeug-3.1.9-py3-none-any.whl.metadata (4.1 kB)
+#8 4.513 Collecting gunicorn==26.2.0 (from -r requirements.txt (line 3))
+#8 4.785   Downloading gunicorn-26.2.0-py3-none-any.whl.metadata (5.5 kB)
+#8 5.434 Collecting blinker>=1.9.0 (from Flask==3.1.3->-r requirements.txt (line 1))
+#8 5.767   Downloading blinker-1.9.0-py3-none-any.whl.metadata (1.6 kB)
+#8 6.437 Collecting click>=8.1.3 (from Flask==3.1.3->-r requirements.txt (line 1))
+#8 7.158   Downloading click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+#8 7.649 Collecting itsdangerous>=2.2.0 (from Flask==3.1.3->-r requirements.txt (line 1))
+#8 8.062   Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)
+#8 8.419 Collecting jinja2>=3.1.2 (from Flask==3.1.3->-r requirements.txt (line 1))
+#8 8.667   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+#8 ...
+
+#9 [stage-1 2/5] RUN apt-get update  && apt-get upgrade -y --no-install-recommends  && rm -rf /var/lib/apt/lists/*  && python -m pip uninstall -y pip  && groupadd --system --gid 10001 app  && useradd --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
+#9 1.044 Hit:1 http://deb.debian.org/debian trixie InRelease
+#9 1.391 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+#9 1.877 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+#9 1.920 Get:4 http://deb.debian.org/debian trixie/main arm64 Packages [9614 kB]
+#9 7.235 Get:5 http://deb.debian.org/debian trixie-updates/main arm64 Packages [4424 B]
+#9 7.558 Get:6 http://deb.debian.org/debian-security trixie-security/main arm64 Packages [265 kB]
+#9 7.882 Fetched 9974 kB in 8s (1320 kB/s)
+#9 7.882 Reading package lists...
+#9 8.652 Reading package lists...
+#9 9.162 Building dependency tree...
+#9 9.257 Reading state information...
+#9 9.301 Calculating upgrade...
+#9 9.507 0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+#9 ...
+
+#8 [builder 4/4] RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+#8 9.748 Collecting markupsafe>=2.1.1 (from Flask==3.1.3->-r requirements.txt (line 1))
+#8 9.830   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl.metadata (2.7 kB)
+#8 10.10 Downloading flask-3.1.3-py3-none-any.whl (103 kB)
+#8 ...
+
+#9 [stage-1 2/5] RUN apt-get update  && apt-get upgrade -y --no-install-recommends  && rm -rf /var/lib/apt/lists/*  && python -m pip uninstall -y pip  && groupadd --system --gid 10001 app  && useradd --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
+#9 10.21 Found existing installation: pip 25.0.1
+#9 10.23 Uninstalling pip-25.0.1:
+#9 10.34   Successfully uninstalled pip-25.0.1
+#9 10.35 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 10.40 useradd warning: app's uid 10001 is greater than SYS_UID_MAX 999
+#9 DONE 10.4s
+
+#8 [builder 4/4] RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+#8 11.45 Downloading werkzeug-3.1.9-py3-none-any.whl (228 kB)
+#8 13.32 Downloading gunicorn-26.2.0-py3-none-any.whl (228 kB)
+#8 15.52 Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB)
+#8 15.96 Downloading click-8.5.0-py3-none-any.whl (125 kB)
+#8 17.54 Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+#8 17.89 Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+#8 19.12 Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl (24 kB)
+#8 19.17 Installing collected packages: markupsafe, itsdangerous, gunicorn, click, blinker, Werkzeug, jinja2, Flask
+#8 19.66 Successfully installed Flask-3.1.3 Werkzeug-3.1.9 blinker-1.9.0 click-8.5.0 gunicorn-26.2.0 itsdangerous-2.2.0 jinja2-3.1.6 markupsafe-3.0.4
+#8 19.66 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#8 20.44 
+#8 20.44 [notice] A new release of pip is available: 25.0.1 -> 26.2.1
+#8 20.44 [notice] To update, run: pip install --upgrade pip
+#8 DONE 20.6s
+
+#10 [stage-1 3/5] COPY --from=builder /install /usr/local
+#10 DONE 0.1s
+
+#11 [stage-1 4/5] WORKDIR /app
+#11 DONE 0.4s
+
+#12 [stage-1 5/5] COPY --chown=root:root app ./app
+#12 DONE 0.0s
+
+#13 exporting to image
+#13 exporting layers
+#13 exporting layers 0.2s done
+#13 exporting manifest sha256:db184fb0d9c05e72dbaa224b55e09180ba838d83ffb353c5d1380273104de2e1 0.0s done
+#13 exporting config sha256:f23d1d7d645364c64bce020575b7026bada287cc86a18b1a70deb097b6d37a09 0.0s done
+#13 exporting attestation manifest sha256:c25e3a479db127e06d4119a12f4cff7de579c4ac5f0c564c37fb9a2e85ae1d05 0.0s done
+#13 exporting manifest list sha256:ceac20d74508fd247f02f6c34e97a1acb320e4e6bc33d9d98c917612e5f337c6 0.0s done
+#13 naming to docker.io/library/s17-devsecops:1.0 done
+#13 unpacking to docker.io/library/s17-devsecops:1.0
+#13 unpacking to docker.io/library/s17-devsecops:1.0 0.2s done
+#13 DONE 0.5s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/ng925pwaz38prnp083x7569nc
+exit code: 0
+
+$ docker image ls s17-devsecops:1.0
+IMAGE               ID             DISK USAGE   CONTENT SIZE   EXTRA
+s17-devsecops:1.0   ceac20d74508        213MB         45.8MB        
+
+$ docker inspect s17-devsecops:1.0 --format "User={{.Config.User}} Cmd={{.Config.Cmd}}"
+User=10001:10001 Cmd=[gunicorn --bind 0.0.0.0:5000 --workers 2 --worker-tmp-dir /tmp --no-control-socket --access-logfile - app.app:app]

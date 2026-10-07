@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: s17-devsecops
+  namespace: s17
+  labels:
+    app: s17-devsecops
+spec:
+  type: ClusterIP          # reach it with kubectl port-forward; no NodePort clash on the shared cluster
+  selector:
+    app: s17-devsecops
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

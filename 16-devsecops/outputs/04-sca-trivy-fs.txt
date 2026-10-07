@@ -1,0 +1,32 @@
+$ trivy fs --config security/trivy.yaml --severity HIGH,CRITICAL --skip-db-update --no-progress .
+2026-10-07T16:38:52+05:30	INFO	Loaded	file_path="security/trivy.yaml"
+2026-10-07T16:38:52+05:30	INFO	[vuln] Vulnerability scanning is enabled
+2026-10-07T16:38:52+05:30	INFO	[misconfig] Misconfiguration scanning is enabled
+2026-10-07T16:38:52+05:30	INFO	[checks-client] Using existing checks from cache	path="/Users/ridaamahroozmirza/Library/Caches/trivy/policy/content"
+2026-10-07T16:38:52+05:30	INFO	[secret] Secret scanning is enabled
+2026-10-07T16:38:52+05:30	INFO	[secret] If your scanning is slow, please try '--scanners vuln,misconfig' to disable secret scanning
+2026-10-07T16:38:52+05:30	INFO	[secret] Please see https://trivy.dev/docs/v0.75/guide/scanner/secret#recommendation for faster secret detection
+2026-10-07T16:38:52+05:30	INFO	Number of language-specific files	num=1
+2026-10-07T16:38:52+05:30	INFO	[pip] Detecting vulnerabilities...
+2026-10-07T16:38:52+05:30	INFO	Detected config files	num=4
+
+Report Summary
+
+┌─────────────────────┬────────────┬─────────────────┬───────────────────┬─────────┐
+│       Target        │    Type    │ Vulnerabilities │ Misconfigurations │ Secrets │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ requirements.txt    │    pip     │        0        │         -         │    -    │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ Dockerfile          │ dockerfile │        -        │         0         │    -    │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ k8s/deployment.yaml │ kubernetes │        -        │         0         │    -    │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ k8s/namespace.yaml  │ kubernetes │        -        │         0         │    -    │
+├─────────────────────┼────────────┼─────────────────┼───────────────────┼─────────┤
+│ k8s/service.yaml    │ kubernetes │        -        │         0         │    -    │
+└─────────────────────┴────────────┴─────────────────┴───────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+exit code: 0

@@ -1,0 +1,24 @@
+# Security gate policy - read by security/gate.py in the "Security Gate" job.
+# Every scanner runs in report mode and uploads a JSON report; this file is
+# the single place that decides which findings block a release.
+
+[sast]                        # bandit
+# Block on findings at or above BOTH of these levels (LOW < MEDIUM < HIGH).
+min_severity   = "MEDIUM"
+min_confidence = "MEDIUM"
+
+[sca]                         # pip-audit
+# pip-audit has no severity field, so every known vulnerability in a pinned
+# dependency blocks. Exceptions must be listed by ID with a reason.
+max_vulnerabilities = 0
+allow = []                    # e.g. [{ id = "GHSA-xxxx", reason = "..." }]
+
+[secrets]                     # gitleaks
+max_findings = 0              # any leaked secret blocks, no exceptions
+
+[image]                       # trivy image (OS + Python packages in the image)
+# Block on HIGH/CRITICAL that already have a fixed version available.
+# Unfixed CVEs in the Debian base are reported but cannot be fixed by us;
+# accepted ones live in security/.trivyignore with a justification.
+block_severities = ["HIGH", "CRITICAL"]
+ignore_unfixed   = true

@@ -1,0 +1,13 @@
+# Bandit (SAST) config for the Session 17 app.
+# Run from 16-devsecops/:  bandit -c security/bandit.yaml -r app
+#
+# tests/ is excluded because pytest uses bare `assert` everywhere (B101),
+# which is fine in test code and would just be noise.
+exclude_dirs:
+  - tests
+  - .venv
+
+# Nothing is globally skipped. If a check ever has to be silenced, do it
+# inline with `# nosec BXXX` plus a comment explaining why, so the reason
+# sits next to the code it applies to.
+skips: []

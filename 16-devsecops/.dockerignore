@@ -1,0 +1,14 @@
+.venv
+__pycache__
+*.pyc
+.coverage
+coverage.xml
+.pytest_cache
+reports
+outputs
+tests
+k8s
+security
+scripts
+README.md
+.gitignore

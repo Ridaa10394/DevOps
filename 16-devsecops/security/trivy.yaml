@@ -1,0 +1,20 @@
+# Trivy config shared by `trivy fs` (SCA stage) and `trivy image` (image scan stage).
+# Usage: trivy image --config security/trivy.yaml <image>
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+scan:
+  scanners:
+    - vuln
+    - misconfig
+    - secret
+vulnerability:
+  # Accepted risks, each with a written justification and review date.
+  ignorefile: security/.trivyignore
+  # Report unfixed CVEs too (they are useful to see) - the security gate
+  # (gate-policy.toml) is what decides that only *fixable* ones block.
+  ignore-unfixed: false
+timeout: 10m

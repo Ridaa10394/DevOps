@@ -1,0 +1,78 @@
+$ kubectl config current-context
+minikube
+
+$ kubectl get nodes
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   21m   v1.37.0
+
+$ minikube image load s17-devsecops:1.0
+exit code: 0
+
+$ minikube image ls | grep s17-devsecops
+docker.io/library/s17-devsecops:1.0
+
+$ kubectl apply -f k8s/namespace.yaml
+namespace/s17 unchanged
+
+$ kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml
+deployment.apps/s17-devsecops created
+service/s17-devsecops created
+
+$ kubectl -n s17 rollout status deployment/s17-devsecops --timeout=180s
+Waiting for deployment "s17-devsecops" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "s17-devsecops" rollout to finish: 1 of 2 updated replicas are available...
+deployment "s17-devsecops" successfully rolled out
+
+$ kubectl -n s17 get deploy,rs,pods,svc -o wide
+NAME                            READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES              SELECTOR
+deployment.apps/s17-devsecops   2/2     2            2           3s    app          s17-devsecops:1.0   app=s17-devsecops
+
+NAME                                       DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES              SELECTOR
+replicaset.apps/s17-devsecops-6446478c9d   2         2         2       3s    app          s17-devsecops:1.0   app=s17-devsecops,pod-template-hash=6446478c9d
+
+NAME                                 READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+pod/s17-devsecops-6446478c9d-4l7bl   1/1     Running   0          3s    10.244.0.121   minikube   <none>           <none>
+pod/s17-devsecops-6446478c9d-dn7qn   1/1     Running   0          3s    10.244.0.122   minikube   <none>           <none>
+
+NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+service/s17-devsecops   ClusterIP   10.106.209.237   <none>        80/TCP    3s    app=s17-devsecops
+
+# security context actually applied to a running pod
+$ kubectl -n s17 exec s17-devsecops-6446478c9d-4l7bl -- id
+uid=10001(app) gid=10001(app) groups=10001(app)
+
+$ kubectl -n s17 exec s17-devsecops-6446478c9d-4l7bl -- sh -c 'touch /app/x || echo read-only-root-ok'
+touch: cannot touch '/app/x': Read-only file system
+read-only-root-ok
+
+$ kubectl -n s17 exec s17-devsecops-6446478c9d-4l7bl -- sh -c 'touch /tmp/x && echo tmp-writable-ok'
+tmp-writable-ok
+
+$ kubectl -n s17 get pod s17-devsecops-6446478c9d-4l7bl -o jsonpath='{.spec.containers[0].securityContext}'
+{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true}
+
+# smoke test through the Service
+$ kubectl -n s17 port-forward svc/s17-devsecops 18017:80 &
+$ curl -s http://localhost:18017/health
+{"status":"healthy","timestamp":"2026-10-07T11:09:18.407801Z","uptime_seconds":4.86}
+
+$ curl -s http://localhost:18017/api/status
+{"app":"DevSecOps Dashboard","platform":"Linux","python_version":"3.12.15","status":"running","timestamp":"2026-10-07T11:09:18.425764Z","total_requests":1,"uptime":"00h 00m 04s","version":"2.0.0"}
+
+$ curl -s -X POST -H "Content-Type: application/json" -d '{"a":6,"b":7,"operation":"multiply"}' http://localhost:18017/api/calculate
+{"a":6.0,"b":7.0,"expression":"6.0 \u00d7 7.0 = 42.0","operation":"multiply","result":42.0,"symbol":"\u00d7"}
+
+$ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:18017/
+200
+
+$ kubectl -n s17 logs deploy/s17-devsecops --tail=8
+Found 2 pods, using pod/s17-devsecops-6446478c9d-4l7bl
+[2026-10-07 11:09:12 +0000] [7] [INFO] Booting worker with pid: 7
+[2026-10-07 11:09:12 +0000] [8] [INFO] Booting worker with pid: 8
+10.244.0.1 - - [07/Oct/2026:11:09:13 +0000] "GET /health HTTP/1.1" 200 85 "-" "kube-probe/1.37"
+10.244.0.1 - - [07/Oct/2026:11:09:13 +0000] "GET /health HTTP/1.1" 200 85 "-" "kube-probe/1.37"
+127.0.0.1 - - [07/Oct/2026:11:09:18 +0000] "GET /health HTTP/1.1" 200 85 "-" "curl/8.7.1"
+127.0.0.1 - - [07/Oct/2026:11:09:18 +0000] "GET /api/status HTTP/1.1" 200 197 "-" "curl/8.7.1"
+127.0.0.1 - - [07/Oct/2026:11:09:18 +0000] "POST /api/calculate HTTP/1.1" 200 110 "-" "curl/8.7.1"
+127.0.0.1 - - [07/Oct/2026:11:09:18 +0000] "GET / HTTP/1.1" 200 6589 "-" "curl/8.7.1"
+
