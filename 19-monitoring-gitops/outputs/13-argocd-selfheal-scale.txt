@@ -1,0 +1,53 @@
+# Drift #1: someone scales the deployment by hand (Git says replicas: 2)
+$ kubectl scale deploy session20-gitops-app -n s20-app --replicas=5
+deployment.apps/session20-gitops-app scaled
+12:16:30Z
+$ kubectl get deploy session20-gitops-app -n s20-app
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   2/5     2            2           38s
+--- 12:16:30Z
+$ kubectl get application s20-gitops-demo -n argocd ; kubectl get deploy session20-gitops-app -n s20-app
+NAME              SYNC STATUS   HEALTH STATUS
+s20-gitops-demo   Synced        Healthy
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   2/5     2            2           38s
+--- 12:16:32Z
+$ kubectl get application s20-gitops-demo -n argocd ; kubectl get deploy session20-gitops-app -n s20-app
+NAME              SYNC STATUS   HEALTH STATUS
+s20-gitops-demo   Synced        Healthy
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   2/2     2            2           40s
+--- 12:16:34Z
+$ kubectl get application s20-gitops-demo -n argocd ; kubectl get deploy session20-gitops-app -n s20-app
+NAME              SYNC STATUS   HEALTH STATUS
+s20-gitops-demo   Synced        Healthy
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   2/2     2            2           42s
+--- 12:16:36Z
+$ kubectl get application s20-gitops-demo -n argocd ; kubectl get deploy session20-gitops-app -n s20-app
+NAME              SYNC STATUS   HEALTH STATUS
+s20-gitops-demo   Synced        Healthy
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   2/2     2            2           44s
+--- 12:16:38Z
+$ kubectl get application s20-gitops-demo -n argocd ; kubectl get deploy session20-gitops-app -n s20-app
+NAME              SYNC STATUS   HEALTH STATUS
+s20-gitops-demo   Synced        Healthy
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   2/2     2            2           46s
+--- 12:16:40Z
+$ kubectl get application s20-gitops-demo -n argocd ; kubectl get deploy session20-gitops-app -n s20-app
+NAME              SYNC STATUS   HEALTH STATUS
+s20-gitops-demo   Synced        Healthy
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   2/2     2            2           48s
+
+$ kubectl get application s20-gitops-demo -n argocd -o json | (operationState + history)
+last op: Succeeded | successfully synced (all tasks run) | initiatedBy: {'automated': True} | startedAt 2026-10-07T12:16:30Z
+   Deployment session20-gitops-app Synced - deployment.apps/session20-gitops-app configured
+
+$ kubectl get events -n s20-app --field-selector involvedObject.name=session20-gitops-app --sort-by=.lastTimestamp | tail -4
+LAST SEEN   TYPE     REASON              OBJECT                            MESSAGE
+51s         Normal   ScalingReplicaSet   deployment/session20-gitops-app   Scaled up replica set session20-gitops-app-679fcbbd85 from 0 to 2
+13s         Normal   ScalingReplicaSet   deployment/session20-gitops-app   Scaled up replica set session20-gitops-app-679fcbbd85 from 2 to 5
+12s         Normal   ScalingReplicaSet   deployment/session20-gitops-app   Scaled down replica set session20-gitops-app-679fcbbd85 from 5 to 2

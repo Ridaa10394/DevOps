@@ -1,0 +1,15 @@
+$ kubectl describe pod -n s20-app -l app=podinfo | grep -E "^Name:|Liveness|Readiness|Ready|Restart Count"
+Name:             podinfo-fb64fdd86-c6tt5
+    Ready:          True
+    Restart Count:  0
+    Liveness:     http-get http://:http/healthz delay=3s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Readiness:    http-get http://:http/readyz delay=2s timeout=1s period=5s successThreshold=1 failureThreshold=3
+Name:             podinfo-fb64fdd86-gktvs
+    Ready:          True
+    Restart Count:  0
+    Liveness:     http-get http://:http/healthz delay=3s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Readiness:    http-get http://:http/readyz delay=2s timeout=1s period=5s successThreshold=1 failureThreshold=3
+
+$ kubectl get endpointslices -n s20-app
+NAME            ADDRESSTYPE   PORTS   ENDPOINTS                 AGE
+podinfo-9km8m   IPv4          9898    10.244.0.75,10.244.0.74   20m

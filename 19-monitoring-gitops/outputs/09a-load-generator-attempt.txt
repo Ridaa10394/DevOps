@@ -1,0 +1,9 @@
+$ kubectl apply -f monitoring/load-generator.yaml   # 8 curl loops, keep-alive
+... (a short while later, load still running) ...
+$ total request rate: sum(rate(http_requests_total{namespace="s20-app"}[1m]))
+{} => 3475.619681243129
+$ CPU per pod: sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="s20-app", container="podinfo"}[1m]))
+{'pod': 'podinfo-75684b76c7-2xdt6'} => 0.11973718975666249
+{'pod': 'podinfo-75684b76c7-j4rmb'} => 0.12809228654824084
+$ /api/v1/alerts (Podinfo*)
+(no Podinfo* alerts active)

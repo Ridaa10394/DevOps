@@ -1,0 +1,26 @@
+# Student's own ArgoCD Application.
+# Apply it from your machine (kubectl apply -f), do NOT put it inside gitops/app/,
+# otherwise ArgoCD would try to manage its own Application object.
+#
+# TODO (run on your machine): this only syncs once 19-monitoring-gitops/gitops/app
+# has been pushed to the main branch of https://github.com/Ridaa10394/DevOps.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: s20-student-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Ridaa10394/DevOps.git
+    targetRevision: main
+    path: 19-monitoring-gitops/gitops/app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: s20-app
+  syncPolicy:
+    automated:
+      prune: true       # delete things that were removed from Git
+      selfHeal: true    # undo manual kubectl changes (drift)
+    syncOptions:
+      - CreateNamespace=true

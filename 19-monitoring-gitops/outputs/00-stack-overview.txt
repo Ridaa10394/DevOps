@@ -1,0 +1,58 @@
+$ helm list -A | grep -E "kps|argocd"
+NAME  	NAMESPACE     	REVISION	UPDATED                             	STATUS  	CHART                       	APP VERSION
+argocd	argocd        	1       	2026-10-07 17:29:12.50145 +0530 IST 	deployed	argo-cd-10.9.7              	v3.5.4     
+kps   	s20-monitoring	3       	2026-10-07 17:39:53.789691 +0530 IST	deployed	kube-prometheus-stack-92.1.0	v0.94.1    
+
+$ kubectl get pods -n s20-monitoring
+NAME                                                    READY   STATUS    RESTARTS      AGE
+alertmanager-kps-kube-prometheus-stack-alertmanager-0   2/2     Running   0             38m
+kps-grafana-7c7559fff4-fhtdn                            3/3     Running   0             9m46s
+kps-kube-prometheus-stack-operator-5f74d68d6c-q2jgj     1/1     Running   0             40m
+kps-kube-state-metrics-785f74f8db-hcpbc                 1/1     Running   2 (13m ago)   40m
+kps-prometheus-node-exporter-vrrx7                      1/1     Running   0             40m
+prometheus-kps-kube-prometheus-stack-prometheus-0       2/2     Running   0             38m
+
+$ kubectl get pods -n argocd
+NAME                                 READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0      1/1     Running   0          22m
+argocd-redis-57f7c59db7-w5rf5        1/1     Running   0          22m
+argocd-repo-server-79688f9fb-p8542   1/1     Running   0          22m
+argocd-server-cd478b94f-8rkss        1/1     Running   0          22m
+
+$ kubectl get all -n s20-app
+NAME                                        READY   STATUS    RESTARTS   AGE
+pod/podinfo-75684b76c7-fr577                1/1     Running   0          6m30s
+pod/podinfo-75684b76c7-qxqfk                1/1     Running   0          6m30s
+pod/session20-gitops-app-679fcbbd85-5x2kc   1/1     Running   0          93s
+pod/session20-gitops-app-679fcbbd85-68wrb   1/1     Running   0          63s
+pod/session20-gitops-app-679fcbbd85-6cf7w   1/1     Running   0          63s
+pod/session20-gitops-app-679fcbbd85-k7xhc   1/1     Running   0          94s
+pod/session20-gitops-app-679fcbbd85-n7xng   1/1     Running   0          63s
+
+NAME                           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/podinfo                ClusterIP   10.109.223.234   <none>        9898/TCP   40m
+service/session20-gitops-app   ClusterIP   10.103.216.210   <none>        80/TCP     94s
+
+NAME                                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/podinfo                2/2     2            2           40m
+deployment.apps/session20-gitops-app   5/5     5            5           94s
+
+NAME                                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/podinfo-65897dcf9b                0         0         0       18m
+replicaset.apps/podinfo-75684b76c7                2         2         2       20m
+replicaset.apps/podinfo-fb64fdd86                 0         0         0       40m
+replicaset.apps/session20-gitops-app-679fcbbd85   5         5         5       94s
+
+$ kubectl top pods -n s20-monitoring ; kubectl top pods -n argocd
+NAME                                                    CPU(cores)   MEMORY(bytes)   
+alertmanager-kps-kube-prometheus-stack-alertmanager-0   5m           45Mi            
+kps-grafana-7c7559fff4-fhtdn                            42m          412Mi           
+kps-kube-prometheus-stack-operator-5f74d68d6c-q2jgj     13m          28Mi            
+kps-kube-state-metrics-785f74f8db-hcpbc                 6m           59Mi            
+kps-prometheus-node-exporter-vrrx7                      4m           21Mi            
+prometheus-kps-kube-prometheus-stack-prometheus-0       66m          504Mi           
+NAME                                 CPU(cores)   MEMORY(bytes)   
+argocd-application-controller-0      32m          245Mi           
+argocd-redis-57f7c59db7-w5rf5        3m           7Mi             
+argocd-repo-server-79688f9fb-p8542   16m          38Mi            
+argocd-server-cd478b94f-8rkss        4m           40Mi            

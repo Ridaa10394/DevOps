@@ -1,0 +1,25 @@
+# Used for the "Git commit drives the cluster" demo.
+# Pinned to an OLD commit first; moving targetRevision forward to the next commit
+# is exactly what happens when a new commit lands on a tracked branch.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: s20-commit-demo
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # deleting the app deletes what it deployed
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Nency-Ravaliya/gitops-demo.git
+    targetRevision: cf39cca            # "Scale down to 2 replicas"
+    path: app
+    directory:
+      exclude: argocd-application.yaml # that folder also contains an Application manifest
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: s20-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

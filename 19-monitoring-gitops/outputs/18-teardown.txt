@@ -1,0 +1,48 @@
+$ kubectl delete application s20-commit-demo -n argocd   # finalizer -> also deletes its Deployment/Service
+application.argoproj.io "s20-commit-demo" deleted from argocd namespace
+$ helm uninstall argocd -n argocd
+These resources were kept due to the resource policy:
+[CustomResourceDefinition] applications.argoproj.io
+[CustomResourceDefinition] applicationsets.argoproj.io
+[CustomResourceDefinition] appprojects.argoproj.io
+
+release "argocd" uninstalled
+$ helm uninstall kps -n s20-monitoring
+release "kps" uninstalled
+$ kubectl delete ns s20-app s20-monitoring argocd
+namespace "s20-app" deleted
+namespace "s20-monitoring" deleted
+namespace "argocd" deleted
+$ kubectl delete crd (argoproj.io + monitoring.coreos.com, nothing else in the cluster uses them)
+customresourcedefinition.apiextensions.k8s.io "alertmanagerconfigs.monitoring.coreos.com" deleted
+customresourcedefinition.apiextensions.k8s.io "alertmanagers.monitoring.coreos.com" deleted
+customresourcedefinition.apiextensions.k8s.io "applications.argoproj.io" deleted
+customresourcedefinition.apiextensions.k8s.io "applicationsets.argoproj.io" deleted
+customresourcedefinition.apiextensions.k8s.io "appprojects.argoproj.io" deleted
+customresourcedefinition.apiextensions.k8s.io "podmonitors.monitoring.coreos.com" deleted
+customresourcedefinition.apiextensions.k8s.io "probes.monitoring.coreos.com" deleted
+customresourcedefinition.apiextensions.k8s.io "prometheusagents.monitoring.coreos.com" deleted
+customresourcedefinition.apiextensions.k8s.io "prometheuses.monitoring.coreos.com" deleted
+customresourcedefinition.apiextensions.k8s.io "prometheusrules.monitoring.coreos.com" deleted
+customresourcedefinition.apiextensions.k8s.io "scrapeconfigs.monitoring.coreos.com" deleted
+customresourcedefinition.apiextensions.k8s.io "servicemonitors.monitoring.coreos.com" deleted
+customresourcedefinition.apiextensions.k8s.io "thanosrulers.monitoring.coreos.com" deleted
+$ kubectl get svc -n kube-system | grep kps   # kubelet Service the operator left behind
+kps-kube-prometheus-stack-kubelet   ClusterIP   None            <none>        10250/TCP,4194/TCP,10255/TCP   39m
+service "kps-kube-prometheus-stack-kubelet" deleted from kube-system namespace
+
+$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   94m
+final-app         Active   9m46s
+ingress-nginx     Active   93m
+kube-node-lease   Active   94m
+kube-public       Active   94m
+kube-system       Active   94m
+s09               Active   90m
+s17               Active   74m
+$ helm list -A
+NAME	NAMESPACE	REVISION	UPDATED	STATUS	CHART	APP VERSION
+$ kubectl top node
+NAME       CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+minikube   748m         4%       3919Mi          49%         

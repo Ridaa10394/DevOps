@@ -1,0 +1,10 @@
+$ kubectl get servicemonitor,prometheusrule -n s20-app
+NAME                                           AGE
+servicemonitor.monitoring.coreos.com/podinfo   19m
+
+NAME                                                  AGE
+prometheusrule.monitoring.coreos.com/podinfo-alerts   19m
+
+$ curl -s localhost:9090/api/v1/targets (filtered to s20-app)
+serviceMonitor/s20-app/podinfo/0 http://10.244.0.74:9898/metrics health=up lastScrape=2026-10-07T11:59:42 err=''
+serviceMonitor/s20-app/podinfo/0 http://10.244.0.75:9898/metrics health=up lastScrape=2026-10-07T11:59:41 err=''

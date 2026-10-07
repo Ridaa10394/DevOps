@@ -1,0 +1,34 @@
+$ kubectl get pods -n argocd
+NAME                                 READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0      1/1     Running   0          16m
+argocd-redis-57f7c59db7-w5rf5        1/1     Running   0          16m
+argocd-repo-server-79688f9fb-p8542   1/1     Running   0          16m
+argocd-server-cd478b94f-8rkss        1/1     Running   0          16m
+
+$ kubectl apply -f gitops/argocd-application-instructor.yaml
+application.argoproj.io/s20-gitops-demo created
+
+$ kubectl get applications -n argocd -o wide
+NAME              SYNC STATUS   HEALTH STATUS   REVISION                                   PROJECT
+s20-gitops-demo   Synced        Healthy         8376590a668ac8d6f2700d181c0739d0ed3fc5ea   default
+
+$ kubectl get deploy,svc,pods -n s20-app -l app=session20-gitops-app
+NAME                                        READY   STATUS    RESTARTS   AGE
+pod/session20-gitops-app-679fcbbd85-4xzwz   1/1     Running   0          17s
+pod/session20-gitops-app-679fcbbd85-vvf2r   1/1     Running   0          17s
+
+$ kubectl get deploy session20-gitops-app -n s20-app ; kubectl get svc session20-gitops-app -n s20-app
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   2/2     2            2           25s
+NAME                   TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+session20-gitops-app   ClusterIP   10.109.1.183   <none>        80/TCP    25s
+
+$ kubectl get application s20-gitops-demo -n argocd -o jsonpath=...  (source, sync, health, resources, last operation)
+source:    https://github.com/Nency-Ravaliya/devops-heros.git @ main path: session20-monitoring-observability-gitops/06-git-as-source-of-truth/gitops-repo/app
+sync:      Synced revision 8376590a668ac8d6f2700d181c0739d0ed3fc5ea
+health:    Healthy
+policy:    {'automated': {'prune': True, 'selfHeal': True}, 'syncOptions': ['CreateNamespace=true']}
+resource:  Service s20-app/session20-gitops-app Synced 
+resource:  Deployment s20-app/session20-gitops-app Synced 
+last op:   Succeeded | successfully synced (all tasks run) | startedAt 2026-10-07T12:15:52Z
+history:  id 0 rev 8376590 deployedAt 2026-10-07T12:15:52Z

@@ -1,0 +1,39 @@
+# Alert rules for the podinfo demo app.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: podinfo-alerts
+  namespace: s20-app
+spec:
+  groups:
+    - name: podinfo.rules
+      rules:
+        # Fires when Prometheus can't find a single healthy podinfo target.
+        # absent() covers the "scaled to 0" case where the series disappears entirely.
+        - alert: PodinfoDown
+          expr: sum(up{namespace="s20-app", job="podinfo"}) == 0 or absent(up{namespace="s20-app", job="podinfo"})
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "podinfo has no healthy targets"
+            description: "No podinfo pod in s20-app is being scraped successfully for more than 1 minute."
+
+        # Fires when a podinfo container uses more than 70% of its 500m CPU limit (350m).
+        - alert: PodinfoHighCPU
+          expr: sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="s20-app", container="podinfo"}[1m])) > 0.35
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "podinfo pod {{ $labels.pod }} CPU is high"
+            description: "CPU usage is {{ $value | humanize }} cores (limit 0.5)."
+
+        # Fires when working-set memory crosses 100Mi (limit is 128Mi).
+        - alert: PodinfoHighMemory
+          expr: max by (pod) (container_memory_working_set_bytes{namespace="s20-app", container="podinfo"}) > 100 * 1024 * 1024
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "podinfo pod {{ $labels.pod }} memory is high"

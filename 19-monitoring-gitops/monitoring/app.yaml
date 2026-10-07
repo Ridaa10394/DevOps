@@ -1,0 +1,58 @@
+# Demo app for Session 20 monitoring: podinfo exposes /metrics (Prometheus format),
+# /healthz (liveness) and /readyz (readiness) out of the box.
+# --level=debug makes it log every HTTP request as a JSON line (handy for the logs part).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: s20-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+  namespace: s20-app
+  labels:
+    app: podinfo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+    spec:
+      containers:
+        - name: podinfo
+          image: ghcr.io/stefanprodan/podinfo:6.9.2
+          command: ["./podinfo", "--port=9898", "--level=debug"]
+          ports:
+            - name: http
+              containerPort: 9898
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 20m, memory: 32Mi }
+            limits:   { cpu: 500m, memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: podinfo
+  namespace: s20-app
+  labels:
+    app: podinfo
+spec:
+  selector:
+    app: podinfo
+  ports:
+    - name: http
+      port: 9898
+      targetPort: http

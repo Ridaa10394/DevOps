@@ -1,0 +1,23 @@
+$ curl -s localhost:9898/metrics | grep -E "^# (HELP|TYPE) http_|^http_requests_total|^process_resident" (via kubectl port-forward svc/podinfo 9898)
+# HELP http_request_duration_seconds Seconds spent serving HTTP requests.
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{method="GET",path="healthz",status="200",le="0.005"} 99
+http_request_duration_seconds_sum{method="GET",path="healthz",status="200"} 0.14104891700000005
+http_request_duration_seconds_count{method="GET",path="healthz",status="200"} 101
+http_request_duration_seconds_bucket{method="GET",path="metrics",status="200",le="0.005"} 12
+http_request_duration_seconds_sum{method="GET",path="metrics",status="200"} 2.1246871659999997
+http_request_duration_seconds_count{method="GET",path="metrics",status="200"} 29
+http_request_duration_seconds_bucket{method="GET",path="readyz",status="200",le="0.005"} 197
+http_request_duration_seconds_sum{method="GET",path="readyz",status="200"} 0.25947228400000005
+http_request_duration_seconds_count{method="GET",path="readyz",status="200"} 199
+http_request_duration_seconds_bucket{method="GET",path="root",status="200",le="0.005"} 200
+http_request_duration_seconds_sum{method="GET",path="root",status="200"} 0.019041837999999988
+http_request_duration_seconds_count{method="GET",path="root",status="200"} 201
+http_request_duration_seconds_bucket{method="GET",path="status",status="500",le="0.005"} 200
+http_request_duration_seconds_sum{method="GET",path="status",status="500"} 0.011324284999999995
+http_request_duration_seconds_count{method="GET",path="status",status="500"} 200
+# HELP http_requests_total The total number of HTTP requests.
+# TYPE http_requests_total counter
+http_requests_total{status="200"} 530
+http_requests_total{status="500"} 200
+process_resident_memory_bytes 2.7099136e+07

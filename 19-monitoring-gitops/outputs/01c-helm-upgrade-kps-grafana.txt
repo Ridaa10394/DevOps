@@ -1,0 +1,5 @@
+Release "kps" has been upgraded. Happy Helming!
+NAME: kps
+LAST DEPLOYED: Wed Oct  7 17:39:53 2026
+NAMESPACE: s20-monitoring
+STATUS: deployed

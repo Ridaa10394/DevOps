@@ -1,0 +1,11 @@
+# Student Application pointed at Ridaa10394/DevOps before 19-monitoring-gitops/ is pushed
+$ kubectl apply -f gitops/argocd-application.yaml
+application.argoproj.io/s20-student-app created
+$ kubectl get applications -n argocd s20-student-app
+NAME              SYNC STATUS   HEALTH STATUS
+s20-student-app   Unknown       Healthy
+$ kubectl get application s20-student-app -n argocd -o jsonpath={.status.conditions}
+ComparisonError | Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = 19-monitoring-gitops/gitops/app: app path does not exist
+
+$ kubectl delete -f gitops/argocd-application.yaml   # removed again until the folder is pushed
+application.argoproj.io "s20-student-app" deleted from argocd namespace

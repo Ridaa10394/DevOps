@@ -1,0 +1,11 @@
+$ curl -s localhost:9090/api/v1/rules  (group podinfo.rules only)
+group: podinfo.rules file: /etc/prometheus/rules/prometheus-kps-kube-prometheus-stack-prometheus-rulefiles-0/s20-app-podinfo-alerts-bec13110-1b5d-4ca5-aad2-efa41e83e7e5.yaml
+  - PodinfoDown | state=inactive | health=ok | for=60
+    expr: sum(up{job="podinfo",namespace="s20-app"}) == 0 or absent(up{job="podinfo",namespace="s20-app"})
+  - PodinfoHighCPU | state=inactive | health=ok | for=60
+    expr: sum by (pod) (rate(container_cpu_usage_seconds_total{container="podinfo",namespace="s20-app"}[1m])) > 0.35
+  - PodinfoHighMemory | state=inactive | health=ok | for=120
+    expr: max by (pod) (container_memory_working_set_bytes{container="podinfo",namespace="s20-app"}) > 100 * 1024 * 1024
+
+$ curl -s localhost:9090/api/v1/rules | count rules loaded from the chart defaults
+31 rule groups, 223 rules total

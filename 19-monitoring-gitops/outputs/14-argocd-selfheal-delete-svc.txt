@@ -1,0 +1,16 @@
+# Drift #2: someone deletes a resource that lives in Git
+$ kubectl get svc session20-gitops-app -n s20-app -o jsonpath={.metadata.uid}
+5f4cc483-7569-42c4-94fa-cb452e9c6e5a
+$ kubectl delete svc session20-gitops-app -n s20-app
+service "session20-gitops-app" deleted from s20-app namespace
+12:16:52Z
+--- 12:16:57Z
+$ kubectl get svc session20-gitops-app -n s20-app
+NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+session20-gitops-app   ClusterIP   10.101.159.40   <none>        80/TCP    4s
+$ kubectl get svc session20-gitops-app -n s20-app -o jsonpath={.metadata.uid}   # new UID = recreated object
+960e0fca-15a2-4358-9885-044eee1be63b
+$ kubectl get application s20-gitops-demo -n argocd -o json | operationState
+sync: Synced | health: Healthy
+last op: Succeeded | successfully synced (all tasks run) | initiatedBy: {'automated': True} | startedAt 2026-10-07T12:16:53Z
+   Service session20-gitops-app Synced - service/session20-gitops-app created

@@ -1,0 +1,34 @@
+$ kubectl scale deploy podinfo -n s20-app --replicas=0
+deployment.apps/podinfo scaled
+scaled to 0 at 12:12:57Z
+
+--- 12:13:35Z
+$ kubectl get pods -n s20-app
+No resources found in s20-app namespace.
+$ PromQL up{namespace="s20-app"}
+(empty result)
+$ PromQL absent(up{namespace="s20-app", job="podinfo"})
+{'job': 'podinfo', 'namespace': 's20-app'} => 1
+$ curl -s localhost:9090/api/v1/alerts (Podinfo*)
+PodinfoDown | state=pending | activeAt=2026-10-07T12:13:22 | severity=critical | pod=- | value=0e+00
+
+--- 12:14:38Z
+$ curl -s localhost:9090/api/v1/alerts (Podinfo*)
+PodinfoDown | state=firing | activeAt=2026-10-07T12:13:37 | severity=critical | pod=- | value=1e+00
+$ curl -s localhost:9093/api/v2/alerts (Alertmanager, Podinfo*)
+PodinfoDown | status=active | startsAt=2026-10-07T12:14:37 | summary=podinfo has no healthy targets
+$ PromQL kube_deployment_spec_replicas{namespace="s20-app"}
+{'container': 'kube-state-metrics', 'deployment': 'podinfo', 'instance': '10.244.0.70:8080', 'job': 'kube-state-metrics', 'namespace': 's20-app', 'pod': 'kps-kube-state-metrics-785f74f8db-hcpbc'} => 0
+
+$ kubectl scale deploy podinfo -n s20-app --replicas=2
+deployment.apps/podinfo scaled
+Waiting for deployment "podinfo" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "podinfo" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "podinfo" rollout to finish: 1 of 2 updated replicas are available...
+deployment "podinfo" successfully rolled out
+--- 12:15:39Z
+$ PromQL up{namespace="s20-app"}
+{'container': 'podinfo', 'instance': '10.244.0.108:9898', 'job': 'podinfo', 'namespace': 's20-app', 'pod': 'podinfo-75684b76c7-qxqfk'} => 1
+{'container': 'podinfo', 'instance': '10.244.0.109:9898', 'job': 'podinfo', 'namespace': 's20-app', 'pod': 'podinfo-75684b76c7-fr577'} => 1
+$ curl -s localhost:9090/api/v1/alerts (Podinfo*)
+(no Podinfo* alerts active)

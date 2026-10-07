@@ -1,0 +1,60 @@
+$ kubectl patch deploy podinfo -n s20-app --type=json -p '[{"op":"add","path":"/spec/template/spec/containers/0/command/-","value":"--stress-cpu=1"}]'
+deployment.apps/podinfo patched
+Waiting for deployment "podinfo" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "podinfo" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "podinfo" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "podinfo" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "podinfo" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "podinfo" rollout to finish: 1 old replicas are pending termination...
+deployment "podinfo" successfully rolled out
+stress started ~12:03:14Z
+
+--- 12:04:17Z (about 1 min in)
+$ kubectl top pods -n s20-app
+NAME                       CPU(cores)   MEMORY(bytes)   
+podinfo-65897dcf9b-mf7hf   501m         16Mi            
+podinfo-65897dcf9b-vpl7v   501m         15Mi            
+$ PromQL CPU per pod
+{'pod': 'podinfo-65897dcf9b-vpl7v'} => 0.4996434901322092
+{'pod': 'podinfo-65897dcf9b-mf7hf'} => 0.4061374266326755
+$ curl -s localhost:9090/api/v1/alerts (Podinfo*)
+PodinfoHighCPU | state=pending | activeAt=2026-10-07T12:03:52 | severity=warning | pod=podinfo-65897dcf9b-vpl7v | value=4.121977189631177e-01
+PodinfoHighCPU | state=pending | activeAt=2026-10-07T12:03:52 | severity=warning | pod=podinfo-65897dcf9b-mf7hf | value=3.630196052736632e-01
+
+--- 12:05:07Z (after the 1m 'for' window)
+$ curl -s localhost:9090/api/v1/alerts (Podinfo*)
+PodinfoHighCPU | state=firing | activeAt=2026-10-07T12:03:52 | severity=warning | pod=podinfo-65897dcf9b-vpl7v | value=4.9924445702638426e-01
+PodinfoHighCPU | state=firing | activeAt=2026-10-07T12:03:52 | severity=warning | pod=podinfo-65897dcf9b-mf7hf | value=4.9719747612551163e-01
+$ PromQL ALERTS{alertname="PodinfoHighCPU"}
+{'alertname': 'PodinfoHighCPU', 'alertstate': 'firing', 'pod': 'podinfo-65897dcf9b-mf7hf'} => 1
+{'alertname': 'PodinfoHighCPU', 'alertstate': 'firing', 'pod': 'podinfo-65897dcf9b-vpl7v'} => 1
+$ throttling: rate(container_cpu_cfs_throttled_periods_total{namespace="s20-app",container="podinfo"}[1m]) / rate(container_cpu_cfs_periods_total{...}[1m])
+{'pod': 'podinfo-65897dcf9b-vpl7v'} => 0.953125
+{'pod': 'podinfo-65897dcf9b-mf7hf'} => 1
+$ kubectl port-forward -n s20-monitoring svc/kps-kube-prometheus-stack-alertmanager 9093 ; curl -s localhost:9093/api/v2/alerts (Podinfo*)
+PodinfoHighCPU | status=active | startsAt=2026-10-07T12:04:52 | pod=podinfo-65897dcf9b-mf7hf | receivers=null
+PodinfoHighCPU | status=active | startsAt=2026-10-07T12:04:52 | pod=podinfo-65897dcf9b-vpl7v | receivers=null
+
+--- remove the stress flag again (back to monitoring/app.yaml)
+$ kubectl apply -f monitoring/app.yaml
+namespace/s20-app unchanged
+deployment.apps/podinfo configured
+service/podinfo unchanged
+Waiting for deployment spec update to be observed...
+Waiting for deployment spec update to be observed...
+Waiting for deployment "podinfo" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "podinfo" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "podinfo" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "podinfo" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "podinfo" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "podinfo" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "podinfo" rollout to finish: 1 old replicas are pending termination...
+deployment "podinfo" successfully rolled out
+stress removed ~12:09:47Z
+
+--- 12:12:57Z (a few minutes after removing the stress)
+$ curl -s localhost:9090/api/v1/alerts (Podinfo*)
+(no Podinfo* alerts active)
+$ PromQL CPU per pod
+{'pod': 'podinfo-75684b76c7-v5lfm'} => 0.0019791376255168347
+{'pod': 'podinfo-75684b76c7-42jb7'} => 0.0013671450279242933

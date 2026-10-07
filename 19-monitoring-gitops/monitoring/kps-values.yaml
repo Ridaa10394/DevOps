@@ -1,0 +1,74 @@
+# Lean kube-prometheus-stack values for a single-node minikube (4 CPU / 6GB shared).
+# Install:
+#   helm install kps prometheus-community/kube-prometheus-stack \
+#     -n s20-monitoring --create-namespace -f kps-values.yaml
+
+# Alertmanager is kept (so alerts have somewhere to go) but tiny and without persistence.
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    retention: 2h
+    resources:
+      requests: { cpu: 10m, memory: 32Mi }
+      limits:   { memory: 64Mi }
+
+grafana:
+  enabled: true
+  adminPassword: admin123        # lab only - never commit a real password
+  persistence:
+    enabled: false
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { memory: 768Mi }
+  # Grafana 13 downloads a handful of "drilldown" app plugins on first boot; at
+  # 512Mi it sat right at the limit, burned 2+ cores and dashboard queries hung.
+  grafana.ini:
+    plugins:
+      preinstall_disabled: true
+  # Grafana 13 runs a lot of first-boot migrations; on a busy minikube that takes
+  # a few minutes and the default 60s liveness probe kept killing it (exit 137).
+  livenessProbe:
+    httpGet: { path: /api/health, port: 3000 }
+    initialDelaySeconds: 300
+    timeoutSeconds: 30
+    failureThreshold: 10
+
+prometheus:
+  prometheusSpec:
+    retention: 6h
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    # pick up ServiceMonitors / PrometheusRules from every namespace,
+    # not only the ones carrying the helm release label
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    resources:
+      requests: { cpu: 100m, memory: 400Mi }
+      limits:   { memory: 900Mi }
+
+prometheusOperator:
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+    limits:   { memory: 128Mi }
+
+kube-state-metrics:
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits:   { memory: 96Mi }
+
+prometheus-node-exporter:
+  resources:
+    requests: { cpu: 10m, memory: 24Mi }
+    limits:   { memory: 64Mi }
+
+# minikube control-plane components don't expose metrics on reachable addresses,
+# so these targets would just sit at up=0 and fire noisy alerts.
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false

@@ -1,0 +1,23 @@
+# The Application that was actually used for the live demo in this folder.
+# It points at the instructor's PUBLIC repo, because ArgoCD needs a Git repo it can
+# read and this folder wasn't pushed yet when the demo ran.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: s20-gitops-demo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Nency-Ravaliya/devops-heros.git
+    targetRevision: main
+    path: session20-monitoring-observability-gitops/06-git-as-source-of-truth/gitops-repo/app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: s20-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

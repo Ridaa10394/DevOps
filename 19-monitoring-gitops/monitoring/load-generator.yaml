@@ -1,0 +1,24 @@
+# Throwaway load generator: 8 parallel curl loops hammering podinfo.
+# The [1-100000] URL glob makes one curl process send 100k requests over a
+# kept-alive connection - spawning a new curl per request was too slow to load it.
+# so the PodinfoHighCPU alert has something to fire on.
+# kubectl apply -f load-generator.yaml   /   kubectl delete -f load-generator.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: load-generator
+  namespace: s20-app
+spec:
+  restartPolicy: Never
+  containers:
+    - name: load
+      image: curlimages/curl:8.6.0
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          for i in 1 2 3 4 5 6 7 8; do
+            ( while true; do curl -s -o /dev/null "http://podinfo:9898/api/info?n=[1-100000]"; done ) &
+          done
+          wait
+      resources:
+        limits: { cpu: "1", memory: 64Mi }

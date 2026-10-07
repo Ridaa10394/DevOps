@@ -1,0 +1,109 @@
+# Git-driven change: the instructor repo Nency-Ravaliya/gitops-demo has a real commit history for app/deployment.yaml
+$ git log --format="%h %ad %s" --date=short -- app/deployment.yaml
+5c2c67f 2026-10-05 replcias from 2 to 5
+cf39cca 2026-10-03 Scale down to 2 replicas
+f1f9aa9 2026-10-03 2 to 5 pods
+3755ba8 2026-10-03 2 replicas
+492a3dc 2026-10-03 Scale application to 4 replicas
+ca24191 2026-10-03 Add app manifests: deployment and service
+$ git diff cf39cca 5c2c67f -- app/deployment.yaml
+diff --git a/app/deployment.yaml b/app/deployment.yaml
+index d874558..c9c00df 100644
+--- a/app/deployment.yaml
++++ b/app/deployment.yaml
+@@ -5,7 +5,7 @@ metadata:
+   labels:
+     app: session20-gitops-app
+ spec:
+-  replicas: 2
++  replicas: 5
+   selector:
+     matchLabels:
+       app: session20-gitops-app
+
+# Step 1: pin the Application to the OLDER commit cf39cca (replicas: 2).
+# directory.exclude skips the Application yaml that lives inside that folder in the instructor repo.
+# Used for the "Git commit drives the cluster" demo.
+# Pinned to an OLD commit first; moving targetRevision forward to the next commit
+# is exactly what happens when a new commit lands on a tracked branch.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: s20-commit-demo
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # deleting the app deletes what it deployed
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Nency-Ravaliya/gitops-demo.git
+    targetRevision: cf39cca            # "Scale down to 2 replicas"
+    path: app
+    directory:
+      exclude: argocd-application.yaml # that folder also contains an Application manifest
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: s20-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+# the first demo app owns a Deployment with the same name, so remove it first (cascade delete)
+$ kubectl patch application s20-gitops-demo -n argocd --type merge -p '{"metadata":{"finalizers":["resources-finalizer.argocd.argoproj.io"]}}'
+Warning: metadata.finalizers: "resources-finalizer.argocd.argoproj.io": prefer a domain-qualified finalizer name including a path (/) to avoid accidental conflicts with other finalizer writers
+application.argoproj.io/s20-gitops-demo patched
+$ kubectl delete application s20-gitops-demo -n argocd
+application.argoproj.io "s20-gitops-demo" deleted from argocd namespace
+$ kubectl get deploy -n s20-app
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+podinfo   2/2     2            2           39m
+
+$ kubectl apply -f gitops/argocd-application-commit-demo.yaml
+Warning: metadata.finalizers: "resources-finalizer.argocd.argoproj.io": prefer a domain-qualified finalizer name including a path (/) to avoid accidental conflicts with other finalizer writers
+application.argoproj.io/s20-commit-demo created
+--- 12:20:11Z
+$ kubectl get applications -n argocd -o wide
+NAME              SYNC STATUS   HEALTH STATUS   REVISION   PROJECT
+s20-commit-demo   Synced        Healthy         cf39cca    default
+$ kubectl get deploy session20-gitops-app -n s20-app
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   2/2     2            2           22s
+
+# Step 2: "a new commit lands" -> move the tracked revision to 5c2c67f (replicas: 5)
+$ kubectl patch application s20-commit-demo -n argocd --type merge -p '{"spec":{"source":{"targetRevision":"5c2c67f"}}}'
+application.argoproj.io/s20-commit-demo patched
+12:20:19Z
+--- 12:20:23Z
+NAME              SYNC STATUS   HEALTH STATUS   REVISION   PROJECT
+s20-commit-demo   Synced        Healthy         5c2c67f    default
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   5/5     5            5           34s
+--- 12:20:27Z
+NAME              SYNC STATUS   HEALTH STATUS   REVISION   PROJECT
+s20-commit-demo   Synced        Healthy         5c2c67f    default
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   5/5     5            5           38s
+--- 12:20:31Z
+NAME              SYNC STATUS   HEALTH STATUS   REVISION   PROJECT
+s20-commit-demo   Synced        Healthy         5c2c67f    default
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   5/5     5            5           42s
+--- 12:20:35Z
+NAME              SYNC STATUS   HEALTH STATUS   REVISION   PROJECT
+s20-commit-demo   Synced        Healthy         5c2c67f    default
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+session20-gitops-app   5/5     5            5           46s
+
+$ kubectl get pods -n s20-app -l app=session20-gitops-app
+NAME                                    READY   STATUS    RESTARTS   AGE
+session20-gitops-app-679fcbbd85-5x2kc   1/1     Running   0          55s
+session20-gitops-app-679fcbbd85-68wrb   1/1     Running   0          25s
+session20-gitops-app-679fcbbd85-6cf7w   1/1     Running   0          25s
+session20-gitops-app-679fcbbd85-k7xhc   1/1     Running   0          56s
+session20-gitops-app-679fcbbd85-n7xng   1/1     Running   0          25s
+
+$ kubectl get application s20-commit-demo -n argocd -o json | .status.history
+id 0 | revision cf39cca4cced2874b960dd1a9b6f0be88fa53fef | deployedAt 2026-10-07T12:19:49Z | initiatedBy {'automated': True}
+id 1 | revision 5c2c67fae0acccbb1233f56d3377cca402de8666 | deployedAt 2026-10-07T12:20:20Z | initiatedBy {'automated': True}
+sync: Synced | health: Healthy

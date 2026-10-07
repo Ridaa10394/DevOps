@@ -1,0 +1,27 @@
+$ kubectl logs -n s20-app -l app=podinfo --prefix --tail=200 | grep -v -E "healthz|readyz|/metrics" | tail -8
+[pod/podinfo-75684b76c7-2xdt6/podinfo] {"level":"info","ts":"2026-10-07T12:01:29.829Z","caller":"http/server.go:224","msg":"Starting HTTP Server.","addr":":9898"}
+[pod/podinfo-75684b76c7-j4rmb/podinfo] {"level":"info","ts":"2026-10-07T12:01:23.977Z","caller":"podinfo/main.go:153","msg":"Starting podinfo","version":"6.9.2","revision":"e86405a8674ecab990d0a389824c7ebbd82973b5","port":"9898"}
+[pod/podinfo-75684b76c7-j4rmb/podinfo] {"level":"info","ts":"2026-10-07T12:01:23.978Z","caller":"http/server.go:224","msg":"Starting HTTP Server.","addr":":9898"}
+[pod/podinfo-75684b76c7-j4rmb/podinfo] {"level":"debug","ts":"2026-10-07T12:01:42.459Z","caller":"http/logging.go:35","msg":"request started","proto":"HTTP/1.1","uri":"/","method":"GET","remote":"127.0.0.1:36132","user-agent":"curl/8.7.1"}
+[pod/podinfo-75684b76c7-j4rmb/podinfo] {"level":"debug","ts":"2026-10-07T12:01:42.467Z","caller":"http/logging.go:35","msg":"request started","proto":"HTTP/1.1","uri":"/","method":"GET","remote":"127.0.0.1:36134","user-agent":"curl/8.7.1"}
+[pod/podinfo-75684b76c7-j4rmb/podinfo] {"level":"debug","ts":"2026-10-07T12:01:42.475Z","caller":"http/logging.go:35","msg":"request started","proto":"HTTP/1.1","uri":"/","method":"GET","remote":"127.0.0.1:36142","user-agent":"curl/8.7.1"}
+[pod/podinfo-75684b76c7-j4rmb/podinfo] {"level":"debug","ts":"2026-10-07T12:01:42.483Z","caller":"http/logging.go:35","msg":"request started","proto":"HTTP/1.1","uri":"/status/500","method":"GET","remote":"127.0.0.1:36154","user-agent":"curl/8.7.1"}
+[pod/podinfo-75684b76c7-j4rmb/podinfo] {"level":"debug","ts":"2026-10-07T12:01:42.492Z","caller":"http/logging.go:35","msg":"request started","proto":"HTTP/1.1","uri":"/status/404","method":"GET","remote":"127.0.0.1:36166","user-agent":"curl/8.7.1"}
+
+$ kubectl logs -n s20-app -l app=podinfo --prefix --tail=200 | grep readyz | tail -2   # kubelet probes show up too
+[pod/podinfo-75684b76c7-j4rmb/podinfo] {"level":"debug","ts":"2026-10-07T12:01:34.264Z","caller":"http/logging.go:35","msg":"request started","proto":"HTTP/1.1","uri":"/readyz","method":"GET","remote":"10.244.0.1:40804","user-agent":"kube-probe/1.37"}
+[pod/podinfo-75684b76c7-j4rmb/podinfo] {"level":"debug","ts":"2026-10-07T12:01:39.268Z","caller":"http/logging.go:35","msg":"request started","proto":"HTTP/1.1","uri":"/readyz","method":"GET","remote":"10.244.0.1:58916","user-agent":"kube-probe/1.37"}
+
+$ kubectl get events -n s20-app --sort-by=.lastTimestamp | tail -12
+13s         Normal    Scheduled           pod/podinfo-75684b76c7-2xdt6    Successfully assigned s20-app/podinfo-75684b76c7-2xdt6 to minikube
+13s         Normal    SuccessfulCreate    replicaset/podinfo-75684b76c7   Created pod: podinfo-75684b76c7-2xdt6
+13s         Normal    Started             pod/podinfo-75684b76c7-2xdt6    Container started
+13s         Normal    SuccessfulDelete    replicaset/podinfo-fb64fdd86    Deleted pod: podinfo-fb64fdd86-gktvs
+13s         Normal    Created             pod/podinfo-75684b76c7-2xdt6    Container created
+13s         Normal    Pulled              pod/podinfo-75684b76c7-2xdt6    Container image "ghcr.io/stefanprodan/podinfo:6.9.2" already present on machine and can be accessed by the pod
+13s         Normal    ScalingReplicaSet   deployment/podinfo              Scaled down replica set podinfo-fb64fdd86 from 2 to 1
+13s         Normal    ScalingReplicaSet   deployment/podinfo              Scaled up replica set podinfo-75684b76c7 from 1 to 2
+7s          Warning   Unhealthy           pod/podinfo-fb64fdd86-c6tt5     Readiness probe failed: HTTP probe failed with statuscode: 503
+7s          Normal    Killing             pod/podinfo-fb64fdd86-c6tt5     Stopping container podinfo
+7s          Normal    SuccessfulDelete    replicaset/podinfo-fb64fdd86    Deleted pod: podinfo-fb64fdd86-c6tt5
+7s          Normal    ScalingReplicaSet   deployment/podinfo              Scaled down replica set podinfo-fb64fdd86 from 1 to 0

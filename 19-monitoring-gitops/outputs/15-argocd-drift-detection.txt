@@ -1,0 +1,40 @@
+# Drift #3: turn selfHeal OFF so ArgoCD only DETECTS drift instead of fixing it
+$ kubectl patch application s20-gitops-demo -n argocd --type merge -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":false}}}}'
+application.argoproj.io/s20-gitops-demo patched
+
+$ kubectl set image deploy/session20-gitops-app -n s20-app app=nginx:1.28-alpine   # manual hotfix, not in Git
+deployment.apps/session20-gitops-app image updated
+$ kubectl scale deploy session20-gitops-app -n s20-app --replicas=3
+deployment.apps/session20-gitops-app scaled
+12:17:07Z
+--- 12:17:27Z
+$ kubectl get applications -n argocd -o wide
+NAME              SYNC STATUS   HEALTH STATUS   REVISION                                   PROJECT
+s20-gitops-demo   OutOfSync     Healthy         8376590a668ac8d6f2700d181c0739d0ed3fc5ea   default
+
+$ kubectl get application s20-gitops-demo -n argocd -o json | .status.resources
+   Service session20-gitops-app -> Synced 
+   Deployment session20-gitops-app -> OutOfSync 
+
+$ desired (Git) vs live (cluster)
+Git:   replicas: 2  image: nginx:1.27-alpine 
+Live: replicas: 3 image: nginx:1.28-alpine
+
+# Turn selfHeal back ON -> ArgoCD puts Git state back
+$ kubectl patch application s20-gitops-demo -n argocd --type merge -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
+application.argoproj.io/s20-gitops-demo patched
+12:18:24Z
+--- 12:18:44Z
+$ kubectl get applications -n argocd -o wide
+NAME              SYNC STATUS   HEALTH STATUS   REVISION                                   PROJECT
+s20-gitops-demo   Synced        Healthy         8376590a668ac8d6f2700d181c0739d0ed3fc5ea   default
+Live: replicas: 2 image: nginx:1.27-alpine
+$ kubectl rollout history deploy/session20-gitops-app -n s20-app
+deployment.apps/session20-gitops-app 
+REVISION  CHANGE-CAUSE
+2         <none>
+3         <none>
+
+$ kubectl get application s20-gitops-demo -n argocd -o json | operationState
+last op: Succeeded | successfully synced (all tasks run) | initiatedBy: {'automated': True} | startedAt 2026-10-07T12:18:25Z
+   Deployment session20-gitops-app Synced - deployment.apps/session20-gitops-app configured

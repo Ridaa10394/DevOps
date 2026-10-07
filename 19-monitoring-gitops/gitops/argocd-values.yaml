@@ -1,0 +1,25 @@
+# Lean Argo CD install for minikube: no dex (SSO), no HA, small requests.
+#   helm install argocd argo/argo-cd -n argocd --create-namespace -f argocd-values.yaml
+dex:
+  enabled: false
+notifications:
+  enabled: false
+applicationSet:
+  replicas: 0
+configs:
+  params:
+    server.insecure: true
+  cm:
+    timeout.reconciliation: 60s
+controller:
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+server:
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+repoServer:
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+redis:
+  resources:
+    requests: { cpu: 10m, memory: 16Mi }

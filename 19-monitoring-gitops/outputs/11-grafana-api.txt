@@ -1,0 +1,48 @@
+$ curl -s localhost:3000/api/health
+{
+  "database": "ok",
+  "version": "13.2.3",
+  "commit": "90ffed056f0884267356c12a0eeb72a022af53f1"
+}
+
+$ curl -s -u admin:*** -X POST -H "Content-Type: application/json" localhost:3000/api/dashboards/db -d @monitoring/grafana-dashboard-podinfo.json
+{"folderUid":"","id":119968838168576,"slug":"session-20-podinfo","status":"success","uid":"s20-podinfo","url":"/d/s20-podinfo/session-20-podinfo","version":1}
+
+$ curl -s -u admin:*** "localhost:3000/api/search?type=dash-db"   (printed uid | title for each result)
+alertmanager-overview | Alertmanager / Overview
+vkQ0UHxik | CoreDNS
+6be0s85Mk | Grafana Overview
+09ec8aa1e996d6ffcd6817bbaff4db1b | Kubernetes / API server
+b59e6c9f2fcbe2e16d77fc492374cc4f | Kubernetes / Compute Resources /  Multi-Cluster
+efa86fd1d0c121a26444b636a3f509a8 | Kubernetes / Compute Resources / Cluster
+85a562078cdf77779eaa1add43ccec1e | Kubernetes / Compute Resources / Namespace (Pods)
+a87fb0d919ec0ea5f6543124e16c42a5 | Kubernetes / Compute Resources / Namespace (Workloads)
+200ac8fdbfbb74b39aff88118e4d1c2c | Kubernetes / Compute Resources / Node (Pods)
+058020e04168bfdea0c52269cb699df2 | Kubernetes / Compute Resources / Nodes Overview
+6581e46e4e5c7ba40a07646395ef7b23 | Kubernetes / Compute Resources / Pod
+a164a7f0339f99e89cea5cb47e9be617 | Kubernetes / Compute Resources / Workload
+3138fa155d5915769fbded898ac09fd9 | Kubernetes / Kubelet
+ff635a025bcfea7bc3dd4f508990a3e9 | Kubernetes / Networking / Cluster
+8b7a8b326d7a6f1f04244066368c67af | Kubernetes / Networking / Namespace (Pods)
+bbb2a765a623ae38130206c7d94a160f | Kubernetes / Networking / Namespace (Workload)
+7a18067ce943a40ae25454675c19ff5c | Kubernetes / Networking / Pod
+728bf77cc1166d2f3133bf25846876cc | Kubernetes / Networking / Workload
+919b92a8e8041bd567af9edab12c840c | Kubernetes / Persistent Volumes
+7e0a61e486f727d763fb1d86fdd629c2 | Node Exporter / AIX
+629701ea43bf69291922ea45f4a87d37 | Node Exporter / MacOS
+7d57716318ee0dddbac5a7f451fb7753 | Node Exporter / Nodes
+3e97d1d02672cdd0861f4c97c64f89b2 | Node Exporter / USE Method / Cluster
+fac67cfbe174d3ef53eb473d73d9212f | Node Exporter / USE Method / Node
+9fa0d141-d019-4ad7-8bc5-42196ee308bd | Prometheus / Overview
+s20-podinfo | Session 20 / podinfo
+
+$ curl -s -u admin:*** localhost:3000/api/datasources
+Alertmanager | alertmanager | http://kps-kube-prometheus-stack-alertmanager.s20-monitoring:9093/ | default=False
+Prometheus | prometheus | http://kps-kube-prometheus-stack-prometheus.s20-monitoring:9090/ | default=True
+
+--- after the grafana resource bump (helm upgrade, see outputs/01c) the pod restarted; persistence is off so the dashboard had to be re-imported
+$ curl -s -u admin:*** -X POST -H "Content-Type: application/json" localhost:3000/api/dashboards/db -d @monitoring/grafana-dashboard-podinfo.json
+{"folderUid":"","id":121594320678912,"slug":"session-20-podinfo","status":"success","uid":"s20-podinfo","url":"/d/s20-podinfo/session-20-podinfo","version":1}
+
+$ query Prometheus THROUGH Grafana: POST /api/ds/query  expr=sum(up{namespace="s20-app"})
+status=200, executed: Expr: sum(up{namespace="s20-app"}) / Step: 15s | value: [2]

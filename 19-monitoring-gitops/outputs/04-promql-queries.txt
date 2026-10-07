@@ -1,0 +1,63 @@
+captured at 2026-10-07T12:01:08Z
+
+### Health: is each podinfo target up? (1 = scraped OK)
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=up{namespace="s20-app"}'
+{'container': 'podinfo', 'instance': '10.244.0.75:9898', 'job': 'podinfo', 'namespace': 's20-app', 'pod': 'podinfo-fb64fdd86-c6tt5'} => 1
+{'container': 'podinfo', 'instance': '10.244.0.74:9898', 'job': 'podinfo', 'namespace': 's20-app', 'pod': 'podinfo-fb64fdd86-gktvs'} => 1
+
+### CPU utilization per pod (cores, 1m rate)
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="s20-app", container="podinfo"}[1m]))'
+{'pod': 'podinfo-fb64fdd86-gktvs'} => 0.00028910000000000047
+{'pod': 'podinfo-fb64fdd86-c6tt5'} => 0.03962932519778207
+
+### CPU as % of the container limit (500m)
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="s20-app", container="podinfo"}[1m])) / 0.5 * 100'
+{'pod': 'podinfo-fb64fdd86-gktvs'} => 0.057820000000000094
+{'pod': 'podinfo-fb64fdd86-c6tt5'} => 7.9224726146963285
+
+### Memory utilization per pod (working set, MiB)
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=sum by (pod) (container_memory_working_set_bytes{namespace="s20-app", container="podinfo"}) / 1024 / 1024'
+{'pod': 'podinfo-fb64fdd86-gktvs'} => 17.1015625
+{'pod': 'podinfo-fb64fdd86-c6tt5'} => 31.7890625
+
+### Memory as % of the container limit (128Mi)
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=sum by (pod) (container_memory_working_set_bytes{namespace="s20-app", container="podinfo"}) / sum by (pod) (kube_pod_container_resource_limits{namespace="s20-app", resource="memory"}) * 100'
+{'pod': 'podinfo-fb64fdd86-gktvs'} => 13.360595703125
+{'pod': 'podinfo-fb64fdd86-c6tt5'} => 24.835205078125
+
+### Request rate per pod and status (req/s, 1m)
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=sum by (pod, status) (rate(http_requests_total{namespace="s20-app"}[1m]))'
+{'pod': 'podinfo-fb64fdd86-c6tt5', 'status': '200'} => 74.66832596279917
+{'pod': 'podinfo-fb64fdd86-gktvs', 'status': '200'} => 0.37779456864749544
+{'pod': 'podinfo-fb64fdd86-c6tt5', 'status': '500'} => 37.134158536856376
+
+### Error ratio (5xx / all)
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=sum(rate(http_requests_total{namespace="s20-app", status=~"5.."}[1m])) / sum(rate(http_requests_total{namespace="s20-app"}[1m]))'
+{} => 0.33102216223090825
+
+### p95 latency per path (seconds)
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=histogram_quantile(0.95, sum by (le, path) (rate(http_request_duration_seconds_bucket{namespace="s20-app"}[1m])))'
+{'path': 'api_info'} => 0.00475
+{'path': 'healthz'} => 0.00475
+{'path': 'readyz'} => 0.00475
+{'path': 'metrics'} => 0.00924999166629628
+{'path': 'root'} => 0.004749999999999999
+{'path': 'status'} => 0.004749999999999999
+
+### kube-state-metrics: available replicas
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=kube_deployment_status_replicas_available{namespace="s20-app"}'
+{'container': 'kube-state-metrics', 'deployment': 'podinfo', 'instance': '10.244.0.70:8080', 'job': 'kube-state-metrics', 'namespace': 's20-app', 'pod': 'kps-kube-state-metrics-785f74f8db-hcpbc'} => 2
+
+### kube-state-metrics: container restarts
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=kube_pod_container_status_restarts_total{namespace="s20-app"}'
+{'container': 'podinfo', 'instance': '10.244.0.70:8080', 'job': 'kube-state-metrics', 'namespace': 's20-app', 'pod': 'podinfo-fb64fdd86-c6tt5'} => 0
+{'container': 'podinfo', 'instance': '10.244.0.70:8080', 'job': 'kube-state-metrics', 'namespace': 's20-app', 'pod': 'podinfo-fb64fdd86-gktvs'} => 0
+
+### node-exporter: node CPU busy %
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=100 * (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[1m])))'
+{} => 10.508615197712567
+
+### node-exporter: node memory used %
+$ curl -s -G localhost:9090/api/v1/query --data-urlencode 'query=100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)'
+{'container': 'node-exporter', 'instance': '192.168.49.2:9100', 'job': 'node-exporter', 'namespace': 's20-monitoring', 'pod': 'kps-prometheus-node-exporter-vrrx7'} => 76.75994895045122
+
