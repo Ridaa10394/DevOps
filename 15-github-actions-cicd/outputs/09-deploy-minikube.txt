@@ -1,0 +1,49 @@
+# deploy-job steps on my local minikube cluster (kind node image wouldn't pull, see 08-deploy-kind-attempt.txt)
+$ kubectl get nodes
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   42m   v1.37.0
+
+$ minikube image load ghcr.io/ridaa10394/devops-s16-app:1.0.0-local     # same role as 'kind load docker-image'
+$ minikube image ls | grep devops-s16
+ghcr.io/ridaa10394/devops-s16-app:1.0.0-local
+
+$ kubectl apply -f k8s/namespace.yaml
+namespace/s16 created
+$ sed "s|IMAGE_PLACEHOLDER|ghcr.io/ridaa10394/devops-s16-app:1.0.0-local|" k8s/deployment.yaml | kubectl apply -f -
+deployment.apps/devops-s16-app created
+$ kubectl apply -f k8s/service.yaml
+service/devops-s16-app created
+
+$ kubectl -n s16 rollout status deployment/devops-s16-app --timeout=120s
+Waiting for deployment "devops-s16-app" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "devops-s16-app" rollout to finish: 1 of 2 updated replicas are available...
+deployment "devops-s16-app" successfully rolled out
+exit code: 0
+
+$ kubectl -n s16 get deploy,pods,svc -o wide
+NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                          SELECTOR
+deployment.apps/devops-s16-app   2/2     2            2           6s    app          ghcr.io/ridaa10394/devops-s16-app:1.0.0-local   app=devops-s16-app
+
+NAME                                  READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+pod/devops-s16-app-7777c654db-h28st   1/1     Running   0          6s    10.244.0.13   minikube   <none>           <none>
+pod/devops-s16-app-7777c654db-hpgtj   1/1     Running   0          6s    10.244.0.12   minikube   <none>           <none>
+
+NAME                     TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+service/devops-s16-app   ClusterIP   10.107.20.251   <none>        80/TCP    6s    app=devops-s16-app
+
+# curlimages/curl:8.6.0 was already cached in minikube, so I used that tag locally (workflow uses 8.10.1)
+$ kubectl -n s16 run curl-check --image=curlimages/curl:8.6.0 --restart=Never --rm -i -- curl -fsS http://devops-s16-app/health
+{"python":"3.13.15","status":"ok","version":"1.0.0-local"}
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+warning: couldn't attach to pod/curl-check, falling back to streaming logs: Internal error occurred: Internal error occurred: error attaching to container: failed to load task: no running task found: task 4a7abbed604cc9fbe453ee8e6c350eddfc13bbb08de4af986c3ae49de5520c11 not found
+{"python":"3.13.15","status":"ok","version":"1.0.0-local"}
+pod "curl-check" deleted from s16 namespace
+exit code: 0
+
+$ kubectl -n s16 get pod -l app=devops-s16-app -o jsonpath="{.items[0].spec.securityContext}"
+{"runAsNonRoot":true,"runAsUser":10001}
+
+# cleanup
+$ kubectl delete namespace s16
+namespace "s16" deleted

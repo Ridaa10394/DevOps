@@ -1,0 +1,273 @@
+# Session 16 - CI/CD with GitHub Actions
+# lint -> test (matrix) -> build (artifact) -> docker (smoke test + GHCR push) -> deploy (kind)
+name: S16 CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "15-github-actions-cicd/**"
+      - ".github/workflows/s16-cicd.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "15-github-actions-cicd/**"
+      - ".github/workflows/s16-cicd.yml"
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Run the deploy job on a manual run"
+        type: boolean
+        default: true
+
+# default: read-only token; jobs that need more ask for it explicitly
+permissions:
+  contents: read
+
+concurrency:
+  group: s16-cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_DIR: 15-github-actions-cicd/app
+  IMAGE_NAME: devops-s16-app
+  PYTHON_DEFAULT: "3.13"
+
+defaults:
+  run:
+    working-directory: 15-github-actions-cicd/app
+
+jobs:
+  lint:
+    name: Lint (flake8)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT }}
+          cache: pip
+          cache-dependency-path: ${{ env.APP_DIR }}/requirements-dev.txt
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run flake8
+        run: flake8 src tests
+
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: ${{ env.APP_DIR }}/requirements-dev.txt
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run pytest with coverage
+        run: |
+          mkdir -p reports
+          pytest -v \
+            --junitxml=reports/junit-py${{ matrix.python-version }}.xml \
+            --cov=src --cov-report=term-missing \
+            --cov-report=xml:reports/coverage-py${{ matrix.python-version }}.xml
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-py${{ matrix.python-version }}
+          path: ${{ env.APP_DIR }}/reports/
+          retention-days: 7
+
+  build:
+    name: Build package
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      artifact: ${{ steps.version.outputs.artifact }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute version
+        id: version
+        run: |
+          VERSION="1.0.${{ github.run_number }}-${GITHUB_SHA::7}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "artifact=devops-s16-app-$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+      - name: Build app package
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: ./build.sh
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.artifact }}
+          path: ${{ env.APP_DIR }}/dist/
+          retention-days: 7
+
+      - name: Use a custom secret (masked)
+        env:
+          DEMO_API_KEY: ${{ secrets.DEMO_API_KEY }}
+        run: |
+          if [ -z "$DEMO_API_KEY" ]; then
+            echo "DEMO_API_KEY is not set - skipping (add it under Settings > Secrets and variables > Actions)"
+          else
+            echo "DEMO_API_KEY is set (${#DEMO_API_KEY} chars). Printing it shows: $DEMO_API_KEY"
+          fi
+
+  docker:
+    name: Docker build, smoke test & push
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Image name (lowercase owner)
+        id: meta
+        run: |
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "image=ghcr.io/${OWNER}/${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (load locally)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.APP_DIR }}
+          load: true
+          build-args: APP_VERSION=${{ needs.build.outputs.version }}
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ needs.build.outputs.version }}
+            ${{ steps.meta.outputs.image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run container and smoke-test /health
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}:${{ needs.build.outputs.version }}
+        run: |
+          docker run -d --name s16-smoke -p 5000:5000 "$IMAGE"
+          for i in $(seq 1 15); do
+            if curl -fsS http://localhost:5000/health; then echo; echo "smoke test passed"; break; fi
+            echo "waiting for container ($i)..."; sleep 2
+            if [ "$i" -eq 15 ]; then docker logs s16-smoke; exit 1; fi
+          done
+          curl -fsS "http://localhost:5000/calc/add?a=2&b=3"; echo
+          docker exec s16-smoke id
+          docker rm -f s16-smoke
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          docker push "$IMAGE:$VERSION"
+          docker push "$IMAGE:latest"
+
+      - name: Save image as tarball for the deploy job
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}:${{ needs.build.outputs.version }}
+        run: docker save "$IMAGE" -o "${{ runner.temp }}/image.tar"
+
+      - name: Upload image tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}/image.tar
+          retention-days: 1
+
+  deploy:
+    name: Deploy to kind (production)
+    needs: [build, docker]
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy)
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact }}
+          path: ${{ runner.temp }}/release
+
+      - name: Download image tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}/image
+
+      - name: Show release contents
+        run: |
+          ls -la "${{ runner.temp }}/release"
+          cat "${{ runner.temp }}/release/devops-s16-app/build-info.txt"
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: s16
+
+      - name: Load image into kind
+        run: |
+          docker load -i "${{ runner.temp }}/image/image.tar"
+          kind load docker-image "${{ needs.docker.outputs.image }}:${{ needs.build.outputs.version }}" --name s16
+
+      - name: Apply manifests
+        working-directory: 15-github-actions-cicd/k8s
+        env:
+          IMAGE: ${{ needs.docker.outputs.image }}:${{ needs.build.outputs.version }}
+        run: |
+          kubectl apply -f namespace.yaml
+          sed "s|IMAGE_PLACEHOLDER|${IMAGE}|" deployment.yaml | kubectl apply -f -
+          kubectl apply -f service.yaml
+
+      - name: Wait for rollout
+        run: kubectl -n s16 rollout status deployment/devops-s16-app --timeout=120s
+
+      - name: Verify deployment
+        run: |
+          kubectl -n s16 get deploy,pods,svc -o wide
+          kubectl -n s16 run curl-check --image=curlimages/curl:8.10.1 --restart=Never --rm -i -- \
+            curl -fsS http://devops-s16-app/health

@@ -1,0 +1,102 @@
+# owner lowercased the same way the workflow does:
+$ echo 'Ridaa10394' | tr '[:upper:]' '[:lower:]'
+ridaa10394
+
+$ docker build --build-arg APP_VERSION=1.0.0-local -t ghcr.io/ridaa10394/devops-s16-app:1.0.0-local .
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.07kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 158B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 6.06kB done
+#4 DONE 0.0s
+
+#5 [builder 1/5] FROM docker.io/library/python:3.13-slim@sha256:9d2e5553305c7c7b0097999bb17187c69b921ccd6bc9d40e4bb5ebe652c00285
+#5 resolve docker.io/library/python:3.13-slim@sha256:9d2e5553305c7c7b0097999bb17187c69b921ccd6bc9d40e4bb5ebe652c00285 0.0s done
+#5 CACHED
+
+#6 [builder 2/5] WORKDIR /build
+#6 DONE 0.0s
+
+#7 [builder 3/5] RUN python -m venv /opt/venv
+#7 ...
+
+#8 [runtime 2/5] RUN groupadd --system --gid 10001 app &&     useradd --system --uid 10001 --gid app --no-create-home app
+#8 0.197 useradd warning: app's uid 10001 is greater than SYS_UID_MAX 999
+#8 DONE 0.2s
+
+#9 [runtime 3/5] WORKDIR /app
+#9 DONE 0.2s
+
+#7 [builder 3/5] RUN python -m venv /opt/venv
+#7 DONE 1.6s
+
+#10 [builder 4/5] COPY requirements.txt .
+#10 DONE 0.0s
+
+#11 [builder 5/5] RUN pip install -r requirements.txt
+#11 0.700 Collecting flask==3.1.2 (from -r requirements.txt (line 1))
+#11 1.625   Downloading flask-3.1.2-py3-none-any.whl.metadata (3.2 kB)
+#11 1.765 Collecting gunicorn==23.0.0 (from -r requirements.txt (line 2))
+#11 1.993   Downloading gunicorn-23.0.0-py3-none-any.whl.metadata (4.4 kB)
+#11 2.089 Collecting blinker>=1.9.0 (from flask==3.1.2->-r requirements.txt (line 1))
+#11 2.932   Downloading blinker-1.9.0-py3-none-any.whl.metadata (1.6 kB)
+#11 3.057 Collecting click>=8.1.3 (from flask==3.1.2->-r requirements.txt (line 1))
+#11 3.295   Downloading click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+#11 3.370 Collecting itsdangerous>=2.2.0 (from flask==3.1.2->-r requirements.txt (line 1))
+#11 3.534   Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)
+#11 3.650 Collecting jinja2>=3.1.2 (from flask==3.1.2->-r requirements.txt (line 1))
+#11 3.905   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+#11 4.188 Collecting markupsafe>=2.1.1 (from flask==3.1.2->-r requirements.txt (line 1))
+#11 4.388   Downloading markupsafe-3.0.4-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl.metadata (2.7 kB)
+#11 4.522 Collecting werkzeug>=3.1.0 (from flask==3.1.2->-r requirements.txt (line 1))
+#11 4.748   Downloading werkzeug-3.1.9-py3-none-any.whl.metadata (4.1 kB)
+#11 4.889 Collecting packaging (from gunicorn==23.0.0->-r requirements.txt (line 2))
+#11 5.049   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+#11 5.220 Downloading flask-3.1.2-py3-none-any.whl (103 kB)
+#11 5.798 Downloading gunicorn-23.0.0-py3-none-any.whl (85 kB)
+#11 6.193 Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB)
+#11 6.880 Downloading click-8.5.0-py3-none-any.whl (125 kB)
+#11 7.344 Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+#11 7.484 Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+#11 8.346 Downloading markupsafe-3.0.4-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl (24 kB)
+#11 8.450 Downloading werkzeug-3.1.9-py3-none-any.whl (228 kB)
+#11 9.096 Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#11 9.122 Installing collected packages: packaging, markupsafe, itsdangerous, click, blinker, werkzeug, jinja2, gunicorn, flask
+#11 9.363 
+#11 9.364 Successfully installed blinker-1.9.0 click-8.5.0 flask-3.1.2 gunicorn-23.0.0 itsdangerous-2.2.0 jinja2-3.1.6 markupsafe-3.0.4 packaging-26.3 werkzeug-3.1.9
+#11 DONE 9.4s
+
+#12 [runtime 4/5] COPY --from=builder /opt/venv /opt/venv
+#12 DONE 0.2s
+
+#13 [runtime 5/5] COPY --chown=app:app src ./src
+#13 DONE 0.0s
+
+#14 exporting to image
+#14 exporting layers
+#14 exporting layers 0.4s done
+#14 exporting manifest sha256:8dee97efc7c8ae922970fc808a45159d477bb69d2ae92c0a02720ab9d235f1a5 done
+#14 exporting config sha256:5e34fdaa3a7ca3f9382a35ed2ab9d951360f3f886e6c15b8feed192e9b7ee8a8 done
+#14 exporting attestation manifest sha256:45774f403706fb64a7f0785506baa82afab01ca1c1b5ac936ba28cd321efc177 done
+#14 exporting manifest list sha256:4d88e27f3c4b87f6b267cae16467203a492f7038530dccc348786c8ecacf5dc1 done
+#14 naming to ghcr.io/ridaa10394/devops-s16-app:1.0.0-local done
+#14 unpacking to ghcr.io/ridaa10394/devops-s16-app:1.0.0-local
+#14 unpacking to ghcr.io/ridaa10394/devops-s16-app:1.0.0-local 0.2s done
+#14 DONE 0.6s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/wda955fnroxvyk6ae3hjuseps
+exit code: 0
+
+$ docker images ghcr.io/ridaa10394/devops-s16-app
+IMAGE                                           ID             DISK USAGE   CONTENT SIZE   EXTRA
+ghcr.io/ridaa10394/devops-s16-app:1.0.0-local   4d88e27f3c4b        240MB         52.5MB        

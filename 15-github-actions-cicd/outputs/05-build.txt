@@ -1,0 +1,21 @@
+$ APP_VERSION=1.0.0-local ./build.sh
+Build output:
+total 8
+drwxr-xr-x@  4 ridaamahroozmirza  staff   128 Oct  7 16:25 .
+drwxr-xr-x@ 16 ridaamahroozmirza  staff   512 Oct  7 16:25 ..
+drwxr-xr-x@  5 ridaamahroozmirza  staff   160 Oct  7 16:25 devops-s16-app
+-rw-r--r--@  1 ridaamahroozmirza  staff  1740 Oct  7 16:25 devops-s16-app-1.0.0-local.tar.gz
+Application: devops-s16-app
+Version: 1.0.0-local
+Commit: local
+Build Date: 2026-10-07T10:55:32Z
+exit code: 0
+
+$ tar -tzf dist/devops-s16-app-1.0.0-local.tar.gz
+devops-s16-app/
+devops-s16-app/requirements.txt
+devops-s16-app/build-info.txt
+devops-s16-app/src/
+devops-s16-app/src/__init__.py
+devops-s16-app/src/calculator.py
+devops-s16-app/src/app.py

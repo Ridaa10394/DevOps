@@ -1,0 +1,5 @@
+$ flake8 --version
+7.3.0 (mccabe: 0.7.0, pycodestyle: 2.14.0, pyflakes: 3.4.0) CPython 3.13.14 on
+Darwin
+$ flake8 src tests
+exit code: 0

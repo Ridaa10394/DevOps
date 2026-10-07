@@ -1,0 +1,7 @@
+app/.venv/
+app/dist/
+app/reports/
+app/.coverage
+app/coverage.xml
+__pycache__/
+.pytest_cache/

@@ -1,0 +1,12 @@
+$ actionlint -version
+1.7.12
+installed from Homebrew
+built with go1.26.3 compiler for darwin/arm64
+
+$ actionlint -verbose .github/workflows/s16-cicd.yml
+verbose: Linting .github/workflows/s16-cicd.yml
+verbose: Using project at /Users/ridaamahroozmirza/Desktop/AI-Labs/DevOps
+verbose: Found 0 parse errors in 0 ms for .github/workflows/s16-cicd.yml
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Found total 0 errors in 1497 ms for .github/workflows/s16-cicd.yml
+exit code: 0

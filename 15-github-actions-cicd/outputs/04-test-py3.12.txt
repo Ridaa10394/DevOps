@@ -1,0 +1,56 @@
+# matrix leg python 3.12 - run inside python:3.12-slim since the Mac only has 3.13/3.14
+$ docker run --rm -v "$PWD":/src:ro -w /work python:3.12-slim sh -c "cp -r /src/src /src/tests /src/pytest.ini /src/requirements*.txt . && pip install -q --root-user-action=ignore -r requirements-dev.txt && python --version && pytest -v -p no:cacheprovider --cov=src --cov-report=term-missing"
+Unable to find image 'python:3.12-slim' locally
+3.12-slim: Pulling from library/python
+6e2fcafe72a4: Pulling fs layer
+387b25ff7b94: Pulling fs layer
+4dbdca1a513d: Pulling fs layer
+bbeda6b4abb7: Pulling fs layer
+e5bc9678f6a8: Download complete
+6e2fcafe72a4: Download complete
+ba62fc866f1e: Download complete
+387b25ff7b94: Download complete
+4dbdca1a513d: Download complete
+bbeda6b4abb7: Download complete
+bbeda6b4abb7: Pull complete
+387b25ff7b94: Pull complete
+6e2fcafe72a4: Pull complete
+4dbdca1a513d: Pull complete
+Digest: sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f
+Status: Downloaded newer image for python:3.12-slim
+
+[notice] A new release of pip is available: 25.0.1 -> 26.2.1
+[notice] To update, run: pip install --upgrade pip
+Python 3.12.15
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /work
+configfile: pytest.ini
+testpaths: tests
+plugins: cov-7.0.0
+collecting ... collected 11 items
+
+tests/test_app.py::test_index PASSED                                     [  9%]
+tests/test_app.py::test_health PASSED                                    [ 18%]
+tests/test_app.py::test_calc_add PASSED                                  [ 27%]
+tests/test_app.py::test_calc_divide_by_zero PASSED                       [ 36%]
+tests/test_app.py::test_calc_bad_input PASSED                            [ 45%]
+tests/test_app.py::test_calc_unknown_op PASSED                           [ 54%]
+tests/test_calculator.py::test_add PASSED                                [ 63%]
+tests/test_calculator.py::test_subtract PASSED                           [ 72%]
+tests/test_calculator.py::test_multiply PASSED                           [ 81%]
+tests/test_calculator.py::test_divide PASSED                             [ 90%]
+tests/test_calculator.py::test_divide_by_zero PASSED                     [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.15-final-0 _______________
+
+Name                Stmts   Miss  Cover   Missing
+-------------------------------------------------
+src/__init__.py         0      0   100%
+src/app.py             32      1    97%   50
+src/calculator.py      11      0   100%
+-------------------------------------------------
+TOTAL                  43      1    98%
+============================== 11 passed in 0.15s ==============================
+exit code: 0

@@ -1,0 +1,31 @@
+$ docker run -d --name s16-smoke -p 5050:5000 ghcr.io/ridaa10394/devops-s16-app:1.0.0-local
+86f70b7d509034e2df9ad6710b7ab8a8b6587186eda390c6d9396bd8c5e233d8
+
+$ curl -fsS http://localhost:5050/health
+{"python":"3.13.15","status":"ok","version":"1.0.0-local"}
+
+$ curl -fsS http://localhost:5050/
+{"app":"devops-s16-app","endpoints":["/","/health","/calc/<op>?a=&b="],"message":"Hello from the Session 16 CI/CD pipeline","version":"1.0.0-local"}
+
+$ curl -fsS "http://localhost:5050/calc/add?a=2&b=3"
+{"a":2.0,"b":3.0,"op":"add","result":5.0}
+
+$ curl -sS -w " [HTTP %{http_code}]" "http://localhost:5050/calc/divide?a=1&b=0"
+{"error":"Cannot divide by zero"}
+ [HTTP 400]
+
+$ docker exec s16-smoke id
+uid=10001(app) gid=10001(app) groups=10001(app)
+
+$ docker ps --filter name=s16-smoke --format "{{.Names}}  {{.Image}}  {{.Status}}  {{.Ports}}"
+s16-smoke  ghcr.io/ridaa10394/devops-s16-app:1.0.0-local  Up 34 seconds (healthy)  0.0.0.0:5050->5000/tcp, [::]:5050->5000/tcp
+
+$ docker logs s16-smoke
+[2026-10-07 10:56:02 +0000] [1] [INFO] Starting gunicorn 23.0.0
+[2026-10-07 10:56:02 +0000] [1] [INFO] Listening at: http://0.0.0.0:5000 (1)
+[2026-10-07 10:56:02 +0000] [1] [INFO] Using worker: sync
+[2026-10-07 10:56:02 +0000] [7] [INFO] Booting worker with pid: 7
+[2026-10-07 10:56:02 +0000] [8] [INFO] Booting worker with pid: 8
+
+$ docker rm -f s16-smoke
+s16-smoke

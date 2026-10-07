@@ -1,0 +1,23 @@
+# attempt 1: deploy-job steps against a local kind cluster on my Mac
+$ docker save ghcr.io/ridaa10394/devops-s16-app:1.0.0-local -o image.tar && ls -lh image.tar
+50M image.tar
+
+$ kind version
+kind v0.33.0 go1.27.0 darwin/arm64
+$ kind create cluster --name s16
+Creating cluster "s16" ...
+ • Ensuring node image (kindest/node:v1.37.0) 🖼️  ...
+# (hung here for 10+ minutes, killed it)
+
+# attempt 2: pre-pull the node image separately
+$ docker pull kindest/node:v1.37.0
+v1.37.0: Pulling from kindest/node
+9f3efb90fca8: Pulling fs layer
+# (no progress for another ~10 minutes, killed it; `docker pull alpine:3.20` worked fine in between,
+#  so it's this big image + my Docker Desktop, not the manifests)
+
+$ kind delete cluster --name s16
+Deleting cluster "s16" ...
+
+# => ran the exact same kubectl steps on my existing minikube cluster instead, see 09-deploy-minikube.txt
+#    (on the GitHub runner helm/kind-action creates the kind cluster itself)
